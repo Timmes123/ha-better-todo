@@ -1,4 +1,4 @@
-{
+﻿{
   "config": {
     "step": {
       "user": {
@@ -37,8 +37,8 @@
         "due_date": { "name": "Fälligkeitsdatum", "description": "Fälligkeit (bei wiederholenden Aufgaben die erste Fälligkeit)." },
         "visible_from": { "name": "Sichtbar ab", "description": "Die Aufgabe erscheint an diesem Datum." },
         "assigned_to": { "name": "Zugewiesen an", "description": "Personen-Entität, der die Aufgabe zugewiesen wird." },
-        "schedule": { "name": "Zeitplan", "description": "Wiederholungsregel für plan-basierte Aufgaben, z. B. {\"freq\": \"monthly\", \"interval\": 1, \"day\": 1}." },
-        "interval": { "name": "Intervall", "description": "Intervall nach Erledigung, z. B. {\"unit\": \"months\", \"value\": 1}." },
+        "schedule": { "name": "Zeitplan", "description": "Wiederholungsregel für plan-basierte Aufgaben, z. B. freq=monthly, interval=1, day=1." },
+        "interval": { "name": "Intervall", "description": "Intervall nach Erledigung, z. B. unit=months, value=1." },
         "period": { "name": "Periode", "description": "Periode für Gewohnheits-Aufgaben: week oder month." }
       }
     },
@@ -69,3 +69,4 @@
     }
   }
 }
+

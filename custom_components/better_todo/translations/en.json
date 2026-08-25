@@ -1,4 +1,4 @@
-{
+﻿{
   "config": {
     "step": {
       "user": {
@@ -37,8 +37,8 @@
         "due_date": { "name": "Due date", "description": "Due date (first due date for recurring tasks)." },
         "visible_from": { "name": "Visible from", "description": "The task appears on this date." },
         "assigned_to": { "name": "Assigned to", "description": "Person entity the task is assigned to." },
-        "schedule": { "name": "Schedule", "description": "Recurrence rule for scheduled tasks, e.g. {\"freq\": \"monthly\", \"interval\": 1, \"day\": 1}." },
-        "interval": { "name": "Interval", "description": "Interval after completion, e.g. {\"unit\": \"months\", \"value\": 1}." },
+        "schedule": { "name": "Schedule", "description": "Recurrence rule for scheduled tasks, e.g. freq=monthly, interval=1, day=1." },
+        "interval": { "name": "Interval", "description": "Interval after completion, e.g. unit=months, value=1." },
         "period": { "name": "Period", "description": "Period for habit tasks: week or month." }
       }
     },
@@ -69,3 +69,4 @@
     }
   }
 }
+
