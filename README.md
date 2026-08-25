@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="branding/icon.png" width="110" alt="Better ToDo logo">
+  <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/branding/icon.png" width="110" alt="Better ToDo logo">
 </p>
 
 # Better ToDo
@@ -12,7 +12,7 @@ A task manager for Home Assistant with a custom dashboard card — built for
 **recurring tasks that actually work the way you need them to**.
 
 <p align="center">
-  <img src="images/card-overview.png" width="400" alt="Better ToDo card overview">
+  <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-overview.png" width="400" alt="Better ToDo card overview">
 </p>
 
 ## Why another todo integration?
@@ -87,11 +87,11 @@ restart. HACS is strongly recommended so you get updates.
 
 | Card menu | Filters |
 |:---:|:---:|
-| <img src="images/card-menu.png" width="340" alt="Card menu with Show filters, Edit lists and Clear completed"> | <img src="images/card-filters.png" width="340" alt="Filter bar with list chips, tag chips, person filter and sorting"> |
+| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-menu.png" width="340" alt="Card menu with Show filters, Edit lists and Clear completed"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-filters.png" width="340" alt="Filter bar with list chips, tag chips, person filter and sorting"> |
 
 | Task dialog | List management |
 |:---:|:---:|
-| <img src="images/task-dialog.png" width="340" alt="Task dialog with schedule, reminders, tag picker and rotating assignment"> | <img src="images/list-manager.png" width="340" alt="Edit lists dialog"> |
+| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/task-dialog.png" width="340" alt="Task dialog with schedule, reminders, tag picker and rotating assignment"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/list-manager.png" width="340" alt="Edit lists dialog"> |
 
 The **☰ menu** offers *Show filters* (list/tag/person filter, sorting, view toggles),
 *Edit lists* (create, rename, delete — deleting a list removes its tasks and entities),
