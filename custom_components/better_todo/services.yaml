@@ -1,0 +1,97 @@
+add_task:
+  fields:
+    list:
+      required: true
+      example: "Haushaltsaufgaben"
+      selector:
+        text:
+    title:
+      required: true
+      example: "Wäsche aufhängen"
+      selector:
+        text:
+    notes:
+      required: false
+      selector:
+        text:
+          multiline: true
+    type:
+      required: false
+      default: simple
+      selector:
+        select:
+          options:
+            - simple
+            - scheduled
+            - after_completion
+            - period
+    due_date:
+      required: false
+      example: "2026-09-01"
+      selector:
+        date:
+    visible_from:
+      required: false
+      selector:
+        date:
+    assigned_to:
+      required: false
+      selector:
+        entity:
+          domain: person
+    schedule:
+      required: false
+      example: '{"freq": "monthly", "interval": 1, "day": 1}'
+      selector:
+        object:
+    interval:
+      required: false
+      example: '{"unit": "months", "value": 1}'
+      selector:
+        object:
+    period:
+      required: false
+      selector:
+        select:
+          options:
+            - week
+            - month
+
+complete_task:
+  fields:
+    task_id:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      example: "Wäsche aufhängen"
+      selector:
+        text:
+    all:
+      required: false
+      default: false
+      selector:
+        boolean:
+
+skip_task:
+  fields:
+    task_id:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      selector:
+        text:
+
+remove_task:
+  fields:
+    task_id:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      selector:
+        text:

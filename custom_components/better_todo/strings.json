@@ -9,5 +9,63 @@
     "abort": {
       "single_instance_allowed": "Already configured. Only a single instance is possible."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Better ToDo features",
+        "description": "Enable or disable features. Disabled features are hidden everywhere.",
+        "data": {
+          "priorities": "Priorities",
+          "subtasks": "Subtasks",
+          "assignment": "Assignment to persons",
+          "rotation": "Rotating assignment",
+          "periods": "Weekly/monthly tasks with streaks"
+        }
+      }
+    }
+  },
+  "services": {
+    "add_task": {
+      "name": "Add task",
+      "description": "Adds a task to a list (the list is created if it does not exist).",
+      "fields": {
+        "list": { "name": "List", "description": "Name of the list." },
+        "title": { "name": "Title", "description": "Task title." },
+        "notes": { "name": "Notes", "description": "Optional notes." },
+        "type": { "name": "Type", "description": "Task type: simple, scheduled, after_completion or period." },
+        "due_date": { "name": "Due date", "description": "Due date (first due date for recurring tasks)." },
+        "visible_from": { "name": "Visible from", "description": "The task appears on this date." },
+        "assigned_to": { "name": "Assigned to", "description": "Person entity the task is assigned to." },
+        "schedule": { "name": "Schedule", "description": "Recurrence rule for scheduled tasks, e.g. {\"freq\": \"monthly\", \"interval\": 1, \"day\": 1}." },
+        "interval": { "name": "Interval", "description": "Interval after completion, e.g. {\"unit\": \"months\", \"value\": 1}." },
+        "period": { "name": "Period", "description": "Period for habit tasks: week or month." }
+      }
+    },
+    "complete_task": {
+      "name": "Complete task",
+      "description": "Marks a task as completed (by id or exact title).",
+      "fields": {
+        "task_id": { "name": "Task ID", "description": "Internal task id." },
+        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." },
+        "all": { "name": "Complete all", "description": "Complete all outstanding occurrences at once." }
+      }
+    },
+    "skip_task": {
+      "name": "Skip task",
+      "description": "Skips the current occurrence without completing it (streaks are frozen).",
+      "fields": {
+        "task_id": { "name": "Task ID", "description": "Internal task id." },
+        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." }
+      }
+    },
+    "remove_task": {
+      "name": "Remove task",
+      "description": "Deletes a task permanently.",
+      "fields": {
+        "task_id": { "name": "Task ID", "description": "Internal task id." },
+        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." }
+      }
+    }
   }
 }

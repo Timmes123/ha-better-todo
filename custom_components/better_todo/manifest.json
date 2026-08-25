@@ -3,9 +3,11 @@
   "name": "Better ToDo",
   "codeowners": ["@Timmes123"],
   "config_flow": true,
+  "dependencies": ["http", "websocket_api", "lovelace"],
   "documentation": "https://github.com/Timmes123/ha-better-todo",
   "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/Timmes123/ha-better-todo/issues",
-  "version": "0.1.0"
+  "single_config_entry": true,
+  "version": "0.2.0"
 }
