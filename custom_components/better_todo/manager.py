@@ -358,6 +358,23 @@ class BetterTodoManager:
                 break
         self._save_notify()
 
+    def clear_completed(self, list_ids: list[str] | None = None) -> int:
+        """Delete all tasks in the given lists (or all lists) whose display
+        state is 'done': completed simple tasks and ended recurring tasks."""
+        today = self._today()
+
+        def _done(task: dict) -> bool:
+            if list_ids and task["list_id"] not in list_ids:
+                return False
+            return engine.compute_state(task, today).get("state") == "done"
+
+        doomed = {t["id"] for t in self.data["tasks"] if _done(t)}
+        if not doomed:
+            return 0
+        self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] not in doomed]
+        self._save_notify()
+        return len(doomed)
+
     def skip_task(self, task_id: str, by: str | None = None) -> None:
         task = self._task(task_id)
         today = self._today()

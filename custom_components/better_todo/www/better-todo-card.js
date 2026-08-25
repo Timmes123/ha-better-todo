@@ -27,6 +27,8 @@ const STR = {
     delete_task_confirm: "Delete this task?", no_lists: "No lists yet.", empty: "Nothing to do 🎉",
     edit_list: "Edit list", delete_list_confirm: "Delete this list and all its tasks?",
     show_filters: "Show filters", manage_lists: "Edit lists",
+    clear_done: "Clear completed", clear_done_confirm: "Delete all completed tasks?",
+    reset_filters: "Reset filters",
     type_simple: "One-time", type_scheduled: "Recurring (fixed schedule)",
     type_after: "Recurring (after completion)", type_period: "Weekly/monthly task",
     error: "Better ToDo is not reachable. Is the integration installed?",
@@ -65,6 +67,8 @@ const STR = {
     delete_task_confirm: "Diese Aufgabe löschen?", no_lists: "Noch keine Listen.", empty: "Nichts zu tun 🎉",
     edit_list: "Liste bearbeiten", delete_list_confirm: "Diese Liste und alle ihre Aufgaben löschen?",
     show_filters: "Filter anzeigen", manage_lists: "Listen bearbeiten",
+    clear_done: "Erledigte aufräumen", clear_done_confirm: "Alle erledigten Aufgaben löschen?",
+    reset_filters: "Filter zurücksetzen",
     type_simple: "Einmalig", type_scheduled: "Wiederholend (fester Plan)",
     type_after: "Wiederholend (nach Erledigung)", type_period: "Wochen-/Monatsaufgabe",
     error: "Better ToDo ist nicht erreichbar. Ist die Integration installiert?",
@@ -103,6 +107,8 @@ const STR = {
     delete_task_confirm: "Supprimer cette tâche ?", no_lists: "Pas encore de listes.", empty: "Rien à faire 🎉",
     edit_list: "Modifier la liste", delete_list_confirm: "Supprimer cette liste et toutes ses tâches ?",
     show_filters: "Afficher les filtres", manage_lists: "Modifier les listes",
+    clear_done: "Effacer les terminées", clear_done_confirm: "Supprimer toutes les tâches terminées ?",
+    reset_filters: "Réinitialiser les filtres",
     type_simple: "Unique", type_scheduled: "Récurrente (plan fixe)",
     type_after: "Récurrente (après achèvement)", type_period: "Tâche hebdo/mensuelle",
     error: "Better ToDo est injoignable. L'intégration est-elle installée ?",
@@ -141,6 +147,8 @@ const STR = {
     delete_task_confirm: "¿Eliminar esta tarea?", no_lists: "Aún no hay listas.", empty: "Nada que hacer 🎉",
     edit_list: "Editar lista", delete_list_confirm: "¿Eliminar esta lista y todas sus tareas?",
     show_filters: "Mostrar filtros", manage_lists: "Editar listas",
+    clear_done: "Borrar completadas", clear_done_confirm: "¿Eliminar todas las tareas completadas?",
+    reset_filters: "Restablecer filtros",
     type_simple: "Única", type_scheduled: "Recurrente (plan fijo)",
     type_after: "Recurrente (tras completar)", type_period: "Tarea semanal/mensual",
     error: "Better ToDo no responde. ¿Está instalada la integración?",
@@ -179,6 +187,8 @@ const STR = {
     delete_task_confirm: "Eliminare questa attività?", no_lists: "Ancora nessuna lista.", empty: "Niente da fare 🎉",
     edit_list: "Modifica lista", delete_list_confirm: "Eliminare questa lista e tutte le sue attività?",
     show_filters: "Mostra filtri", manage_lists: "Modifica liste",
+    clear_done: "Rimuovi completate", clear_done_confirm: "Eliminare tutte le attività completate?",
+    reset_filters: "Reimposta filtri",
     type_simple: "Singola", type_scheduled: "Ricorrente (piano fisso)",
     type_after: "Ricorrente (dopo completamento)", type_period: "Attività settimanale/mensile",
     error: "Better ToDo non raggiungibile. L'integrazione è installata?",
@@ -217,6 +227,8 @@ const STR = {
     delete_task_confirm: "Deze taak verwijderen?", no_lists: "Nog geen lijsten.", empty: "Niets te doen 🎉",
     edit_list: "Lijst bewerken", delete_list_confirm: "Deze lijst en al haar taken verwijderen?",
     show_filters: "Filters tonen", manage_lists: "Lijsten bewerken",
+    clear_done: "Voltooide opruimen", clear_done_confirm: "Alle voltooide taken verwijderen?",
+    reset_filters: "Filters herstellen",
     type_simple: "Eenmalig", type_scheduled: "Terugkerend (vast schema)",
     type_after: "Terugkerend (na afronden)", type_period: "Week-/maandtaak",
     error: "Better ToDo is niet bereikbaar. Is de integratie geïnstalleerd?",
@@ -255,6 +267,8 @@ const STR = {
     delete_task_confirm: "Usunąć to zadanie?", no_lists: "Brak list.", empty: "Nic do zrobienia 🎉",
     edit_list: "Edytuj listę", delete_list_confirm: "Usunąć tę listę i wszystkie jej zadania?",
     show_filters: "Pokaż filtry", manage_lists: "Edytuj listy",
+    clear_done: "Wyczyść ukończone", clear_done_confirm: "Usunąć wszystkie ukończone zadania?",
+    reset_filters: "Resetuj filtry",
     type_simple: "Jednorazowe", type_scheduled: "Cykliczne (stały plan)",
     type_after: "Cykliczne (po ukończeniu)", type_period: "Zadanie tygodniowe/miesięczne",
     error: "Better ToDo jest niedostępne. Czy integracja jest zainstalowana?",
@@ -465,6 +479,12 @@ class BetterTodoCard extends HTMLElement {
   _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
+  _filtersActive() {
+    const u = this._ui;
+    return !!(u.lists || u.person !== null || (u.tags && u.tags.length)
+      || u.dueSoon || u.sort || u.showDone !== null || u.showUpcoming !== null);
+  }
+
   _allTags() {
     // Same visibility rules as _visibleTasks, minus the tag filter itself:
     // chips only offer tags the current view can actually match. Selected
@@ -570,6 +590,8 @@ class BetterTodoCard extends HTMLElement {
           ${this._ui.dropdown ? `<div class="dropdown">
             <button class="dd-item" data-action="dd-filters">${this._ui.menu ? "✓ " : ""}${esc(t.show_filters)}</button>
             <button class="dd-item" data-action="dd-lists">${esc(t.manage_lists)}</button>
+            <button class="dd-item" data-action="dd-clear">${esc(t.clear_done)}</button>
+            ${this._filtersActive() ? `<button class="dd-item" data-action="dd-reset">${esc(t.reset_filters)}</button>` : ""}
           </div>` : ""}
         </div>` : ""}
       </div>
@@ -731,6 +753,20 @@ class BetterTodoCard extends HTMLElement {
     if (action === "menu") { this._ui.dropdown = !this._ui.dropdown; this._render(); }
     else if (action === "dd-filters") { this._ui.menu = !this._ui.menu; this._ui.dropdown = false; this._render(); }
     else if (action === "dd-lists") { this._ui.dropdown = false; this._render(); this._openManageLists(); }
+    else if (action === "dd-clear") {
+      this._ui.dropdown = false;
+      this._render();
+      if (confirm(this.t.clear_done_confirm)) {
+        this._ws({ type: "better_todo/clear_completed", list_ids: this._activeLists().map((l) => l.id) });
+      }
+    }
+    else if (action === "dd-reset") {
+      Object.assign(this._ui, {
+        lists: null, person: null, tags: null, dueSoon: false, sort: null,
+        showDone: null, showUpcoming: null, dropdown: false,
+      });
+      this._render();
+    }
     else if (action === "toggle-list") this._toggleListFilter(id);
     else if (action === "toggle-tag") this._toggleTagFilter(id);
     else if (action === "add") this._openTaskDialog(null);

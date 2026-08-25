@@ -34,6 +34,7 @@ def async_register_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_skip_task)
     websocket_api.async_register_command(hass, ws_toggle_subtask)
     websocket_api.async_register_command(hass, ws_reorder)
+    websocket_api.async_register_command(hass, ws_clear_completed)
 
 
 def _manager(hass: HomeAssistant) -> BetterTodoManager:
@@ -111,6 +112,17 @@ def ws_save_list(hass, connection, msg):
 @_handle
 def ws_delete_list(hass, connection, msg):
     _manager(hass).delete_list(msg["list_id"])
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "better_todo/clear_completed",
+        vol.Optional("list_ids"): [str],
+    }
+)
+@_handle
+def ws_clear_completed(hass, connection, msg):
+    return {"deleted": _manager(hass).clear_completed(msg.get("list_ids"))}
 
 
 @websocket_api.websocket_command(
