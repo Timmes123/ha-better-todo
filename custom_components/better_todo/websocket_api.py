@@ -58,6 +58,13 @@ def _handle(func):
         except BetterTodoError as err:
             connection.send_error(msg["id"], "better_todo_error", str(err))
             return
+        except (ValueError, TypeError, KeyError, AttributeError) as err:
+            # Legacy tasks stored before input validation existed can still
+            # carry data the engine rejects — surface a clean error instead
+            # of an unhandled exception on the socket.
+            _LOGGER.exception("Better ToDo command %s failed", msg.get("type"))
+            connection.send_error(msg["id"], "better_todo_error", f"Invalid task data: {err}")
+            return
         connection.send_result(msg["id"], result)
 
     return wrapper
@@ -81,9 +88,12 @@ def ws_subscribe(hass, connection, msg):
         manager = hass.data.get(DOMAIN)
         if manager is None:
             return
-        connection.send_message(
-            websocket_api.event_message(msg["id"], manager.serialized_data())
-        )
+        try:
+            data = manager.serialized_data()
+        except Exception:  # noqa: BLE001 - a push failure must not kill the socket
+            _LOGGER.exception("Could not serialize Better ToDo data for push")
+            return
+        connection.send_message(websocket_api.event_message(msg["id"], data))
 
     connection.subscriptions[msg["id"]] = async_dispatcher_connect(
         hass, SIGNAL_UPDATE, push
@@ -103,6 +113,10 @@ def ws_save_list(hass, connection, msg):
     return _manager(hass).save_list(msg["list"])
 
 
+# Destructive bulk operations are admin-only: any authenticated HA user may
+# manage tasks, but wiping a whole list (or all completed tasks) is reserved
+# for admins.
+@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "better_todo/delete_list",
@@ -114,6 +128,7 @@ def ws_delete_list(hass, connection, msg):
     _manager(hass).delete_list(msg["list_id"])
 
 
+@websocket_api.require_admin
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "better_todo/clear_completed",

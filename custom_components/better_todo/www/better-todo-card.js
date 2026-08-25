@@ -47,6 +47,9 @@ const STR = {
     logged_in: "Logged-in user", mode_day: "on a fixed day", mode_last: "on the last day of the month",
     mode_nth: "on the nth weekday", day_f: "Day (1–31)", month_f: "Month", nth_last: "last",
     auto_hint: "empty = automatic from rule",
+    menu_t: "Menu", error_g: "Error", compact_t: "Compact",
+    confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
+    empty_all_hint: "empty = all",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -89,6 +92,9 @@ const STR = {
     logged_in: "Angemeldeter Benutzer", mode_day: "an festem Tag", mode_last: "am letzten Tag des Monats",
     mode_nth: "am N-ten Wochentag", day_f: "Tag (1–31)", month_f: "Monat", nth_last: "letzter",
     auto_hint: "leer = automatisch aus der Regel",
+    menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt",
+    confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
+    empty_all_hint: "leer = alle",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -131,6 +137,9 @@ const STR = {
     logged_in: "Utilisateur connecté", mode_day: "à jour fixe", mode_last: "le dernier jour du mois",
     mode_nth: "le n-ième jour de semaine", day_f: "Jour (1–31)", month_f: "Mois", nth_last: "dernier",
     auto_hint: "vide = automatique selon la règle",
+    menu_t: "Menu", error_g: "Erreur", compact_t: "Compact",
+    confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
+    empty_all_hint: "vide = toutes",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -173,6 +182,9 @@ const STR = {
     logged_in: "Usuario conectado", mode_day: "en un día fijo", mode_last: "el último día del mes",
     mode_nth: "el n-ésimo día de la semana", day_f: "Día (1–31)", month_f: "Mes", nth_last: "último",
     auto_hint: "vacío = automático según la regla",
+    menu_t: "Menú", error_g: "Error", compact_t: "Compacto",
+    confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
+    empty_all_hint: "vacío = todas",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -215,6 +227,9 @@ const STR = {
     logged_in: "Utente connesso", mode_day: "in un giorno fisso", mode_last: "l'ultimo giorno del mese",
     mode_nth: "l'n-esimo giorno della settimana", day_f: "Giorno (1–31)", month_f: "Mese", nth_last: "ultimo",
     auto_hint: "vuoto = automatico dalla regola",
+    menu_t: "Menu", error_g: "Errore", compact_t: "Compatto",
+    confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
+    empty_all_hint: "vuoto = tutte",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -257,6 +272,9 @@ const STR = {
     logged_in: "Ingelogde gebruiker", mode_day: "op een vaste dag", mode_last: "op de laatste dag van de maand",
     mode_nth: "op de n-de weekdag", day_f: "Dag (1–31)", month_f: "Maand", nth_last: "laatste",
     auto_hint: "leeg = automatisch volgens regel",
+    menu_t: "Menu", error_g: "Fout", compact_t: "Compact",
+    confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
+    empty_all_hint: "leeg = alle",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -299,6 +317,9 @@ const STR = {
     logged_in: "Zalogowany użytkownik", mode_day: "w stały dzień", mode_last: "ostatniego dnia miesiąca",
     mode_nth: "w n-ty dzień tygodnia", day_f: "Dzień (1–31)", month_f: "Miesiąc", nth_last: "ostatni",
     auto_hint: "puste = automatycznie z reguły",
+    menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy",
+    confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
+    empty_all_hint: "puste = wszystkie",
   },
 };
 
@@ -306,6 +327,17 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
+
+// Order-independent serialization for config comparison: HA may reorder or
+// re-wrap config objects when echoing them back to the editor.
+const canonJson = (v) => {
+  const canon = (x) => Array.isArray(x)
+    ? x.map(canon)
+    : x && typeof x === "object"
+      ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, canon(x[k])]))
+      : x;
+  return JSON.stringify(canon(v));
+};
 
 const STATE_RANK = {
   overdue: 0, due: 1, period_open: 2, open: 3, period_skipped: 4,
@@ -324,9 +356,11 @@ function remLabel(t, minutes) {
 const toIso = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-function nextRuleDate(s) {
+function nextRuleDate(s, todayIso) {
   // First occurrence (>= today) matching a schedule rule — mirrors engine.py.
-  const today = new Date();
+  // `todayIso` is today in the HA timezone so the result matches the backend
+  // even when the browser is in a different timezone.
+  const today = todayIso ? new Date(todayIso + "T00:00:00") : new Date();
   today.setHours(0, 0, 0, 0);
   const clampDay = (y, m, day) => {
     const last = new Date(y, m + 1, 0).getDate();
@@ -400,6 +434,9 @@ class BetterTodoCard extends HTMLElement {
     this.shadowRoot.addEventListener("dragstart", (e) => this._onDragStart(e));
     this.shadowRoot.addEventListener("dragover", (e) => this._onDragOver(e));
     this.shadowRoot.addEventListener("drop", (e) => this._onDrop(e));
+    // A cancelled drag (Esc, drop outside) must not leave stale drag state
+    // behind — a later unrelated drop would otherwise trigger a reorder.
+    this.shadowRoot.addEventListener("dragend", () => { this._drag = null; });
   }
 
   setConfig(config) {
@@ -427,38 +464,100 @@ class BetterTodoCard extends HTMLElement {
 
   connectedCallback() {
     if (this._hass && !this._sub) this._connect();
+    // Re-render when the (HA-timezone) day changes so due/overdue badges and
+    // the "due soon" filter stay correct on a display left open overnight.
+    if (!this._dayTimer) {
+      this._dayTimer = setInterval(() => {
+        const day = this._todayIso();
+        if (this._lastDay && day !== this._lastDay && !this._dialog) this._render();
+        this._lastDay = day;
+      }, 60000);
+    }
   }
 
   disconnectedCallback() {
     if (this._sub) { this._sub.then((u) => u()).catch(() => {}); this._sub = null; }
+    if (this._retryTimer) { clearTimeout(this._retryTimer); this._retryTimer = null; }
+    if (this._dayTimer) { clearInterval(this._dayTimer); this._dayTimer = null; }
   }
 
   get t() { return pickLang(this._hass); }
+
+  // Fail closed: without user info the admin-only buttons stay hidden — the
+  // backend enforces the permission anyway, this only avoids dead buttons.
+  get _admin() { return this._hass?.user?.is_admin === true; }
+
+  _todayIso() {
+    // "Today" in the HA timezone — the backend computes all due logic there,
+    // so a browser in another timezone must not disagree. The formatter is
+    // cached: constructing Intl.DateTimeFormat is expensive and this runs
+    // per task per render.
+    try {
+      const tz = this._hass?.config?.time_zone;
+      if (!this._dayFmt || this._dayFmtTz !== tz) {
+        this._dayFmt = new Intl.DateTimeFormat("en-CA", {
+          timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+        });
+        this._dayFmtTz = tz;
+      }
+      return this._dayFmt.format(new Date());
+    } catch {
+      return toIso(new Date());
+    }
+  }
 
   async _connect() {
     if (this._connecting) return;
     this._connecting = true;
     try {
-      this._data = await this._hass.callWS({ type: "better_todo/get_data" });
-      this._error = null;
-      this._sub = this._hass.connection.subscribeMessage(
-        (data) => { this._data = data; this._render(); },
+      // subscribe pushes the initial state itself — no separate get_data,
+      // so there is no gap between fetch and subscribe.
+      const sub = this._hass.connection.subscribeMessage(
+        (data) => { this._data = data; this._error = null; this._render(); },
         { type: "better_todo/subscribe" }
       );
+      await sub;
+      if (!this.isConnected) {
+        // Detached while connecting (view switch): don't leak the subscription.
+        sub.then((u) => u()).catch(() => {});
+        return;
+      }
+      this._sub = sub;
+      this._error = null;
+      this._retryDelay = null;
     } catch (e) {
       this._error = e;
+      this._scheduleRetry();
+    } finally {
+      this._connecting = false;
+      this._render();
     }
-    this._connecting = false;
-    this._render();
+  }
+
+  _scheduleRetry() {
+    // A failed first load (e.g. dashboard opens while HA is still starting)
+    // must not be permanent — retry with backoff while the card is visible.
+    if (this._retryTimer || !this.isConnected) return;
+    this._retryDelay = Math.min(30000, (this._retryDelay || 1500) * 2);
+    this._retryTimer = setTimeout(() => {
+      this._retryTimer = null;
+      if (this.isConnected && !this._sub) this._connect();
+    }, this._retryDelay);
   }
 
   async _ws(msg) {
     try {
       return await this._hass.callWS(msg);
     } catch (e) {
-      alert(e.message || "Error");
+      alert(e.message || this.t.error_g);
       throw e;
     }
+  }
+
+  _wsBg(msg) {
+    // Fire-and-forget mutation: the error is already alerted in _ws; swallow
+    // the rejection so it doesn't surface as an unhandled promise rejection.
+    this._ws(msg).catch(() => {});
   }
 
   // ------------------------------------------------------------- helpers
@@ -543,8 +642,11 @@ class BetterTodoCard extends HTMLElement {
     const c = task.computed || {};
     if (["overdue", "due", "period_open"].includes(c.state)) return true;
     if (!c.due) return false;
-    const diff = (new Date(c.due + "T00:00:00") - new Date(new Date().toDateString())) / 86400000;
-    return diff <= days;
+    // Pure date-string comparison in the HA timezone — no ms division, so
+    // DST transitions and browser-timezone offsets cannot skew the window.
+    const limit = new Date(this._todayIso() + "T12:00:00Z");
+    limit.setUTCDate(limit.getUTCDate() + (Number(days) || 0));
+    return c.due <= limit.toISOString().slice(0, 10);
   }
 
   _visibleTasks(listId) {
@@ -594,6 +696,7 @@ class BetterTodoCard extends HTMLElement {
 
   _render() {
     if (this._dialog) return;
+    this._lastDay = this._todayIso();
     const t = this.t;
     let body;
     if (this._error) {
@@ -621,11 +724,11 @@ class BetterTodoCard extends HTMLElement {
       <div class="head-actions">
         ${this._config.show_add ? `<button class="icon-btn" data-action="add" title="${esc(t.new_task)}">+</button>` : ""}
         ${this._config.show_menu ? `<div class="menu-anchor">
-          <button class="icon-btn ${this._ui.dropdown ? "active" : ""}" data-action="menu" title="Menu">☰</button>
+          <button class="icon-btn ${this._ui.dropdown ? "active" : ""}" data-action="menu" title="${esc(t.menu_t)}">☰</button>
           ${this._ui.dropdown ? `<div class="dropdown">
             <button class="dd-item" data-action="dd-filters">${this._ui.menu ? "✓ " : ""}${esc(t.show_filters)}</button>
             <button class="dd-item" data-action="dd-lists">${esc(t.manage_lists)}</button>
-            <button class="dd-item" data-action="dd-clear">${esc(t.clear_done)}</button>
+            ${this._admin ? `<button class="dd-item" data-action="dd-clear">${esc(t.clear_done)}</button>` : ""}
             ${this._filtersActive() ? `<button class="dd-item" data-action="dd-reset">${esc(t.reset_filters)}</button>` : ""}
           </div>` : ""}
         </div>` : ""}
@@ -635,7 +738,12 @@ class BetterTodoCard extends HTMLElement {
 
   _renderMenu() {
     const t = this.t;
-    const all = this._data.lists || [];
+    // Only lists the card config permits: a chip for a config-excluded list
+    // would toggle filter state that can never become visible.
+    let all = this._data.lists || [];
+    if (this._config.lists && this._config.lists.length) {
+      all = all.filter((l) => this._config.lists.includes(l.id) || this._config.lists.includes(l.name));
+    }
     const active = this._activeLists().map((l) => l.id);
     const personFilter = this._personFilter();
     const persons = this._data.persons || [];
@@ -794,7 +902,7 @@ class BetterTodoCard extends HTMLElement {
       this._ui.dropdown = false;
       this._render();
       if (confirm(this.t.clear_done_confirm)) {
-        this._ws({ type: "better_todo/clear_completed", list_ids: this._activeLists().map((l) => l.id) });
+        this._wsBg({ type: "better_todo/clear_completed", list_ids: this._activeLists().map((l) => l.id) });
       }
     }
     else if (action === "dd-reset") {
@@ -806,14 +914,18 @@ class BetterTodoCard extends HTMLElement {
     }
     else if (action === "toggle-list") this._toggleListFilter(id);
     else if (action === "toggle-tag") this._toggleTagFilter(id);
-    else if (action === "add") this._openTaskDialog(null);
+    else if (action === "add") {
+      // Without any list a task cannot exist — offer creating a list first.
+      if ((this._data?.lists || []).length) this._openTaskDialog(null);
+      else this._openListDialog(null);
+    }
     else if (action === "add-list") this._openListDialog(null);
     else if (action === "expand") { this._ui.expanded = this._ui.expanded === id ? null : id; this._render(); }
     else if (action === "complete") this._complete(id);
     else if (action === "edit") this._openTaskDialog(this._task(id));
-    else if (action === "skip") this._ws({ type: "better_todo/skip_task", task_id: id });
+    else if (action === "skip") this._wsBg({ type: "better_todo/skip_task", task_id: id });
     else if (action === "del-task") {
-      if (confirm(this.t.delete_task_confirm)) this._ws({ type: "better_todo/delete_task", task_id: id });
+      if (confirm(this.t.delete_task_confirm)) this._wsBg({ type: "better_todo/delete_task", task_id: id });
     }
   }
 
@@ -822,7 +934,7 @@ class BetterTodoCard extends HTMLElement {
     if (!el) return;
     const action = el.dataset.action;
     if (action === "subtask") {
-      this._ws({ type: "better_todo/toggle_subtask", task_id: el.dataset.id, subtask_id: el.dataset.sub, done: el.checked });
+      this._wsBg({ type: "better_todo/toggle_subtask", task_id: el.dataset.id, subtask_id: el.dataset.sub, done: el.checked });
     } else if (action === "person-filter") { this._ui.person = el.value; this._render(); }
     else if (action === "sort") { this._ui.sort = el.value; this._render(); }
     else if (action === "show-done") { this._ui.showDone = el.checked; this._render(); }
@@ -840,7 +952,13 @@ class BetterTodoCard extends HTMLElement {
   _onDragOver(e) {
     if (!this._drag) return;
     const row = e.target.closest?.(".task");
-    if (row && row.dataset.list === this._drag.listId) e.preventDefault();
+    if (!row || row.dataset.list !== this._drag.listId) return;
+    // Done rows sit at the visual bottom regardless of their stored order —
+    // dropping onto them would splice at a position that contradicts what
+    // the user sees, so they are not valid drop targets.
+    const target = this._task(row.dataset.id);
+    if (target && ["done", "period_done"].includes(target.computed?.state)) return;
+    e.preventDefault();
   }
 
   _onDrop(e) {
@@ -849,17 +967,25 @@ class BetterTodoCard extends HTMLElement {
     const drag = this._drag;
     this._drag = null;
     if (!row || row.dataset.list !== drag.listId || row.dataset.id === drag.id) return;
+    const target = this._task(row.dataset.id);
+    if (target && ["done", "period_done"].includes(target.computed?.state)) return;
     e.preventDefault();
+    // Direction of the move comes from the visible rows; the new order is
+    // built on the FULL list so filtered-out tasks keep their positions
+    // (moving one task must never shuffle hidden ones to the end).
     const visible = this._visibleTasks(drag.listId).map((x) => x.id);
-    const from = visible.indexOf(drag.id);
-    const to = visible.indexOf(row.dataset.id);
-    if (from < 0 || to < 0) return;
-    visible.splice(to, 0, visible.splice(from, 1)[0]);
-    const rest = (this._data.tasks || [])
-      .filter((x) => x.list_id === drag.listId && !visible.includes(x.id))
+    const vFrom = visible.indexOf(drag.id);
+    const vTo = visible.indexOf(row.dataset.id);
+    if (vFrom < 0 || vTo < 0) return;
+    const full = (this._data.tasks || [])
+      .filter((x) => x.list_id === drag.listId)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((x) => x.id);
-    this._ws({ type: "better_todo/reorder", list_id: drag.listId, task_ids: [...visible, ...rest] });
+      .map((x) => x.id)
+      .filter((id) => id !== drag.id);
+    const targetIdx = full.indexOf(row.dataset.id);
+    if (targetIdx < 0) return;
+    full.splice(vFrom < vTo ? targetIdx + 1 : targetIdx, 0, drag.id);
+    this._wsBg({ type: "better_todo/reorder", list_id: drag.listId, task_ids: full });
   }
 
   _toggleListFilter(id) {
@@ -885,7 +1011,7 @@ class BetterTodoCard extends HTMLElement {
     if (!task) return;
     const s = task.computed?.state;
     if (s === "done" || s === "period_done") {
-      this._ws({ type: "better_todo/uncomplete_task", task_id: id });
+      this._wsBg({ type: "better_todo/uncomplete_task", task_id: id });
       return;
     }
     if (task.type === "scheduled" && (task.computed?.due_count || 0) > 1) {
@@ -893,7 +1019,7 @@ class BetterTodoCard extends HTMLElement {
       return;
     }
     if (this._config.confirm_complete && !confirm(this.t.confirm_done(task.title))) return;
-    this._ws({ type: "better_todo/complete_task", task_id: id, all: true });
+    this._wsBg({ type: "better_todo/complete_task", task_id: id, all: true });
   }
 
   // ------------------------------------------------------------- dialogs
@@ -934,8 +1060,8 @@ class BetterTodoCard extends HTMLElement {
         dlg.addEventListener("click", (e) => {
           const b = e.target.closest("[data-x]");
           if (!b) return;
-          if (b.dataset.x === "one") this._ws({ type: "better_todo/complete_task", task_id: task.id, all: false });
-          if (b.dataset.x === "all") this._ws({ type: "better_todo/complete_task", task_id: task.id, all: true });
+          if (b.dataset.x === "one") this._wsBg({ type: "better_todo/complete_task", task_id: task.id, all: false });
+          if (b.dataset.x === "all") this._wsBg({ type: "better_todo/complete_task", task_id: task.id, all: true });
           dlg.close();
         });
       }
@@ -950,7 +1076,7 @@ class BetterTodoCard extends HTMLElement {
        <label class="field">${esc(t.list_name_f)}<input type="text" id="lname" value="${esc(list?.name || "")}"></label>
        <div class="dlg-actions">
          <button class="btn primary" data-x="save">${esc(t.save)}</button>
-         ${list ? `<button class="btn danger" data-x="delete">${esc(t.delete)}</button>` : ""}
+         ${list && this._admin ? `<button class="btn danger" data-x="delete">${esc(t.delete)}</button>` : ""}
          <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
        </div>`,
       (dlg) => {
@@ -1028,7 +1154,7 @@ class BetterTodoCard extends HTMLElement {
     if (!draft.period) draft.period = "week";
     // Editable rule fields, prefilled from an existing schedule.
     const s = draft.schedule;
-    const now = new Date();
+    const now = new Date(this._todayIso() + "T00:00:00");
     draft._mMode = s.nth ? "nth" : (s.day === "last" ? "last" : "day");
     draft._mDay = s.day && s.day !== "last" ? Number(s.day) : now.getDate();
     draft._mNthN = s.nth ? Number(s.nth.n) : 1;
@@ -1113,12 +1239,12 @@ class BetterTodoCard extends HTMLElement {
           <label class="field grow">${esc(t.first_due_f)} <span class="hint">(${esc(t.auto_hint)})</span><input type="date" data-f="due_date" value="${esc(d.due_date || "")}"></label>
           <label class="field">${esc(t.time_f)}<input type="time" data-f="due_time" value="${esc(d.due_time || "")}"></label>
         </div>
-        <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${d.lead_days ?? ""}"></label>
+        <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${esc(d.lead_days ?? "")}"></label>
         <details class="endblock" ${d.schedule.until || d.schedule.max_occurrences ? "open" : ""}>
           <summary>${esc(t.end_f)}</summary>
           <div class="field-row2">
             <label class="field grow">${esc(t.until_f)}<input type="date" data-f="schedule.until" value="${esc(d.schedule.until || "")}"></label>
-            <label class="field">${esc(t.max_occ_f)}<input type="number" min="1" data-f="schedule.max_occurrences" value="${d.schedule.max_occurrences ?? ""}"></label>
+            <label class="field">${esc(t.max_occ_f)}<input type="number" min="1" data-f="schedule.max_occurrences" value="${esc(d.schedule.max_occurrences ?? "")}"></label>
           </div>
         </details>`;
     } else if (d.type === "after_completion") {
@@ -1137,7 +1263,7 @@ class BetterTodoCard extends HTMLElement {
           </select>
           <span>${esc(t.after_done)}</span>
         </div>
-        <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${d.lead_days ?? ""}"></label>`;
+        <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${esc(d.lead_days ?? "")}"></label>`;
     } else if (d.type === "period") {
       typeFields = `
         <label class="field">${esc(t.period_f)}
@@ -1316,10 +1442,10 @@ class BetterTodoCard extends HTMLElement {
         s.day = Math.min(31, Math.max(1, Number(d._mDay) || 1));
         s.month = Math.min(12, Math.max(1, Number(d._yMonth) || 1));
       } else if (s.freq === "weekly" && (!s.weekdays || !s.weekdays.length)) {
-        s.weekdays = [(new Date().getDay() + 6) % 7];
+        s.weekdays = [(new Date(this._todayIso() + "T00:00:00").getDay() + 6) % 7];
       }
       if (s.freq !== "weekly") s.weekdays = null;
-      if (!d.due_date) d.due_date = toIso(nextRuleDate(s));
+      if (!d.due_date) d.due_date = toIso(nextRuleDate(s, this._todayIso()));
       d.interval = null; d.period = null;
     } else if (d.type === "after_completion") {
       d.schedule = null; d.period = null;
@@ -1486,7 +1612,10 @@ class BetterTodoCardEditor extends HTMLElement {
     this._config = { ...config };
     // Config changes we fired ourselves come straight back through here;
     // re-rendering then would destroy the focused input on every keystroke.
-    if (this._suppressRender) { this._suppressRender = false; return; }
+    // Compare content instead of a one-shot flag so a genuine external
+    // change (e.g. edited YAML) can never be swallowed by a stale flag.
+    if (this._lastFired && canonJson({ type: "custom:better-todo-card", ...config }) === this._lastFired) return;
+    this._lastFired = null;
     this._render();
   }
 
@@ -1500,8 +1629,8 @@ class BetterTodoCardEditor extends HTMLElement {
   }
 
   _fire() {
-    this._suppressRender = true;
     const config = { type: "custom:better-todo-card", ...this._config };
+    this._lastFired = canonJson(config);
     this.dispatchEvent(new CustomEvent("config-changed", {
       detail: { config }, bubbles: true, composed: true,
     }));
@@ -1514,12 +1643,12 @@ class BetterTodoCardEditor extends HTMLElement {
     const persons = this._data?.persons || [];
     const selLists = c.lists || [];
     const toggles = [
-      ["show_menu", "Menu", c.show_menu ?? true],
-      ["show_add", "+ Add", c.show_add ?? true],
+      ["show_menu", t.menu_t, c.show_menu ?? true],
+      ["show_add", `+ ${t.new_task}`, c.show_add ?? true],
       ["show_completed", t.show_done, c.show_completed ?? false],
       ["show_upcoming", t.show_upcoming, c.show_upcoming ?? false],
-      ["compact", "Compact", c.compact ?? false],
-      ["confirm_complete", "Confirm", c.confirm_complete ?? false],
+      ["compact", t.compact_t, c.compact ?? false],
+      ["confirm_complete", t.confirm_t, c.confirm_complete ?? false],
     ];
     this.shadowRoot.innerHTML = `<style>
         .ed { display: flex; flex-direction: column; gap: 10px; font-family: inherit; color: var(--primary-text-color); }
@@ -1538,7 +1667,7 @@ class BetterTodoCardEditor extends HTMLElement {
         <label>${esc(t.title_f)}<input type="text" data-f="title" value="${esc(c.title || "")}"></label>
         ${lists.length ? `<div><label>${esc(t.list_f)}</label><div class="lists">
           ${lists.map((l) => `<label><input type="checkbox" data-list="${esc(l.id)}" ${selLists.includes(l.id) || selLists.includes(l.name) ? "checked" : ""}> ${esc(l.name)}</label>`).join("")}
-        </div><div class="hint">∅ = alle / all</div></div>` : ""}
+        </div><div class="hint">${esc(t.empty_all_hint)}</div></div>` : ""}
         <div class="row">
           <label>${esc(t.assigned_f)}<select data-f="assigned">
             <option value="all" ${(c.assigned || "all") === "all" ? "selected" : ""}>${esc(t.all_persons)}</option>
@@ -1551,8 +1680,8 @@ class BetterTodoCardEditor extends HTMLElement {
           </select></label>
         </div>
         <div class="row">
-          <label>${esc(t.due_soon(c.due_soon_days ?? 7))}<input type="number" min="0" max="90" data-f="due_soon_days" value="${c.due_soon_days ?? 7}"></label>
-          <label>max-height (px)<input type="number" min="0" data-f="max_height" value="${c.max_height ?? ""}"></label>
+          <label>${esc(t.due_soon(c.due_soon_days ?? 7))}<input type="number" min="0" max="90" data-f="due_soon_days" value="${esc(c.due_soon_days ?? 7)}"></label>
+          <label>${esc(t.max_height_f)}<input type="number" min="0" data-f="max_height" value="${esc(c.max_height ?? "")}"></label>
         </div>
         <div class="checks">
           ${toggles.map(([key, label, val]) => `<label><input type="checkbox" data-f="${key}" ${val ? "checked" : ""}> ${esc(label)}</label>`).join("")}
@@ -1591,4 +1720,14 @@ window.customCards.push({
   name: "Better ToDo Card",
   description: "Task list card for the Better ToDo integration.",
   preview: false,
+  documentationURL: "https://github.com/Timmes123/ha-better-todo",
+  // Card picker (HA 2026.6+): suggest this card for the integration's own
+  // mirror todo entities.
+  getEntitySuggestion: (hass, entityId) => {
+    if (hass?.entities?.[entityId]?.platform !== "better_todo") return null;
+    // The mirror todo entity is named after its list — scope the suggested
+    // card to that list so the picker shows a card for THIS entity.
+    const name = hass.states?.[entityId]?.attributes?.friendly_name;
+    return { config: { type: "custom:better-todo-card", ...(name ? { lists: [name] } : {}) } };
+  },
 });

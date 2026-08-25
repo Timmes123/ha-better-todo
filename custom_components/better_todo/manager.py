@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import uuid
 from datetime import date, datetime, time, timedelta
@@ -63,6 +64,7 @@ class BetterTodoManager:
         self._fired_reminders: set[tuple[str, int, str]] = set()
         self._summary_sent: date | None = None
         self._persistent_active = False
+        self._last_tick: datetime | None = None
 
     # ------------------------------------------------------------- storage
 
@@ -73,8 +75,34 @@ class BetterTodoManager:
             self.data.setdefault("lists", [])
             self.data.setdefault("tasks", [])
             self.data.setdefault("history", [])
+        # Restore reminder/summary bookkeeping so a restart neither loses
+        # reminders that fell into the downtime nor re-sends fired ones.
+        # Stored meta is untrusted like everything else: corrupt values fall
+        # back to a fresh state instead of failing setup or the minute tick.
+        meta = self.data.get("meta") or {}
+        try:
+            self._fired_reminders = {
+                tuple(key) for key in meta.get("fired_reminders") or [] if len(key) == 3
+            }
+        except (ValueError, TypeError):
+            self._fired_reminders = set()
+        try:
+            self._summary_sent = engine.parse_date(meta.get("summary_sent"))
+        except (ValueError, TypeError):
+            self._summary_sent = None
+        last_tick = meta.get("last_tick")
+        try:
+            parsed = dt_util.parse_datetime(last_tick) if isinstance(last_tick, str) else None
+        except (ValueError, TypeError):
+            parsed = None
+        # A naive timestamp would make `now - window_start` raise on every
+        # tick; better to fall back to the default 10-minute window.
+        self._last_tick = parsed if parsed and parsed.tzinfo else None
         if self.normalize():
             self._schedule_save()
+
+    def _meta(self) -> dict:
+        return self.data.setdefault("meta", {})
 
     async def async_save_now(self) -> None:
         await self._store.async_save(self.data)
@@ -112,12 +140,19 @@ class BetterTodoManager:
 
     def normalize(self) -> bool:
         """Roll period tasks over into the current period and migrate legacy
-        fields (assigned_to: str -> list). Returns True on change."""
+        fields (assigned_to: str -> list, unpinned monthly day). Returns True
+        on change."""
         today = self._today()
         changed = False
         for task in self.data["tasks"]:
-            if task.get("type") == TASK_TYPE_PERIOD and engine.rollover(task, today):
-                changed = True
+            if task.get("type") == TASK_TYPE_PERIOD:
+                try:
+                    if engine.rollover(task, today):
+                        changed = True
+                except (ValueError, TypeError):
+                    # Corrupt period_start must not fail setup; the task
+                    # shows as state "error" via computed_state instead.
+                    _LOGGER.exception("Task %s has an invalid period_start", task.get("id"))
             assigned = task.get("assigned_to")
             if isinstance(assigned, str):
                 task["assigned_to"] = [assigned] if assigned else []
@@ -125,7 +160,27 @@ class BetterTodoManager:
             elif assigned is None:
                 task["assigned_to"] = []
                 changed = True
+            # Migration: pin the intended day-of-month for stored monthly/
+            # yearly rules so short months stop shifting the day permanently.
+            if task.get("type") == TASK_TYPE_SCHEDULED and task.get("schedule"):
+                try:
+                    anchor = engine.parse_date(task.get("due_date"))
+                except (ValueError, TypeError):
+                    anchor = None
+                if anchor and engine.pin_monthly_day(task["schedule"], anchor):
+                    changed = True
         return changed
+
+    def computed_state(self, task: dict, today: date) -> dict:
+        """compute_state that can never take the whole data set down: a task
+        with invalid stored data reports state 'error' instead of raising."""
+        try:
+            return engine.compute_state(task, today)
+        except Exception:  # noqa: BLE001 - one bad task must not break all
+            _LOGGER.exception(
+                "Task %s (%r) has invalid data", task.get("id"), task.get("title")
+            )
+            return {"state": "error"}
 
     # ------------------------------------------------------------- serialization
 
@@ -137,7 +192,7 @@ class BetterTodoManager:
             "features": self.features,
             "lists": sorted(self.data["lists"], key=lambda l: l.get("order", 0)),
             "tasks": [
-                {**task, "computed": engine.compute_state(task, today)}
+                {**task, "computed": self.computed_state(task, today)}
                 for task in self.data["tasks"]
             ],
             "persons": self._persons(),
@@ -219,7 +274,10 @@ class BetterTodoManager:
         if task_id:
             existing = next((t for t in self.data["tasks"] if t["id"] == task_id), None)
 
-        task = existing if existing is not None else self._new_task()
+        # Work on a deep copy: validation canonicalizes nested dicts in
+        # place, so a rejected payload must never touch the stored task —
+        # not even its schedule/rotation sub-objects.
+        task = copy.deepcopy(existing) if existing is not None else self._new_task()
         editable = (
             "list_id", "title", "notes", "type", "priority", "subtasks",
             "assigned_to", "rotation", "visible_from", "due_date", "due_time",
@@ -230,8 +288,9 @@ class BetterTodoManager:
             if key in data:
                 task[key] = data[key]
 
+        self._validate_task(task)
+
         task["tags"] = sorted({str(t).strip() for t in (task.get("tags") or []) if str(t).strip()})
-        task["reminders"] = [int(r) for r in (task.get("reminders") or []) if int(r) >= 0][:5]
 
         # Normalize subtasks and rotation structures.
         task["subtasks"] = [
@@ -261,7 +320,8 @@ class BetterTodoManager:
             task["rotation"] = None
 
         if typ == TASK_TYPE_PERIOD:
-            task.setdefault("period", "week")
+            if task.get("period") not in ("week", "month"):
+                task["period"] = "week"
             if not task.get("period_start"):
                 task["period_start"] = engine.period_start(
                     task["period"], self._today()
@@ -271,8 +331,91 @@ class BetterTodoManager:
         if existing is None:
             self.data["tasks"].append(task)
             self._fire(EVENT_CREATED, task, None)
+        else:
+            self.data["tasks"][self.data["tasks"].index(existing)] = task
         self._save_notify()
         return task
+
+    def _validate_task(self, task: dict) -> None:
+        """Validate and canonicalize task content before it is persisted.
+
+        Invalid schedules, dates or intervals raise BetterTodoError here —
+        once stored they would poison every later compute_state call.
+        """
+        for key in ("due_date", "visible_from"):
+            value = task.get(key)
+            if value is None or value == "":
+                task[key] = None
+                continue
+            try:
+                task[key] = engine.parse_date(value).isoformat()
+            except (ValueError, TypeError) as err:
+                raise BetterTodoError(f"Invalid {key}: {value!r}") from err
+        due_time = task.get("due_time")
+        if due_time:
+            parsed = self._parse_hhmm(due_time)
+            if parsed is None:
+                raise BetterTodoError(f"Invalid due_time: {due_time!r}")
+            task["due_time"] = f"{parsed[0]:02d}:{parsed[1]:02d}"
+        else:
+            task["due_time"] = None
+        try:
+            if task.get("schedule"):
+                engine.validate_schedule(task["schedule"])
+                if task.get("due_date"):
+                    engine.pin_monthly_day(
+                        task["schedule"], engine.parse_date(task["due_date"])
+                    )
+            if task.get("interval"):
+                engine.validate_interval(task["interval"])
+        except (ValueError, TypeError, KeyError) as err:
+            raise BetterTodoError(f"Invalid schedule/interval: {err}") from err
+        try:
+            task["reminders"] = sorted(
+                {int(r) for r in (task.get("reminders") or []) if int(r) >= 0}
+            )[:5]
+        except (ValueError, TypeError) as err:
+            raise BetterTodoError("Invalid reminders") from err
+        for key in ("lead_days", "priority", "order"):
+            value = task.get(key)
+            if value in (None, ""):
+                task[key] = None
+                continue
+            try:
+                task[key] = int(value)
+            except (ValueError, TypeError) as err:
+                raise BetterTodoError(f"Invalid {key}: {value!r}") from err
+        subtasks = task.get("subtasks")
+        if subtasks is not None and (
+            not isinstance(subtasks, list)
+            or any(not isinstance(st, dict) for st in subtasks)
+        ):
+            raise BetterTodoError("subtasks must be a list of objects")
+        rotation = task.get("rotation")
+        if rotation is not None and not isinstance(rotation, dict):
+            raise BetterTodoError("Invalid rotation")
+        if isinstance(rotation, dict):
+            persons = rotation.get("persons")
+            if persons is not None and (
+                not isinstance(persons, list)
+                or any(not isinstance(p, str) or not p.strip() for p in persons)
+            ):
+                raise BetterTodoError("rotation.persons must be a list of person ids")
+            try:
+                int(rotation.get("index") or 0)  # probe only; save_task normalizes
+            except (ValueError, TypeError) as err:
+                raise BetterTodoError("Invalid rotation.index") from err
+
+    @staticmethod
+    def _parse_hhmm(value) -> tuple[int, int] | None:
+        """Parse 'HH:MM[:SS]' into (hour, minute); None when invalid."""
+        try:
+            hour, minute = (int(x) for x in str(value).split(":")[:2])
+        except (ValueError, TypeError):
+            return None
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            return None
+        return hour, minute
 
     def _new_task(self) -> dict:
         return {
@@ -338,15 +481,17 @@ class BetterTodoManager:
         typ = task.get("type", TASK_TYPE_SIMPLE)
 
         if typ == TASK_TYPE_SIMPLE:
+            if task.get("status") == "done":
+                return  # already done: no duplicate history entry or event
             task["status"] = "done"
             task["completed_at"] = dt_util.now().isoformat()
         elif typ == TASK_TYPE_SCHEDULED:
             anchor = engine.parse_date(task["due_date"]) or today
-            new_anchor = engine.complete_anchor(
+            new_anchor, consumed = engine.complete_anchor(
                 anchor, task.get("schedule") or {}, today, complete_all
             )
             task["due_date"] = new_anchor.isoformat()
-            task["occurrence_count"] = int(task.get("occurrence_count") or 0) + 1
+            task["occurrence_count"] = int(task.get("occurrence_count") or 0) + consumed
             if engine.schedule_ended(task, new_anchor):
                 task["ended"] = True
             self._rotate(task)
@@ -356,13 +501,16 @@ class BetterTodoManager:
             self._rotate(task)
             self._reset_subtasks(task)
         elif typ == TASK_TYPE_PERIOD:
-            engine.rollover(task, today)
-            if not task.get("period_done"):
-                task["prev_misses"] = int(task.get("misses") or 0)
-                task["period_done"] = True
-                task["period_skipped"] = False
-                task["streak"] = int(task.get("streak") or 0) + 1
-                task["misses"] = 0
+            rolled = engine.rollover(task, today)
+            if task.get("period_done"):
+                if rolled:
+                    self._save_notify()  # the rollover itself must persist
+                return  # already done this period
+            task["prev_misses"] = int(task.get("misses") or 0)
+            task["period_done"] = True
+            task["period_skipped"] = False
+            task["streak"] = int(task.get("streak") or 0) + 1
+            task["misses"] = 0
 
         self._history_add(task, "complete", by)
         self._fire(EVENT_COMPLETED, task, by)
@@ -372,21 +520,35 @@ class BetterTodoManager:
         task = self._task(task_id)
         typ = task.get("type", TASK_TYPE_SIMPLE)
         if typ == TASK_TYPE_SIMPLE:
+            if task.get("status") != "done":
+                return  # nothing to undo; keep history untouched
             task["status"] = "open"
             task["completed_at"] = None
+            self._remove_last_complete(task_id)
         elif typ == TASK_TYPE_PERIOD:
-            if task.get("period_done"):
-                task["period_done"] = False
-                task["streak"] = max(0, int(task.get("streak") or 0) - 1)
-                task["misses"] = int(task.get("prev_misses") or 0)
+            rolled = engine.rollover(task, self._today())
+            if not task.get("period_done"):
+                if rolled:
+                    self._save_notify()  # the rollover itself must persist
+                return  # period already rolled over (or never completed)
+            task["period_done"] = False
+            task["streak"] = max(0, int(task.get("streak") or 0) - 1)
+            task["misses"] = int(task.get("prev_misses") or 0)
+            # Only a completion from the current period may be dropped —
+            # older entries belong to closed periods and must stay.
+            self._remove_last_complete(task_id, since=task.get("period_start"))
         else:
             raise BetterTodoError("Only simple and period tasks can be uncompleted")
-        # Drop the matching history entry so statistics stay accurate.
+        self._save_notify()
+
+    def _remove_last_complete(self, task_id: str, since: str | None = None) -> None:
+        """Drop the newest 'complete' history entry so statistics stay accurate."""
         for entry in reversed(self.data["history"]):
             if entry["task_id"] == task_id and entry["action"] == "complete":
+                if since and str(entry.get("at") or "")[:10] < since:
+                    return
                 self.data["history"].remove(entry)
-                break
-        self._save_notify()
+                return
 
     def clear_completed(self, list_ids: list[str] | None = None) -> int:
         """Delete all tasks in the given lists (or all lists) whose display
@@ -396,7 +558,7 @@ class BetterTodoManager:
         def _done(task: dict) -> bool:
             if list_ids and task["list_id"] not in list_ids:
                 return False
-            return engine.compute_state(task, today).get("state") == "done"
+            return self.computed_state(task, today).get("state") == "done"
 
         doomed = {t["id"] for t in self.data["tasks"] if _done(t)}
         if not doomed:
@@ -467,24 +629,37 @@ class BetterTodoManager:
     # ------------------------------------------------------------- daily tick
 
     async def async_minute_tick(self, now=None) -> None:
-        """Fire pending task reminders (checked once per minute)."""
+        """Fire pending task reminders (checked once per minute).
+
+        The window since the last tick is persisted, so reminders that fall
+        into an HA downtime are caught up on the next tick after restart
+        (capped at 48 h) instead of being lost. Already-fired keys are
+        persisted (debounced): delivery is at-least-once — only a hard crash
+        within the save debounce right after a reminder can repeat it.
+
+        meta["last_tick"] is only updated in memory here; it reaches disk
+        piggybacked on every real save plus once per daily tick, which keeps
+        the idle system free of periodic full-store writes."""
         now = now or dt_util.now()
         today = now.date()
-        await self._async_maybe_send_summary(now)
+        window_start = self._last_tick or now - timedelta(minutes=10)
+        if now - window_start > timedelta(hours=48):
+            window_start = now - timedelta(hours=48)
+        self._last_tick = now
+        self._meta()["last_tick"] = now.isoformat()
+        fired_any = False
+        await self._async_maybe_send_summary(now, window_start)
         for task in self.data["tasks"]:
             reminders = task.get("reminders") or []
             if not reminders:
                 continue
-            computed = engine.compute_state(task, today)
+            computed = self.computed_state(task, today)
             due_iso = computed.get("due")
-            if not due_iso or computed.get("state") in ("done", "hidden"):
+            if not due_iso or computed.get("state") in ("done", "hidden", "error"):
                 continue
             due_date = engine.parse_date(due_iso)
             time_str = task.get("due_time") or DEFAULT_REMINDER_TIME
-            try:
-                hour, minute = (int(x) for x in time_str.split(":")[:2])
-            except (ValueError, TypeError):
-                hour, minute = 9, 0
+            hour, minute = self._parse_hhmm(time_str) or (9, 0)
             due_dt = datetime.combine(due_date, time(hour, minute), tzinfo=now.tzinfo)
             for offset in reminders:
                 offset = int(offset)
@@ -492,8 +667,9 @@ class BetterTodoManager:
                 if key in self._fired_reminders:
                     continue
                 fire_at = due_dt - timedelta(minutes=offset)
-                if fire_at <= now <= fire_at + timedelta(minutes=10):
+                if window_start < fire_at <= now:
                     self._fired_reminders.add(key)
+                    fired_any = True
                     self.hass.bus.async_fire(
                         EVENT_REMINDER,
                         {
@@ -507,6 +683,12 @@ class BetterTodoManager:
                         },
                     )
                     await self._async_notify_reminder(task, due_date, offset)
+        if fired_any:
+            self._persist_reminder_state()
+
+    def _persist_reminder_state(self) -> None:
+        self._meta()["fired_reminders"] = [list(key) for key in self._fired_reminders]
+        self._schedule_save()
 
     async def _async_notify_reminder(self, task: dict, due_date, offset: int) -> None:
         """Send the reminder to the notify services configured in the options.
@@ -550,13 +732,16 @@ class BetterTodoManager:
         tasks only once their period is about to end."""
         entries: list[tuple[dict, str, dict]] = []
         for task in self.data["tasks"]:
-            computed = engine.compute_state(task, today)
+            computed = self.computed_state(task, today)
             state = computed.get("state")
             if state in ("due", "overdue"):
                 entries.append((task, state, computed))
             elif state == "period_open":
                 period = task.get("period") or "week"
-                start = engine.parse_date(task.get("period_start")) or engine.period_start(period, today)
+                try:
+                    start = engine.parse_date(task.get("period_start")) or engine.period_start(period, today)
+                except (ValueError, TypeError):
+                    start = engine.period_start(period, today)
                 days_left = (engine.next_period(period, start) - today).days
                 if days_left <= SUMMARY_PERIOD_LEAD.get(period, 2):
                     entries.append((task, "period", computed))
@@ -586,21 +771,20 @@ class BetterTodoManager:
     def _lang_de(self) -> bool:
         return (self.hass.config.language or "en").lower().startswith("de")
 
-    async def _async_maybe_send_summary(self, now) -> None:
+    async def _async_maybe_send_summary(self, now, window_start) -> None:
         options = self.entry.options
         if not options.get(CONF_SUMMARY_ENABLED):
             return
         time_str = options.get(CONF_SUMMARY_TIME) or DEFAULT_SUMMARY_TIME
-        try:
-            hour, minute = (int(x) for x in time_str.split(":")[:2])
-        except (ValueError, TypeError):
-            hour, minute = 8, 0
+        hour, minute = self._parse_hhmm(time_str) or (8, 0)
         fire_at = datetime.combine(now.date(), time(hour, minute), tzinfo=now.tzinfo)
-        if not (fire_at <= now <= fire_at + timedelta(minutes=10)):
+        if not (window_start < fire_at <= now):
             return
         if self._summary_sent == now.date():
             return
         self._summary_sent = now.date()
+        self._meta()["summary_sent"] = now.date().isoformat()
+        self._schedule_save()
         await self._async_send_summary(now.date())
 
     async def _async_send_summary(self, today: date) -> None:
@@ -660,17 +844,23 @@ class BetterTodoManager:
 
     async def async_daily_tick(self, _now=None) -> None:
         """Midnight housekeeping: roll periods, fire due/overdue events."""
-        if len(self._fired_reminders) > 1000:
-            self._fired_reminders.clear()
-        changed = self.normalize()
+        # Prune fired-reminder keys once their due date is safely in the past
+        # (older than the 48 h restart catch-up window can ever look back).
+        cutoff = (self._today() - timedelta(days=7)).isoformat()
+        pruned = {k for k in self._fired_reminders if str(k[2])[:10] >= cutoff}
+        if pruned != self._fired_reminders:
+            self._fired_reminders = pruned
+            self._persist_reminder_state()
+        self.normalize()
         today = self._today()
         for task in self.data["tasks"]:
-            computed = engine.compute_state(task, today)
+            computed = self.computed_state(task, today)
             state = computed.get("state")
             if state == "due":
                 self._fire(EVENT_DUE, task, None)
             elif state == "overdue":
                 self._fire(EVENT_OVERDUE, task, None)
-        if changed:
-            self._schedule_save()
+        # One save per day also bounds how stale the persisted last_tick can
+        # get on an idle system (the catch-up window tolerates up to 48 h).
+        self._schedule_save()
         self.notify()

@@ -49,9 +49,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.is_running:
         hass.async_create_task(_setup_frontend())
     else:
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
+        entry.async_on_unload(
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
+        )
 
-    entry.async_on_unload(entry.add_update_listener(_options_updated))
+    # Options changes reload the entry via OptionsFlowWithReload (config_flow).
     entry.async_on_unload(
         async_track_time_change(
             hass, manager.async_daily_tick, hour=0, minute=0, second=30
@@ -64,11 +66,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     manager.notify()
     _LOGGER.info("Better ToDo %s loaded", version)
     return True
-
-
-async def _options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload the entry so feature toggles (incl. platforms) take effect."""
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

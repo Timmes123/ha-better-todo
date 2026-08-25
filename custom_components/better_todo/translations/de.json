@@ -50,43 +50,105 @@
       "name": "Aufgabe anlegen",
       "description": "Legt eine Aufgabe in einer Liste an (die Liste wird bei Bedarf erstellt).",
       "fields": {
-        "list": { "name": "Liste", "description": "Name der Liste." },
-        "title": { "name": "Titel", "description": "Titel der Aufgabe." },
-        "notes": { "name": "Notizen", "description": "Optionale Notizen." },
-        "type": { "name": "Typ", "description": "Aufgabentyp: simple, scheduled, after_completion oder period." },
-        "due_date": { "name": "Fälligkeitsdatum", "description": "Fälligkeit (bei wiederholenden Aufgaben die erste Fälligkeit)." },
-        "visible_from": { "name": "Sichtbar ab", "description": "Die Aufgabe erscheint an diesem Datum." },
-        "assigned_to": { "name": "Zugewiesen an", "description": "Personen-Entität, der die Aufgabe zugewiesen wird." },
-        "schedule": { "name": "Zeitplan", "description": "Wiederholungsregel für plan-basierte Aufgaben, z. B. freq=monthly, interval=1, day=1." },
-        "interval": { "name": "Intervall", "description": "Intervall nach Erledigung, z. B. unit=months, value=1." },
-        "period": { "name": "Periode", "description": "Periode für Gewohnheits-Aufgaben: week oder month." }
+        "list": {
+          "name": "Liste",
+          "description": "Name der Liste."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Titel der Aufgabe."
+        },
+        "notes": {
+          "name": "Notizen",
+          "description": "Optionale Notizen."
+        },
+        "type": {
+          "name": "Typ",
+          "description": "Aufgabentyp: simple, scheduled, after_completion oder period."
+        },
+        "due_date": {
+          "name": "Fälligkeitsdatum",
+          "description": "Fälligkeit (bei wiederholenden Aufgaben die erste Fälligkeit)."
+        },
+        "visible_from": {
+          "name": "Sichtbar ab",
+          "description": "Die Aufgabe erscheint an diesem Datum."
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Personen-Entität, der die Aufgabe zugewiesen wird."
+        },
+        "schedule": {
+          "name": "Zeitplan",
+          "description": "Wiederholungsregel für plan-basierte Aufgaben, z. B. freq=monthly, interval=1, day=1."
+        },
+        "interval": {
+          "name": "Intervall",
+          "description": "Intervall nach Erledigung, z. B. unit=months, value=1."
+        },
+        "period": {
+          "name": "Periode",
+          "description": "Periode für Gewohnheits-Aufgaben: week oder month."
+        }
       }
     },
     "complete_task": {
       "name": "Aufgabe erledigen",
       "description": "Markiert eine Aufgabe als erledigt (per ID oder exaktem Titel).",
       "fields": {
-        "task_id": { "name": "Aufgaben-ID", "description": "Interne Aufgaben-ID." },
-        "title": { "name": "Titel", "description": "Exakter Aufgabentitel (Alternative zur ID)." },
-        "all": { "name": "Alle erledigen", "description": "Alle offenen Fälligkeiten auf einmal erledigen." }
+        "task_id": {
+          "name": "Aufgaben-ID",
+          "description": "Interne Aufgaben-ID."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Exakter Aufgabentitel (Alternative zur ID)."
+        },
+        "all": {
+          "name": "Alle erledigen",
+          "description": "Alle offenen Fälligkeiten auf einmal erledigen."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Listenname zur Eingrenzung der Titelsuche (optional)."
+        }
       }
     },
     "skip_task": {
       "name": "Aufgabe überspringen",
       "description": "Überspringt die aktuelle Fälligkeit ohne Erledigung (Strähnen werden eingefroren).",
       "fields": {
-        "task_id": { "name": "Aufgaben-ID", "description": "Interne Aufgaben-ID." },
-        "title": { "name": "Titel", "description": "Exakter Aufgabentitel (Alternative zur ID)." }
+        "task_id": {
+          "name": "Aufgaben-ID",
+          "description": "Interne Aufgaben-ID."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Exakter Aufgabentitel (Alternative zur ID)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Listenname zur Eingrenzung der Titelsuche (optional)."
+        }
       }
     },
     "remove_task": {
       "name": "Aufgabe löschen",
       "description": "Löscht eine Aufgabe dauerhaft.",
       "fields": {
-        "task_id": { "name": "Aufgaben-ID", "description": "Interne Aufgaben-ID." },
-        "title": { "name": "Titel", "description": "Exakter Aufgabentitel (Alternative zur ID)." }
+        "task_id": {
+          "name": "Aufgaben-ID",
+          "description": "Interne Aufgaben-ID."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Exakter Aufgabentitel (Alternative zur ID)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Listenname zur Eingrenzung der Titelsuche (optional)."
+        }
       }
     }
   }
 }
-

@@ -11,6 +11,7 @@ from homeassistant.config_entries import (
     ConfigFlow,
     ConfigFlowResult,
     OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.core import callback
 
@@ -50,8 +51,12 @@ class BetterTodoConfigFlow(ConfigFlow, domain=DOMAIN):
         return BetterTodoOptionsFlow()
 
 
-class BetterTodoOptionsFlow(OptionsFlow):
-    """Options: feature toggles and reminder notifications."""
+class BetterTodoOptionsFlow(OptionsFlowWithReload):
+    """Options: feature toggles and reminder notifications.
+
+    OptionsFlowWithReload reloads the entry automatically after a change, so
+    feature toggles (incl. platforms) take effect without an update listener.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

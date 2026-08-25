@@ -7,6 +7,7 @@ import logging
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.exceptions import ServiceValidationError
 import homeassistant.helpers.config_validation as cv
 
 from .const import DOMAIN, TASK_TYPES, TASK_TYPE_SIMPLE
@@ -38,6 +39,7 @@ TASK_REF_SCHEMA = vol.Schema(
     {
         vol.Optional("task_id"): cv.string,
         vol.Optional("title"): cv.string,
+        vol.Optional("list"): cv.string,
         vol.Optional("all", default=False): cv.boolean,
     }
 )
@@ -64,8 +66,21 @@ def _find_task_id(manager: BetterTodoManager, call: ServiceCall) -> str:
     title = (call.data.get("title") or "").strip().casefold()
     if not title:
         raise BetterTodoError("Provide task_id or title")
+    # An optional list name scopes the title match, so identically named
+    # tasks in other lists cannot be hit by accident.
+    list_ids = None
+    if list_name := (call.data.get("list") or "").strip():
+        list_ids = {
+            lst["id"]
+            for lst in manager.data["lists"]
+            if lst["name"].casefold() == list_name.casefold()
+        }
+        if not list_ids:
+            raise BetterTodoError(f"No list named '{call.data.get('list')}'")
     for task in manager.data["tasks"]:
-        if task["title"].casefold() == title:
+        if task["title"].casefold() == title and (
+            list_ids is None or task["list_id"] in list_ids
+        ):
             return task["id"]
     raise BetterTodoError(f"No task with title '{call.data.get('title')}'")
 
@@ -104,10 +119,25 @@ def async_register_services(hass: HomeAssistant) -> None:
         manager = _manager(hass)
         manager.delete_task(_find_task_id(manager, call))
 
-    hass.services.async_register(DOMAIN, SERVICE_ADD_TASK, add_task, ADD_TASK_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_COMPLETE_TASK, complete_task, TASK_REF_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_SKIP_TASK, skip_task, TASK_REF_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_REMOVE_TASK, remove_task, TASK_REF_SCHEMA)
+    def _wrap(func):
+        # Surface BetterTodoError as a proper service validation error
+        # instead of an unhandled exception in the logs.
+        async def wrapper(call: ServiceCall) -> None:
+            try:
+                await func(call)
+            except BetterTodoError as err:
+                raise ServiceValidationError(str(err)) from err
+            except (ValueError, TypeError, KeyError, AttributeError) as err:
+                # Legacy tasks stored before input validation can still carry
+                # engine-rejected data — return a clean validation error.
+                raise ServiceValidationError(f"Invalid task data: {err}") from err
+
+        return wrapper
+
+    hass.services.async_register(DOMAIN, SERVICE_ADD_TASK, _wrap(add_task), ADD_TASK_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_COMPLETE_TASK, _wrap(complete_task), TASK_REF_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_SKIP_TASK, _wrap(skip_task), TASK_REF_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_REMOVE_TASK, _wrap(remove_task), TASK_REF_SCHEMA)
 
 
 @callback

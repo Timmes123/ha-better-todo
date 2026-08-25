@@ -18,6 +18,10 @@ Verteilung ausschließlich über HACS-Releases (ein Repository, Integration lief
   ein HACS-Repo (Kategorie "Integration"), Karte und Backend immer versionsgleich.
 - Karte kommuniziert über die **HA-WebSocket-API** mit eigenen Commands
   (volles Datenmodell, nicht auf Entity-Attribute beschränkt).
+  **Berechtigungen** (Entscheidung 2026-08-25): destruktive Massen-Kommandos
+  (`delete_list`, `clear_completed`) sind Admin-only; Aufgaben anlegen/bearbeiten/
+  erledigen/löschen darf jeder angemeldete HA-Benutzer. Die Karte blendet
+  Admin-Aktionen für Nicht-Admins aus.
 - **Spätere Ausbaustufe**: optionales Spiegel-`todo`-Entity pro Liste (nur offene Aufgaben
   mit Solldatum) für Sprachassistenten / HA-App / Standard-Automationen. Wahrheit bleibt
   immer die eigene Datenhaltung.
@@ -63,7 +67,12 @@ Gemeinsame Felder aller Typen:
 - `faellig_um` (optional): **Uhrzeit** zur Fälligkeit (Anzeige + Erinnerungen; die
   Wiederholungslogik rechnet weiterhin auf Tagesbasis)
 - `erinnerungen` (optional): bis zu 5 Vorlaufzeiten (Minuten vor Fälligkeit); feuern als
-  Event `better_todo_item_reminder` — Push-Benachrichtigungen baut man per Automation darauf
+  Event `better_todo_item_reminder` — Push-Benachrichtigungen baut man per Automation darauf.
+  **Neustart-fest** (Entscheidung 2026-08-25): Erinnerungszeitpunkte, die in eine
+  HA-Downtime fallen, werden nach dem Neustart einmalig nachgeholt (Fenster max. 48 h);
+  bereits gefeuerte Erinnerungen und die Tageszusammenfassung werden persistiert
+  (At-least-once: nur ein harter Absturz unmittelbar nach dem Senden kann eine
+  Erinnerung wiederholen).
 - `tags` (optional): freie Schlagwörter, quer zu Listen, filterbar in der Karte
 - `sortierung` innerhalb der Liste (manuell, per Drag & Drop in der Karte)
 
@@ -87,6 +96,10 @@ Regelmechanik (eigene Regelstruktur, kein volles RRULE):
 - **Überfällig-Verhalten**: immer **eine** offene Aufgabe mit „n× fällig"-Zähler
   (kein Stapeln separater Instanzen — Entscheidung 2026-08-25). Beim Abhaken wählbar:
   **1× erledigen** (Zähler −1, Aufgabe bleibt offen solange n > 0) oder **alle erledigen**.
+  Oberflächen ohne diese Wahl (Spiegel-Todo-Entity, also Companion-App/Watch/Sprache)
+  erledigen **genau 1×** — nichts wird dort stillschweigend komplett geleert
+  (Entscheidung 2026-08-25). „Alle erledigen" zählt alle konsumierten Vorkommen
+  für `max. Wiederholungen`.
 - Optional `vorlauf_tage`: Instanz wird erst n Tage vor Fälligkeit sichtbar.
 
 **c) Wiederholend, erledigungs-basiert** — nächste Fälligkeit = Erledigungsdatum + Intervall.
@@ -169,7 +182,7 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
    Vorschläge. Architektur-Vorgabe schon jetzt: Datenmodell erweiterbar halten
    (Aufgaben verkraften unbekannte Zusatzfelder), KI-Aufrufe immer über
    HA-Standard-Schnittstellen (`ai_task`), nie fest an einen Anbieter gebunden
-5. **Externer Sync** (CalDAV, Todoist, Google Tasks, …) — bewusst ganz hinten:
+5. **Externer Sync** (CalDAV, externe Aufgaben-Dienste) — bewusst ganz hinten:
    vom Nutzer aktuell nicht benötigt, evtl. für andere Nutzer nach Veröffentlichung.
    Falls es kommt: Overlay-Prinzip (lokale Zusatzfelder über externen Items),
    unsere Spezialtypen bleiben lokal führend

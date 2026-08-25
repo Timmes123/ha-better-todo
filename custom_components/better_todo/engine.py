@@ -10,6 +10,100 @@ from datetime import date, timedelta
 
 MAX_ITER = 1000
 
+VALID_FREQS = ("daily", "weekly", "monthly", "yearly")
+VALID_INTERVAL_UNITS = ("days", "weeks", "months")
+
+
+def validate_schedule(sched: dict) -> dict:
+    """Validate and canonicalize a schedule dict in place.
+
+    Raises ValueError/TypeError on invalid content. Everything that reaches
+    the store must have passed this, so later computation can trust it.
+    """
+    if not isinstance(sched, dict):
+        raise ValueError("schedule must be an object")
+    freq = sched.get("freq") or "monthly"
+    if freq not in VALID_FREQS:
+        raise ValueError(f"Unknown schedule frequency: {freq}")
+    sched["freq"] = freq
+    sched["interval"] = max(1, int(sched.get("interval") or 1))
+    weekdays = sched.get("weekdays")
+    if weekdays:
+        weekdays = sorted({int(w) for w in weekdays})
+        if weekdays[0] < 0 or weekdays[-1] > 6:
+            raise ValueError("weekdays must be 0-6")
+        sched["weekdays"] = weekdays
+    else:
+        sched["weekdays"] = None
+    day = sched.get("day")
+    if day is not None and day != "last":
+        day = int(day)
+        if not 1 <= day <= 31:
+            raise ValueError("day must be 1-31 or 'last'")
+        sched["day"] = day
+    nth = sched.get("nth")
+    if nth:
+        if not isinstance(nth, dict):
+            raise ValueError("nth must be an object")
+        n = int(nth.get("n") or 1)
+        if n not in (1, 2, 3, 4, -1):
+            raise ValueError("nth.n must be 1-4 or -1")
+        weekday = int(nth["weekday"])
+        if not 0 <= weekday <= 6:
+            raise ValueError("nth.weekday must be 0-6")
+        sched["nth"] = {"n": n, "weekday": weekday}
+    else:
+        sched["nth"] = None
+    month = sched.get("month")
+    if month is not None:
+        month = int(month)
+        if not 1 <= month <= 12:
+            raise ValueError("month must be 1-12")
+        sched["month"] = month
+    until = sched.get("until")
+    if until:
+        sched["until"] = parse_date(until).isoformat()
+    else:
+        sched["until"] = None
+    max_occ = sched.get("max_occurrences")
+    if max_occ is not None:
+        max_occ = int(max_occ)
+        if max_occ < 1:
+            raise ValueError("max_occurrences must be >= 1")
+    sched["max_occurrences"] = max_occ
+    return sched
+
+
+def validate_interval(interval: dict) -> dict:
+    """Validate and canonicalize an after-completion interval in place."""
+    if not isinstance(interval, dict):
+        raise ValueError("interval must be an object")
+    unit = interval.get("unit") or "days"
+    if unit not in VALID_INTERVAL_UNITS:
+        raise ValueError(f"Unknown interval unit: {unit}")
+    interval["unit"] = unit
+    interval["value"] = max(1, int(interval.get("value") or 1))
+    return interval
+
+
+def pin_monthly_day(sched: dict, anchor: date) -> bool:
+    """Pin the intended day-of-month for monthly/yearly day rules.
+
+    Without an explicit day, `advance` falls back to the anchor's day — after
+    one short month (Jan 31 -> Feb 28) the day would stay clamped forever.
+    Persisting it keeps 31 -> 28 -> 31. Returns True if the dict changed.
+    """
+    if sched.get("freq") not in ("monthly", "yearly") or sched.get("nth"):
+        return False
+    changed = False
+    if not sched.get("day"):
+        sched["day"] = anchor.day
+        changed = True
+    if sched["freq"] == "yearly" and not sched.get("month"):
+        sched["month"] = anchor.month
+        changed = True
+    return changed
+
 
 def _last_day(year: int, month: int) -> int:
     """Number of days in a month (avoids the stdlib `calendar` module, whose
@@ -112,16 +206,26 @@ def schedule_ended(task: dict, new_anchor: date) -> bool:
     return False
 
 
-def complete_anchor(anchor: date, sched: dict, today: date, complete_all: bool) -> date:
-    """Return the new anchor after completing one or all due occurrences."""
+def complete_anchor(
+    anchor: date, sched: dict, today: date, complete_all: bool
+) -> tuple[date, int]:
+    """Complete one or all due occurrences.
+
+    Returns ``(new_anchor, consumed)`` where ``consumed`` is the number of
+    occurrences this completion accounts for (relevant for max_occurrences).
+    """
     count, _next_future = due_info(anchor, sched, today)
     if count == 0 or not complete_all:
         # Completing early, or checking off exactly one due occurrence.
-        return advance(anchor, sched)
+        return advance(anchor, sched), 1
+    # Count in this loop itself: due_info caps at MAX_ITER, so for extremely
+    # long-overdue tasks its count and this loop would otherwise disagree.
     d = anchor
+    consumed = 0
     while d <= today:
         d = advance(d, sched)
-    return d
+        consumed += 1
+    return d, consumed
 
 
 def add_interval(start: date, interval: dict) -> date:

@@ -39,6 +39,8 @@ async def async_setup_entry(
     @callback
     def sync_lists() -> None:
         current = {lst["id"]: lst for lst in manager.data["lists"]}
+        if current.keys() == known.keys():
+            return  # no list added/removed; renames are handled per entity
         added = [
             BetterTodoCalendarEntity(manager, lst)
             for list_id, lst in current.items()
@@ -89,9 +91,50 @@ class BetterTodoCalendarEntity(CalendarEntity):
 
     @property
     def event(self) -> CalendarEvent | None:
+        # Called on every state write: find just the next occurrence per task
+        # instead of expanding a full year of events.
         today = dt_util.now().date()
-        events = self._events_between(today, today + timedelta(days=366))
-        return events[0] if events else None
+        best_task = None
+        best_key = None
+        for task in self.manager.data["tasks"]:
+            if task["list_id"] != self.list_id:
+                continue
+            day = self._next_occurrence(task, today)
+            if day is None:
+                continue
+            # Tie-break same-day events by due_time; all-day ("") sorts first,
+            # matching the old expanded-list string sort.
+            key = (day, str(task.get("due_time") or ""))
+            if best_key is None or key < best_key:
+                best_task, best_key = task, key
+        return self._make_event(best_task, best_key[0]) if best_task else None
+
+    def _next_occurrence(self, task: dict, today: date) -> date | None:
+        """The task's next occurrence on/after today, or None."""
+        if task.get("ended"):
+            return None
+        try:
+            due = engine.parse_date(task.get("due_date"))
+            if due is None:
+                return None
+            typ = task.get("type", TASK_TYPE_SIMPLE)
+            if typ == TASK_TYPE_SCHEDULED:
+                sched = task.get("schedule") or {}
+                until = engine.parse_date(sched.get("until"))
+                # due_info returns the first occurrence after the passed day,
+                # so "yesterday" yields the next occurrence on/after today —
+                # same stepping logic as everywhere else, not a re-implementation.
+                _count, nxt = engine.due_info(due, sched, today - timedelta(days=1))
+                if nxt < today or (until and nxt > until):
+                    return None
+                return nxt
+            if typ in (TASK_TYPE_SIMPLE, TASK_TYPE_AFTER_COMPLETION):
+                if task.get("status") == "done":
+                    return None
+                return due if due >= today else None
+        except (ValueError, TypeError, KeyError):
+            return None
+        return None
 
     async def async_get_events(
         self, hass: HomeAssistant, start_date: datetime, end_date: datetime
@@ -104,19 +147,25 @@ class BetterTodoCalendarEntity(CalendarEntity):
             if task["list_id"] != self.list_id or task.get("ended"):
                 continue
             typ = task.get("type", TASK_TYPE_SIMPLE)
-            due = engine.parse_date(task.get("due_date"))
+            try:
+                due = engine.parse_date(task.get("due_date"))
+            except (ValueError, TypeError):
+                continue
             if due is None:
                 continue
             if typ == TASK_TYPE_SCHEDULED:
-                sched = task.get("schedule") or {}
-                until = engine.parse_date(sched.get("until"))
-                d = due
-                for _ in range(MAX_EXPANSION):
-                    if d > end or (until and d > until):
-                        break
-                    if d >= start:
-                        events.append(self._make_event(task, d))
-                    d = engine.advance(d, sched)
+                try:
+                    sched = task.get("schedule") or {}
+                    until = engine.parse_date(sched.get("until"))
+                    d = due
+                    for _ in range(MAX_EXPANSION):
+                        if d > end or (until and d > until):
+                            break
+                        if d >= start:
+                            events.append(self._make_event(task, d))
+                        d = engine.advance(d, sched)
+                except (ValueError, TypeError, KeyError):
+                    continue  # invalid stored rule: skip, never break the calendar
             elif typ in (TASK_TYPE_SIMPLE, TASK_TYPE_AFTER_COMPLETION):
                 if task.get("status") == "done":
                     continue

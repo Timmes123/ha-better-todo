@@ -34,6 +34,8 @@ async def async_setup_entry(
     @callback
     def sync_lists() -> None:
         current = {lst["id"]: lst for lst in manager.data["lists"]}
+        if current.keys() == known.keys():
+            return  # no list added/removed; renames are handled per entity
         added = [
             BetterTodoListEntity(manager, lst)
             for list_id, lst in current.items()
@@ -96,9 +98,9 @@ class BetterTodoListEntity(TodoListEntity):
         for task in self.manager.data["tasks"]:
             if task["list_id"] != self.list_id:
                 continue
-            computed = engine.compute_state(task, today)
+            computed = self.manager.computed_state(task, today)
             state = computed.get("state")
-            if state == "hidden":
+            if state in ("hidden", "error"):
                 continue
             if state == "upcoming" and not computed.get("visible"):
                 continue
@@ -132,10 +134,12 @@ class BetterTodoListEntity(TodoListEntity):
         if task is None:
             raise BetterTodoError(f"Task {item.uid} not found")
         today = dt_util.now().date()
-        state = engine.compute_state(task, today).get("state")
+        state = self.manager.computed_state(task, today).get("state")
         done = state in ("done", "period_done")
         if item.status == TodoItemStatus.COMPLETED and not done:
-            self.manager.complete_task(item.uid, True)
+            # Complete exactly one occurrence (spec default): an overdue
+            # "3x due" task must not be silently cleared from voice/app.
+            self.manager.complete_task(item.uid, False)
         elif item.status == TodoItemStatus.NEEDS_ACTION and done:
             try:
                 self.manager.uncomplete_task(item.uid)

@@ -68,6 +68,11 @@ complete_task:
       example: "Wäsche aufhängen"
       selector:
         text:
+    list:
+      required: false
+      example: "Haushaltsaufgaben"
+      selector:
+        text:
     all:
       required: false
       default: false
@@ -84,6 +89,10 @@ skip_task:
       required: false
       selector:
         text:
+    list:
+      required: false
+      selector:
+        text:
 
 remove_task:
   fields:
@@ -92,6 +101,10 @@ remove_task:
       selector:
         text:
     title:
+      required: false
+      selector:
+        text:
+    list:
       required: false
       selector:
         text:

@@ -224,7 +224,8 @@ data:
 ```
 
 Also available: `better_todo.complete_task`, `better_todo.skip_task`,
-`better_todo.remove_task` (by `task_id` or exact `title`).
+`better_todo.remove_task` (by `task_id` or exact `title`; add `list` to scope
+the title match to one list).
 
 ### Events
 
