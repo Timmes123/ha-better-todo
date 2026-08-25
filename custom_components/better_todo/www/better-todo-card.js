@@ -479,6 +479,14 @@ class BetterTodoCard extends HTMLElement {
   _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
+  _knownTags() {
+    // Every tag in the data set, regardless of visibility — used to offer
+    // existing tags for reuse in the task dialog.
+    const tags = new Set();
+    for (const task of this._data?.tasks || []) (task.tags || []).forEach((x) => tags.add(x));
+    return [...tags].sort();
+  }
+
   _filtersActive() {
     const u = this._ui;
     return !!(u.lists || u.person !== null || (u.tags && u.tags.length)
@@ -868,6 +876,8 @@ class BetterTodoCard extends HTMLElement {
     dlg.innerHTML = innerHtml;
     this.shadowRoot.appendChild(dlg);
     this._dialogEl = dlg;
+    // No backdrop-click close: dialogs only close via their buttons, so a
+    // stray click next to the dialog cannot discard unsaved edits.
     // The close event fires async; ignore it if another dialog has been
     // opened in the meantime (close → immediately open follow-up dialog).
     dlg.addEventListener("close", () => {
@@ -875,7 +885,6 @@ class BetterTodoCard extends HTMLElement {
       this._dialogEl = null;
       if (this._dialog) { this._dialog = null; this._render(); }
     });
-    dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
     onWire(dlg);
     dlg.showModal();
     return dlg;
@@ -1123,7 +1132,11 @@ class BetterTodoCard extends HTMLElement {
         </div>
       </div>` : ""}
       <label class="field">${esc(t.notes_f)}<textarea data-f="notes" rows="2">${esc(d.notes || "")}</textarea></label>
-      ${this._feature("tags") ? `<label class="field">${esc(t.tags_f)}<input type="text" data-f="_tags" placeholder="${esc(t.tags_ph)}" value="${esc((d.tags || []).join(", "))}"></label>` : ""}
+      ${this._feature("tags") ? (() => {
+        const known = this._knownTags();
+        return `<label class="field">${esc(t.tags_f)}<input type="text" data-f="_tags" placeholder="${esc(t.tags_ph)}" value="${esc((d.tags || []).join(", "))}"></label>
+        ${known.length ? `<div class="chips tagpick">${known.map((x) => `<button type="button" class="chip tagchip ${(d.tags || []).includes(x) ? "on" : ""}" data-tagpick="${esc(x)}">#${esc(x)}</button>`).join("")}</div>` : ""}`;
+      })() : ""}
       ${this._feature("priorities") ? `<label class="field">${esc(t.priority_f)}
         <select data-f="priority">
           <option value="" ${!d.priority ? "selected" : ""}>${esc(t.prio_none)}</option>
@@ -1196,7 +1209,18 @@ class BetterTodoCard extends HTMLElement {
         this._renderTaskDialog();
       }
     });
+    // Editing must not be lost to an accidental Esc press.
+    dlg.addEventListener("cancel", (e) => e.preventDefault());
     dlg.addEventListener("click", async (e) => {
+      const tagpick = e.target.closest("[data-tagpick]");
+      if (tagpick) {
+        const tag = tagpick.dataset.tagpick;
+        const cur = new Set(d.tags || []);
+        if (cur.has(tag)) cur.delete(tag); else cur.add(tag);
+        d.tags = [...cur];
+        this._renderTaskDialog();
+        return;
+      }
       const remdel = e.target.closest("[data-remdel]");
       if (remdel) {
         d.reminders.splice(Number(remdel.dataset.remdel), 1);
@@ -1288,6 +1312,7 @@ class BetterTodoCard extends HTMLElement {
         white-space: nowrap; }
       .dd-item:hover { background: var(--secondary-background-color); }
       .list-manage { display: flex; flex-direction: column; gap: 6px; }
+      .tagpick { margin: -6px 0 12px; }
       .list-row { display: flex; justify-content: space-between; align-items: center; text-align: left; }
       .row-edit { opacity: 0.6; margin-left: 12px; }
       .menu { padding: 8px 0 4px; border-bottom: 1px solid var(--divider-color); margin-bottom: 8px; }
