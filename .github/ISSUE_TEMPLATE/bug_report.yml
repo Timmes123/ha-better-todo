@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a problem with the Better ToDo integration or card
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Better ToDo version
+      placeholder: "v0.3.2"
+    validations:
+      required: true
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.8.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Dashboard card
+        - Recurrence / scheduling
+        - Reminders / events
+        - Todo or calendar entities
+        - Services / automations
+        - Installation / setup
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a task with …
+        2. Complete it …
+        3. …
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: "Settings → System → Logs (search for better_todo). For card issues, the browser console (F12)."
+      render: text

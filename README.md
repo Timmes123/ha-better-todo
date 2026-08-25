@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="branding/icon.png" width="110" alt="Better ToDo logo">
+</p>
+
 # Better ToDo
 
 [![GitHub release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo)](https://github.com/Timmes123/ha-better-todo/releases)

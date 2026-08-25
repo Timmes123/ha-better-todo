@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1fb8f5"/>
+      <stop offset="1" stop-color="#0e8fd6"/>
+    </linearGradient>
+  </defs>
+  <rect x="14" y="14" width="228" height="228" rx="54" fill="url(#bg)"/>
+  <!-- recurrence ring: open circular arrow around the checkmark -->
+  <g stroke="#ffffff" stroke-width="15" fill="none" stroke-linecap="round" opacity="0.92">
+    <path d="M 178.5 61.5 A 84 84 0 1 1 61.5 77.5"/>
+  </g>
+  <path d="M 52 96 L 66 62 L 88 92 Z" fill="#ffffff" opacity="0.92"/>
+  <!-- checkmark -->
+  <path d="M 88 132 L 118 162 L 172 100" stroke="#ffffff" stroke-width="24"
+        fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

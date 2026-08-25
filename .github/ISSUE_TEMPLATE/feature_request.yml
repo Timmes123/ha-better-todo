@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      description: What are you trying to accomplish? A concrete example helps most.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How could Better ToDo support this?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you use today
