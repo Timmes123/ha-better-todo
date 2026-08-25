@@ -615,6 +615,7 @@ class BetterTodoCard extends HTMLElement {
     const t = this.t;
     if (!this._data) return "";
     const title = this._config.title;
+    if (!title && !this._config.show_add && !this._config.show_menu) return "";
     return `<div class="head">
       <div class="head-title">${title ? esc(title) : ""}</div>
       <div class="head-actions">
@@ -1483,6 +1484,9 @@ class BetterTodoCardEditor extends HTMLElement {
 
   setConfig(config) {
     this._config = { ...config };
+    // Config changes we fired ourselves come straight back through here;
+    // re-rendering then would destroy the focused input on every keystroke.
+    if (this._suppressRender) { this._suppressRender = false; return; }
     this._render();
   }
 
@@ -1496,6 +1500,7 @@ class BetterTodoCardEditor extends HTMLElement {
   }
 
   _fire() {
+    this._suppressRender = true;
     const config = { type: "custom:better-todo-card", ...this._config };
     this.dispatchEvent(new CustomEvent("config-changed", {
       detail: { config }, bubbles: true, composed: true,
