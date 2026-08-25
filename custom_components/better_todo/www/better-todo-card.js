@@ -1438,6 +1438,7 @@ class BetterTodoCard extends HTMLElement {
       .field input, .field select, .field textarea, .sub-add input {
         font-size: 1rem; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--divider-color);
         background: var(--secondary-background-color); color: var(--primary-text-color); width: 100%; }
+      .field input[type="checkbox"] { width: auto; padding: 0; margin: 0; }
       .field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.9em; color: var(--secondary-text-color); flex-wrap: wrap; }
       .field-row2 { display: flex; gap: 8px; align-items: flex-end; }
       .field-row2 .grow { flex: 1; }
