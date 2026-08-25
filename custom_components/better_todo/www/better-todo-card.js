@@ -458,8 +458,22 @@ class BetterTodoCard extends HTMLElement {
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
   _allTags() {
-    const tags = new Set();
-    for (const task of this._data?.tasks || []) (task.tags || []).forEach((x) => tags.add(x));
+    // Same visibility rules as _visibleTasks, minus the tag filter itself:
+    // chips only offer tags the current view can actually match. Selected
+    // tags stay listed so they can be deselected.
+    const personFilter = this._personFilter();
+    const activeIds = this._activeLists().map((l) => l.id);
+    const tags = new Set(this._ui.tags || []);
+    for (const task of this._data?.tasks || []) {
+      if (!activeIds.includes(task.list_id)) continue;
+      const s = task.computed?.state;
+      if (s === "done" && !this._showDone()) continue;
+      if (s === "hidden" && !this._showUpcoming()) continue;
+      if (s === "upcoming" && !(task.computed.visible || this._showUpcoming())) continue;
+      if (personFilter && personFilter !== "all" && task.assigned_to !== personFilter) continue;
+      if (this._ui.dueSoon && !this._dueWithin(task, this._config.due_soon_days ?? 7)) continue;
+      (task.tags || []).forEach((x) => tags.add(x));
+    }
     return [...tags].sort();
   }
 
