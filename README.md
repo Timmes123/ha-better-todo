@@ -7,9 +7,6 @@
 A feature-rich task manager for Home Assistant with a custom dashboard card — built for
 **recurring tasks that actually work the way you need them to**.
 
-> **Status: early development.** The core works and is used in production by the author,
-> but expect rough edges. Bug reports are very welcome!
-
 <p align="center">
   <img src="images/card-overview.png" width="380" alt="Better ToDo card overview">
 </p>
