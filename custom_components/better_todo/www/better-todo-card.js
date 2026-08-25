@@ -26,6 +26,7 @@ const STR = {
     subtasks_f: "Subtasks", add_subtask: "Add subtask…", list_name_f: "List name",
     delete_task_confirm: "Delete this task?", no_lists: "No lists yet.", empty: "Nothing to do 🎉",
     edit_list: "Edit list", delete_list_confirm: "Delete this list and all its tasks?",
+    show_filters: "Show filters", manage_lists: "Edit lists",
     type_simple: "One-time", type_scheduled: "Recurring (fixed schedule)",
     type_after: "Recurring (after completion)", type_period: "Weekly/monthly task",
     error: "Better ToDo is not reachable. Is the integration installed?",
@@ -63,6 +64,7 @@ const STR = {
     subtasks_f: "Unteraufgaben", add_subtask: "Unteraufgabe hinzufügen…", list_name_f: "Listenname",
     delete_task_confirm: "Diese Aufgabe löschen?", no_lists: "Noch keine Listen.", empty: "Nichts zu tun 🎉",
     edit_list: "Liste bearbeiten", delete_list_confirm: "Diese Liste und alle ihre Aufgaben löschen?",
+    show_filters: "Filter anzeigen", manage_lists: "Listen bearbeiten",
     type_simple: "Einmalig", type_scheduled: "Wiederholend (fester Plan)",
     type_after: "Wiederholend (nach Erledigung)", type_period: "Wochen-/Monatsaufgabe",
     error: "Better ToDo ist nicht erreichbar. Ist die Integration installiert?",
@@ -100,6 +102,7 @@ const STR = {
     subtasks_f: "Sous-tâches", add_subtask: "Ajouter une sous-tâche…", list_name_f: "Nom de la liste",
     delete_task_confirm: "Supprimer cette tâche ?", no_lists: "Pas encore de listes.", empty: "Rien à faire 🎉",
     edit_list: "Modifier la liste", delete_list_confirm: "Supprimer cette liste et toutes ses tâches ?",
+    show_filters: "Afficher les filtres", manage_lists: "Modifier les listes",
     type_simple: "Unique", type_scheduled: "Récurrente (plan fixe)",
     type_after: "Récurrente (après achèvement)", type_period: "Tâche hebdo/mensuelle",
     error: "Better ToDo est injoignable. L'intégration est-elle installée ?",
@@ -137,6 +140,7 @@ const STR = {
     subtasks_f: "Subtareas", add_subtask: "Añadir subtarea…", list_name_f: "Nombre de la lista",
     delete_task_confirm: "¿Eliminar esta tarea?", no_lists: "Aún no hay listas.", empty: "Nada que hacer 🎉",
     edit_list: "Editar lista", delete_list_confirm: "¿Eliminar esta lista y todas sus tareas?",
+    show_filters: "Mostrar filtros", manage_lists: "Editar listas",
     type_simple: "Única", type_scheduled: "Recurrente (plan fijo)",
     type_after: "Recurrente (tras completar)", type_period: "Tarea semanal/mensual",
     error: "Better ToDo no responde. ¿Está instalada la integración?",
@@ -174,6 +178,7 @@ const STR = {
     subtasks_f: "Sottoattività", add_subtask: "Aggiungi sottoattività…", list_name_f: "Nome lista",
     delete_task_confirm: "Eliminare questa attività?", no_lists: "Ancora nessuna lista.", empty: "Niente da fare 🎉",
     edit_list: "Modifica lista", delete_list_confirm: "Eliminare questa lista e tutte le sue attività?",
+    show_filters: "Mostra filtri", manage_lists: "Modifica liste",
     type_simple: "Singola", type_scheduled: "Ricorrente (piano fisso)",
     type_after: "Ricorrente (dopo completamento)", type_period: "Attività settimanale/mensile",
     error: "Better ToDo non raggiungibile. L'integrazione è installata?",
@@ -211,6 +216,7 @@ const STR = {
     subtasks_f: "Subtaken", add_subtask: "Subtaak toevoegen…", list_name_f: "Lijstnaam",
     delete_task_confirm: "Deze taak verwijderen?", no_lists: "Nog geen lijsten.", empty: "Niets te doen 🎉",
     edit_list: "Lijst bewerken", delete_list_confirm: "Deze lijst en al haar taken verwijderen?",
+    show_filters: "Filters tonen", manage_lists: "Lijsten bewerken",
     type_simple: "Eenmalig", type_scheduled: "Terugkerend (vast schema)",
     type_after: "Terugkerend (na afronden)", type_period: "Week-/maandtaak",
     error: "Better ToDo is niet bereikbaar. Is de integratie geïnstalleerd?",
@@ -248,6 +254,7 @@ const STR = {
     subtasks_f: "Podzadania", add_subtask: "Dodaj podzadanie…", list_name_f: "Nazwa listy",
     delete_task_confirm: "Usunąć to zadanie?", no_lists: "Brak list.", empty: "Nic do zrobienia 🎉",
     edit_list: "Edytuj listę", delete_list_confirm: "Usunąć tę listę i wszystkie jej zadania?",
+    show_filters: "Pokaż filtry", manage_lists: "Edytuj listy",
     type_simple: "Jednorazowe", type_scheduled: "Cykliczne (stały plan)",
     type_after: "Cykliczne (po ukończeniu)", type_period: "Zadanie tygodniowe/miesięczne",
     error: "Better ToDo jest niedostępne. Czy integracja jest zainstalowana?",
@@ -351,10 +358,11 @@ class BetterTodoCard extends HTMLElement {
     this._error = null;
     this._sub = null;
     this._ui = {
-      menu: false, expanded: null, lists: null, person: null,
+      menu: false, dropdown: false, expanded: null, lists: null, person: null,
       showDone: null, showUpcoming: null, tags: null, dueSoon: false, sort: null,
     };
     this._dialog = null;
+    this._dialogEl = null;
     this._drag = null;
     // Delegated listeners are attached ONCE here — the shadow root element
     // survives innerHTML swaps, so attaching them per render would stack
@@ -557,7 +565,13 @@ class BetterTodoCard extends HTMLElement {
       <div class="head-title">${title ? esc(title) : ""}</div>
       <div class="head-actions">
         ${this._config.show_add ? `<button class="icon-btn" data-action="add" title="${esc(t.new_task)}">+</button>` : ""}
-        ${this._config.show_menu ? `<button class="icon-btn ${this._ui.menu ? "active" : ""}" data-action="menu" title="Filter">☰</button>` : ""}
+        ${this._config.show_menu ? `<div class="menu-anchor">
+          <button class="icon-btn ${this._ui.dropdown ? "active" : ""}" data-action="menu" title="Menu">☰</button>
+          ${this._ui.dropdown ? `<div class="dropdown">
+            <button class="dd-item" data-action="dd-filters">${this._ui.menu ? "✓ " : ""}${esc(t.show_filters)}</button>
+            <button class="dd-item" data-action="dd-lists">${esc(t.manage_lists)}</button>
+          </div>` : ""}
+        </div>` : ""}
       </div>
     </div>${this._ui.menu ? this._renderMenu() : ""}`;
   }
@@ -573,7 +587,7 @@ class BetterTodoCard extends HTMLElement {
     const sort = this._sortMode();
     return `<div class="menu">
       <div class="chips">
-        ${all.map((l) => `<span class="chip-wrap"><button class="chip ${active.includes(l.id) ? "on" : ""}" data-action="toggle-list" data-id="${esc(l.id)}">${esc(l.name)}</button><button class="chip-edit" data-action="edit-list" data-id="${esc(l.id)}" title="${esc(t.edit_list)}">✎</button></span>`).join("")}
+        ${all.map((l) => `<button class="chip ${active.includes(l.id) ? "on" : ""}" data-action="toggle-list" data-id="${esc(l.id)}">${esc(l.name)}</button>`).join("")}
         <button class="chip ghost" data-action="add-list">+ ${esc(t.new_list)}</button>
       </div>
       ${tags.length ? `<div class="chips">
@@ -705,17 +719,22 @@ class BetterTodoCard extends HTMLElement {
 
   _onClick(e) {
     const el = e.target.closest("[data-action]");
+    if (this._ui.dropdown && !e.target.closest(".menu-anchor")) {
+      this._ui.dropdown = false;
+      this._render();
+    }
     if (!el) return;
     const action = el.dataset.action;
     const id = el.dataset.id;
     if (action === "subtask") return;
     e.stopPropagation();
-    if (action === "menu") { this._ui.menu = !this._ui.menu; this._render(); }
+    if (action === "menu") { this._ui.dropdown = !this._ui.dropdown; this._render(); }
+    else if (action === "dd-filters") { this._ui.menu = !this._ui.menu; this._ui.dropdown = false; this._render(); }
+    else if (action === "dd-lists") { this._ui.dropdown = false; this._render(); this._openManageLists(); }
     else if (action === "toggle-list") this._toggleListFilter(id);
     else if (action === "toggle-tag") this._toggleTagFilter(id);
     else if (action === "add") this._openTaskDialog(null);
     else if (action === "add-list") this._openListDialog(null);
-    else if (action === "edit-list") this._openListDialog((this._data.lists || []).find((l) => l.id === id));
     else if (action === "expand") { this._ui.expanded = this._ui.expanded === id ? null : id; this._render(); }
     else if (action === "complete") this._complete(id);
     else if (action === "edit") this._openTaskDialog(this._task(id));
@@ -812,7 +831,14 @@ class BetterTodoCard extends HTMLElement {
     const dlg = document.createElement("dialog");
     dlg.innerHTML = innerHtml;
     this.shadowRoot.appendChild(dlg);
-    dlg.addEventListener("close", () => { if (this._dialog) { this._dialog = null; this._render(); } });
+    this._dialogEl = dlg;
+    // The close event fires async; ignore it if another dialog has been
+    // opened in the meantime (close → immediately open follow-up dialog).
+    dlg.addEventListener("close", () => {
+      if (this._dialogEl !== dlg) return;
+      this._dialogEl = null;
+      if (this._dialog) { this._dialog = null; this._render(); }
+    });
     dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
     onWire(dlg);
     dlg.showModal();
@@ -867,6 +893,38 @@ class BetterTodoCard extends HTMLElement {
             await this._ws({ type: "better_todo/delete_list", list_id: list.id });
           }
           dlg.close();
+        });
+      }
+    );
+  }
+
+  _openManageLists() {
+    const t = this.t;
+    this._dialog = { kind: "lists" };
+    const lists = this._data?.lists || [];
+    this._showDialog(
+      `<div class="dlg-title">${esc(t.manage_lists)}</div>
+       <div class="list-manage">
+         ${lists.map((l) => `<button class="btn list-row" data-x="edit" data-id="${esc(l.id)}"><span>${esc(l.name)}</span><span class="row-edit">✎</span></button>`).join("")}
+       </div>
+       <div class="dlg-actions">
+         <button class="btn" data-x="new">+ ${esc(t.new_list)}</button>
+         <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
+       </div>`,
+      (dlg) => {
+        dlg.addEventListener("click", (e) => {
+          const b = e.target.closest("[data-x]");
+          if (!b) return;
+          if (b.dataset.x === "edit") {
+            const list = (this._data?.lists || []).find((l) => l.id === b.dataset.id);
+            dlg.close();
+            this._openListDialog(list);
+          } else if (b.dataset.x === "new") {
+            dlg.close();
+            this._openListDialog(null);
+          } else {
+            dlg.close();
+          }
         });
       }
     );
@@ -1185,16 +1243,23 @@ class BetterTodoCard extends HTMLElement {
         color: var(--secondary-text-color); padding: 6px 8px; border-radius: 8px; }
       .icon-btn:hover, .icon-btn.active { background: var(--secondary-background-color); color: var(--primary-text-color); }
       .icon-btn.small { font-size: 1em; padding: 2px 6px; }
+      .menu-anchor { position: relative; display: inline-block; }
+      .dropdown { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; min-width: 180px;
+        background: var(--card-background-color, #fff); border: 1px solid var(--divider-color);
+        border-radius: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); overflow: hidden; }
+      .dd-item { display: block; width: 100%; text-align: left; border: none; background: none;
+        color: var(--primary-text-color); padding: 10px 14px; cursor: pointer; font: inherit;
+        white-space: nowrap; }
+      .dd-item:hover { background: var(--secondary-background-color); }
+      .list-manage { display: flex; flex-direction: column; gap: 6px; }
+      .list-row { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+      .row-edit { opacity: 0.6; margin-left: 12px; }
       .menu { padding: 8px 0 4px; border-bottom: 1px solid var(--divider-color); margin-bottom: 8px; }
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
       .chip { border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color);
         border-radius: 14px; padding: 3px 12px; cursor: pointer; font-size: 0.85em; }
       .chip.on { background: var(--primary-color); border-color: var(--primary-color); color: var(--text-primary-color, #fff); }
       .chip.ghost { border-style: dashed; }
-      .chip-wrap { display: inline-flex; align-items: center; gap: 2px; }
-      .chip-edit { border: none; background: none; color: var(--secondary-text-color); cursor: pointer;
-        font-size: 12px; padding: 2px 4px; opacity: 0.6; }
-      .chip-edit:hover { opacity: 1; }
       .chip.tagchip.on { background: var(--accent-color, var(--primary-color)); border-color: var(--accent-color, var(--primary-color)); }
       .chip-select { border: 1px dashed var(--divider-color); background: none; color: var(--secondary-text-color);
         border-radius: 14px; padding: 3px 8px; font-size: 0.85em; }
