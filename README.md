@@ -19,8 +19,15 @@ recurring tasks that actually work the way you need them to.
   configurable pool of persons (e.g. kids rotate taking out the trash).
 - Subtasks, optional priorities — features are centrally toggleable in the integration
   options, from "dumb list" to full feature set.
+- Due times and **per-task reminders** (up to 5, firing as `better_todo_item_reminder`
+  events — build push notifications with a simple automation).
+- Advanced schedules: multiple weekdays per week, "last day of month", "2nd Saturday",
+  "last Wednesday", end date, max repetitions.
+- **Tags** across lists with filter chips.
+- A standard **todo entity** and a **calendar entity** per list (Companion App, watches,
+  voice assistants, HA calendar) — the Better ToDo storage stays the source of truth.
 - Services (`better_todo.add_task`, `complete_task`, `skip_task`, `remove_task`) and events
-  (`better_todo_item_created/completed/due/overdue`) for automations; completion history.
+  (`better_todo_item_created/completed/due/overdue/reminder`) for automations; completion history.
 - A custom dashboard card `better-todo-card` (shipped with the integration, auto-registered
   as a Lovelace resource) with list/person filters, an optional in-card menu, add/edit
   dialogs — following your Home Assistant theme.

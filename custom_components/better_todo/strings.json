@@ -20,7 +20,10 @@
           "subtasks": "Subtasks",
           "assignment": "Assignment to persons",
           "rotation": "Rotating assignment",
-          "periods": "Weekly/monthly tasks with streaks"
+          "periods": "Weekly/monthly tasks with streaks",
+          "tags": "Tags",
+          "todo_mirror": "Standard todo entity per list",
+          "calendar": "Calendar entity per list"
         }
       }
     }

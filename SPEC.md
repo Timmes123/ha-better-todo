@@ -35,8 +35,10 @@ Skala: von „dumme Liste" bis Vollausbau.
 | Zuweisung | an | Aufgaben an Personen zuweisbar, „Meine Aufgaben"-Sicht |
 | Rotation | an | rotierende Zuweisung (setzt Zuweisung voraus) |
 | Perioden-Aufgaben & Streaks | an | Wochen-/Monats-Todos mit Strähnen |
-| Benachrichtigungen | aus | Push bei fällig/überfällig (Ausbaustufe) |
-| Spiegel-Todo-Entities | aus | Standard-`todo`-Entity pro Liste (Ausbaustufe) |
+| Tags | an | Schlagwörter an Aufgaben + Filter-Chips in der Karte |
+| Spiegel-Todo-Entities | an | Standard-`todo`-Entity pro Liste (Companion-App, Watch, Sprachassistenten) |
+| Kalender-Entities | an | `calendar`-Entity pro Liste; Aufgaben mit Fälligkeit erscheinen im HA-Kalender, wiederholende auf jedem Termin |
+| Benachrichtigungen | — | über Erinnerungs-Events + eigene Automation (kein eigener Schalter nötig) |
 
 ## 3. Datenmodell
 
@@ -58,7 +60,12 @@ Gemeinsame Felder aller Typen:
   „Bad: Erwachsene")
 - `sichtbar_ab` (optional): Aufgabe erscheint erst ab diesem Datum
 - `faellig_am` (optional): Solldatum / Deadline
-- `sortierung` innerhalb der Liste (manuell)
+- `faellig_um` (optional): **Uhrzeit** zur Fälligkeit (Anzeige + Erinnerungen; die
+  Wiederholungslogik rechnet weiterhin auf Tagesbasis)
+- `erinnerungen` (optional): bis zu 5 Vorlaufzeiten (Minuten vor Fälligkeit); feuern als
+  Event `better_todo_item_reminder` — Push-Benachrichtigungen baut man per Automation darauf
+- `tags` (optional): freie Schlagwörter, quer zu Listen, filterbar in der Karte
+- `sortierung` innerhalb der Liste (manuell, per Drag & Drop in der Karte)
 
 ### 3.3 Aufgabentypen im Detail
 
@@ -70,8 +77,13 @@ Farbeskalation bei näher rückender Deadline.
 **b) Wiederholend, plan-basiert** — nächste Fälligkeit ergibt sich aus dem Plan,
 unabhängig vom Erledigungszeitpunkt.
 Beispiel: Rechnung fällig am 1.1., erledigt am 10.1. → nächste Instanz am 1.2.
-Regelmechanik: „am n-ten Tag des Monats", „am TT.MM. jedes Jahres", „jeden Montag",
-„alle k Monate am n-ten" usw. (eigene, einfache Regelstruktur, kein volles RRULE).
+Regelmechanik (eigene Regelstruktur, kein volles RRULE):
+- täglich/wöchentlich/monatlich/jährlich mit Intervall k
+- wöchentlich auch **mehrere Wochentage** (z. B. Mo+Do)
+- monatlich: fester Tag (mit Klemmung bei kurzen Monaten), **„letzter Tag"** oder
+  **„n-ter Wochentag"** (z. B. „2. Samstag", „letzter Mittwoch")
+- optional **Enddatum** und/oder **maximale Anzahl Wiederholungen** — danach gilt die
+  Aufgabe als abgeschlossen
 - **Überfällig-Verhalten**: immer **eine** offene Aufgabe mit „n× fällig"-Zähler
   (kein Stapeln separater Instanzen — Entscheidung 2026-08-25). Beim Abhaken wählbar:
   **1× erledigen** (Zähler −1, Aufgabe bleibt offen solange n > 0) oder **alle erledigen**.
@@ -134,13 +146,36 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
   `hacs.json`, `manifest.json`, README, HACS-Validation-Action, getaggte Releases
 - Deployment ausschließlich: Commit → Version-Bump → Release → HACS-Update → HA-Neustart
 
-## 7. Ausbaustufen (Grobplan)
+## 7. Karte — erweiterte Anforderungen (2026-08-25, aus Wettbewerbsanalyse)
 
-1. **v0.x MVP**: Listen, alle 4 Aufgabentypen, Wiederholungs-Engine, Historie,
-   WebSocket-API, Karte mit Grundfunktionen (anzeigen, abhaken, anlegen)
-2. Zuweisung + Rotation, „Meine Aufgaben", Filter/Menü in der Karte, Feature-Schalter
-3. Streak-Badges, Überspringen, Sensoren, Services/Events komplett
-4. Benachrichtigungen (actionable), Spiegel-Todo-Entities, Statistiken
+- Sortier-Optionen pro Karte: manuell, Fälligkeit, Priorität, Titel, Person;
+  manuelle Reihenfolge per Drag & Drop
+- „Bald fällig"-Filter mit einstellbarem Vorlauf (Tage)
+- Komfort: Kompakt-Modus, maximale Höhe mit internem Scrollen, optionale
+  Bestätigung vor dem Erledigen
+- **Visueller Karten-Editor** (GUI-Konfiguration statt nur YAML)
+- Mehrsprachigkeit über DE/EN hinaus (FR, ES, IT, NL, PL, …)
+
+## 8. Ausbaustufen (Grobplan)
+
+1. ✅ **v0.2 MVP**: Listen, alle 4 Aufgabentypen, Wiederholungs-Engine, Historie,
+   WebSocket-API, Karte mit Grundfunktionen, Zuweisung + Rotation, Feature-Schalter
+2. **v0.3**: Uhrzeit + Erinnerungen, erweiterte Wiederholungsmuster, Tags,
+   Spiegel-Todo- und Kalender-Entities, Karten-Ausbau (Sortierung, Drag & Drop,
+   Editor, Komfort-Optionen, mehr Sprachen)
+3. Sensoren (offene/fällige/überfällige je Liste & Person), Statistiken,
+   Sections innerhalb von Listen, Kanban-Ansicht, Audit-Log, Aufgabe duplizieren
+4. **KI-Anbindung** (optional): z. B. Aufgabenbilder über `ai_task`-Entities,
+   Vorschläge. Architektur-Vorgabe schon jetzt: Datenmodell erweiterbar halten
+   (Aufgaben verkraften unbekannte Zusatzfelder), KI-Aufrufe immer über
+   HA-Standard-Schnittstellen (`ai_task`), nie fest an einen Anbieter gebunden
+5. **Externer Sync** (CalDAV, Todoist, Google Tasks, …) — bewusst ganz hinten:
+   vom Nutzer aktuell nicht benötigt, evtl. für andere Nutzer nach Veröffentlichung.
+   Falls es kommt: Overlay-Prinzip (lokale Zusatzfelder über externen Items),
+   unsere Spezialtypen bleiben lokal führend
+
+Hinweis: Fremdintegrationen (z. B. „Home Tasks") dienten nur als Feature-Benchmark —
+kein fremder Code wird übernommen; alle Implementierungen sind Eigenentwicklung.
 
 ---
 

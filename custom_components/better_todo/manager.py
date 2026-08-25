@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -16,11 +16,13 @@ from homeassistant.util import dt as dt_util
 from . import engine
 from .const import (
     DEFAULT_FEATURES,
+    DEFAULT_REMINDER_TIME,
     DOMAIN,
     EVENT_COMPLETED,
     EVENT_CREATED,
     EVENT_DUE,
     EVENT_OVERDUE,
+    EVENT_REMINDER,
     MAX_HISTORY,
     SIGNAL_UPDATE,
     TASK_TYPE_AFTER_COMPLETION,
@@ -48,6 +50,7 @@ class BetterTodoManager:
         self.entry = entry
         self._store: Store = Store(hass, STORAGE_VERSION, DOMAIN)
         self.data: dict[str, Any] = {"lists": [], "tasks": [], "history": []}
+        self._fired_reminders: set[tuple[str, int, str]] = set()
 
     # ------------------------------------------------------------- storage
 
@@ -198,12 +201,16 @@ class BetterTodoManager:
         task = existing if existing is not None else self._new_task()
         editable = (
             "list_id", "title", "notes", "type", "priority", "subtasks",
-            "assigned_to", "rotation", "visible_from", "due_date", "lead_days",
-            "schedule", "interval", "period", "order",
+            "assigned_to", "rotation", "visible_from", "due_date", "due_time",
+            "lead_days", "schedule", "interval", "period", "order",
+            "tags", "reminders", "ended",
         )
         for key in editable:
             if key in data:
                 task[key] = data[key]
+
+        task["tags"] = sorted({str(t).strip() for t in (task.get("tags") or []) if str(t).strip()})
+        task["reminders"] = [int(r) for r in (task.get("reminders") or []) if int(r) >= 0][:5]
 
         # Normalize subtasks and rotation structures.
         task["subtasks"] = [
@@ -252,7 +259,12 @@ class BetterTodoManager:
             "rotation": None,
             "visible_from": None,
             "due_date": None,
+            "due_time": None,
             "lead_days": None,
+            "tags": [],
+            "reminders": [],
+            "occurrence_count": 0,
+            "ended": False,
             "schedule": None,
             "interval": None,
             "period": None,
@@ -269,6 +281,14 @@ class BetterTodoManager:
     def delete_task(self, task_id: str) -> None:
         self._task(task_id)  # raises if unknown
         self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] != task_id]
+        self._save_notify()
+
+    def reorder_tasks(self, list_id: str, task_ids: list[str]) -> None:
+        """Apply a manual order to the tasks of one list."""
+        position = {task_id: index for index, task_id in enumerate(task_ids)}
+        for task in self.data["tasks"]:
+            if task["list_id"] == list_id and task["id"] in position:
+                task["order"] = position[task["id"]]
         self._save_notify()
 
     def toggle_subtask(self, task_id: str, subtask_id: str, done: bool) -> None:
@@ -296,6 +316,9 @@ class BetterTodoManager:
                 anchor, task.get("schedule") or {}, today, complete_all
             )
             task["due_date"] = new_anchor.isoformat()
+            task["occurrence_count"] = int(task.get("occurrence_count") or 0) + 1
+            if engine.schedule_ended(task, new_anchor):
+                task["ended"] = True
             self._rotate(task)
             self._reset_subtasks(task)
         elif typ == TASK_TYPE_AFTER_COMPLETION:
@@ -396,8 +419,50 @@ class BetterTodoManager:
 
     # ------------------------------------------------------------- daily tick
 
+    async def async_minute_tick(self, now=None) -> None:
+        """Fire pending task reminders (checked once per minute)."""
+        now = now or dt_util.now()
+        today = now.date()
+        for task in self.data["tasks"]:
+            reminders = task.get("reminders") or []
+            if not reminders:
+                continue
+            computed = engine.compute_state(task, today)
+            due_iso = computed.get("due")
+            if not due_iso or computed.get("state") in ("done", "hidden"):
+                continue
+            due_date = engine.parse_date(due_iso)
+            time_str = task.get("due_time") or DEFAULT_REMINDER_TIME
+            try:
+                hour, minute = (int(x) for x in time_str.split(":")[:2])
+            except (ValueError, TypeError):
+                hour, minute = 9, 0
+            due_dt = datetime.combine(due_date, time(hour, minute), tzinfo=now.tzinfo)
+            for offset in reminders:
+                offset = int(offset)
+                key = (task["id"], offset, due_iso)
+                if key in self._fired_reminders:
+                    continue
+                fire_at = due_dt - timedelta(minutes=offset)
+                if fire_at <= now <= fire_at + timedelta(minutes=10):
+                    self._fired_reminders.add(key)
+                    self.hass.bus.async_fire(
+                        EVENT_REMINDER,
+                        {
+                            "task_id": task["id"],
+                            "title": task["title"],
+                            "list_id": task["list_id"],
+                            "assigned_to": task.get("assigned_to"),
+                            "due": due_iso,
+                            "due_time": task.get("due_time"),
+                            "offset_minutes": offset,
+                        },
+                    )
+
     async def async_daily_tick(self, _now=None) -> None:
         """Midnight housekeeping: roll periods, fire due/overdue events."""
+        if len(self._fired_reminders) > 1000:
+            self._fired_reminders.clear()
         changed = self.normalize()
         today = self._today()
         for task in self.data["tasks"]:

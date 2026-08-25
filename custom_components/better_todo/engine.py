@@ -32,6 +32,28 @@ def add_months(d: date, months: int, day: int | None = None) -> date:
     return date(year, month, min(dom, last))
 
 
+def nth_weekday_of_month(year: int, month: int, nth: int, weekday: int) -> date:
+    """Date of the nth (1-4, or -1 = last) given weekday in a month."""
+    if nth == -1:
+        last = date(year, month, calendar.monthrange(year, month)[1])
+        return last - timedelta(days=(last.weekday() - weekday) % 7)
+    first = date(year, month, 1)
+    offset = (weekday - first.weekday()) % 7
+    return first + timedelta(days=offset + (nth - 1) * 7)
+
+
+def _monthly_date(year: int, month: int, sched: dict, fallback_day: int) -> date:
+    """Resolve the concrete date within a month for a monthly/yearly rule."""
+    nth = sched.get("nth")
+    if nth and nth.get("weekday") is not None:
+        return nth_weekday_of_month(year, month, int(nth.get("n") or 1), int(nth["weekday"]))
+    day = sched.get("day")
+    last = calendar.monthrange(year, month)[1]
+    if day == "last":
+        return date(year, month, last)
+    return date(year, month, min(int(day or fallback_day), last))
+
+
 def advance(anchor: date, sched: dict) -> date:
     """Return the occurrence following ``anchor`` for a schedule."""
     freq = sched.get("freq", "monthly")
@@ -39,11 +61,20 @@ def advance(anchor: date, sched: dict) -> date:
     if freq == "daily":
         return anchor + timedelta(days=interval)
     if freq == "weekly":
-        return anchor + timedelta(weeks=interval)
+        weekdays = sorted({int(w) for w in (sched.get("weekdays") or [])})
+        if not weekdays:
+            return anchor + timedelta(weeks=interval)
+        for wd in weekdays:
+            if wd > anchor.weekday():
+                return anchor + timedelta(days=wd - anchor.weekday())
+        # Wrap to the first selected weekday, `interval` week-blocks ahead.
+        days_to_monday = 7 * interval - anchor.weekday()
+        return anchor + timedelta(days=days_to_monday + weekdays[0])
     if freq == "monthly":
-        return add_months(anchor, interval, sched.get("day"))
+        months = anchor.year * 12 + (anchor.month - 1) + interval
+        return _monthly_date(months // 12, months % 12 + 1, sched, anchor.day)
     if freq == "yearly":
-        return add_months(anchor, 12 * interval, sched.get("day"))
+        return _monthly_date(anchor.year + interval, anchor.month, sched, anchor.day)
     raise ValueError(f"Unknown schedule frequency: {freq}")
 
 
@@ -53,12 +84,25 @@ def due_info(anchor: date, sched: dict, today: date) -> tuple[int, date]:
     ``anchor`` is the earliest unhandled occurrence. Returns
     ``(due_count, next_future_occurrence)``.
     """
+    until = parse_date(sched.get("until"))
     count = 0
     d = anchor
-    while d <= today and count < MAX_ITER:
+    while d <= today and count < MAX_ITER and (until is None or d <= until):
         count += 1
         d = advance(d, sched)
     return count, d
+
+
+def schedule_ended(task: dict, new_anchor: date) -> bool:
+    """True when a scheduled task has no further occurrences."""
+    sched = task.get("schedule") or {}
+    until = parse_date(sched.get("until"))
+    if until and new_anchor > until:
+        return True
+    max_occ = sched.get("max_occurrences")
+    if max_occ and int(task.get("occurrence_count") or 0) >= int(max_occ):
+        return True
+    return False
 
 
 def complete_anchor(anchor: date, sched: dict, today: date, complete_all: bool) -> date:
@@ -131,6 +175,8 @@ def rollover(task: dict, today: date) -> bool:
 def compute_state(task: dict, today: date) -> dict:
     """Compute the display state of a task for a given day."""
     typ = task.get("type", "simple")
+    if task.get("ended"):
+        return {"state": "done"}
 
     if typ == "simple":
         if task.get("status") == "done":

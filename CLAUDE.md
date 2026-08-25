@@ -4,9 +4,11 @@ Custom Home Assistant integration for a feature-rich, free todo list. Will be pu
 
 ## Project status (2026-08-25)
 
-- Setup complete: git, Python 3.14, `gh` CLI installed and authenticated as Timmes123 (repo + workflow scopes).
-- The user's live HA instance is reachable via MCP; HACS 2.0.5 is installed there.
-- GitHub repo **not yet created** (working name suggestion: `ha-better-todo`, not confirmed).
+- Setup complete: git, Python 3.14, Node.js 24, `gh` CLI (at `C:\Program Files\GitHub CLI\gh.exe` — not on PATH in tool shells) authenticated as Timmes123.
+- The user's live HA instance is reachable via MCP; HACS 2.0.5 is installed there. WS commands can be tested via `ha_call_service(ws_command="better_todo/...")`.
+- Repo: **github.com/Timmes123/ha-better-todo** (public, MIT). v0.2.0 (MVP) is released, installed via HACS on the live HA, and verified working (backend logic tested over WS). CI (hassfest + HACS action) green on main.
+- Test dashboard "Better ToDo" (`/better-todo/aufgaben`) exists on the live HA with the custom card; test data in lists Haushalt/Finanzen/Gesunde Woche.
+- Gotchas learned: hassfest rejects `{...}` braces and UTF-8 BOMs in translation files (PowerShell 5.1 `Set-Content -Encoding utf8` writes a BOM — use `[System.IO.File]::WriteAllText` with `UTF8Encoding($false)`).
 - **Feature requirements are specified and agreed** — see `SPEC.md` (the authoritative design document; keep it updated when decisions change). Key decisions: fully custom data model (no HA todo entities as source of truth), 4 task types incl. plan-based vs. completion-based recurrence and weekly/monthly habit tasks with streaks, overdue = single task with "n× fällig" counter (complete one or all; no stacking), rotation assignment with per-task person pool, central feature toggles in the options flow, card shipped by the integration (single HACS repo).
 
 ## Hard rule: deployment only via HACS releases

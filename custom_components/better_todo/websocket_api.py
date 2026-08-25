@@ -33,6 +33,7 @@ def async_register_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_uncomplete_task)
     websocket_api.async_register_command(hass, ws_skip_task)
     websocket_api.async_register_command(hass, ws_toggle_subtask)
+    websocket_api.async_register_command(hass, ws_reorder)
 
 
 def _manager(hass: HomeAssistant) -> BetterTodoManager:
@@ -70,10 +71,15 @@ def ws_get_data(hass, connection, msg):
 @websocket_api.websocket_command({vol.Required("type"): "better_todo/subscribe"})
 @callback
 def ws_subscribe(hass, connection, msg):
-    manager = _manager(hass)
+    _manager(hass)  # validate setup before subscribing
 
     @callback
     def push() -> None:
+        # Resolve the manager on every push so subscriptions survive an
+        # entry reload (which replaces the manager instance).
+        manager = hass.data.get(DOMAIN)
+        if manager is None:
+            return
         connection.send_message(
             websocket_api.event_message(msg["id"], manager.serialized_data())
         )
@@ -161,6 +167,18 @@ def ws_uncomplete_task(hass, connection, msg):
 @_handle
 def ws_skip_task(hass, connection, msg):
     _manager(hass).skip_task(msg["task_id"], _user_name(connection))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "better_todo/reorder",
+        vol.Required("list_id"): str,
+        vol.Required("task_ids"): [str],
+    }
+)
+@_handle
+def ws_reorder(hass, connection, msg):
+    _manager(hass).reorder_tasks(msg["list_id"], msg["task_ids"])
 
 
 @websocket_api.websocket_command(

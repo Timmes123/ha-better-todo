@@ -20,7 +20,10 @@
           "subtasks": "Unteraufgaben",
           "assignment": "Zuweisung an Personen",
           "rotation": "Rotierende Zuweisung",
-          "periods": "Wochen-/Monatsaufgaben mit Strähnen"
+          "periods": "Wochen-/Monatsaufgaben mit Strähnen",
+          "tags": "Tags",
+          "todo_mirror": "Standard-Todo-Entität pro Liste",
+          "calendar": "Kalender-Entität pro Liste"
         }
       }
     }
