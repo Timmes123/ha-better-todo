@@ -174,9 +174,6 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
    Falls es kommt: Overlay-Prinzip (lokale Zusatzfelder über externen Items),
    unsere Spezialtypen bleiben lokal führend
 
-Hinweis: Fremdintegrationen (z. B. „Home Tasks") dienten nur als Feature-Benchmark —
-kein fremder Code wird übernommen; alle Implementierungen sind Eigenentwicklung.
-
 ---
 
 *Offene Punkte werden hier ergänzt, Entscheidungen datiert nachgetragen.*

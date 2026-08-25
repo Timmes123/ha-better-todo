@@ -195,10 +195,11 @@ normal HA backups. The `todo`/`calendar` entities are read-write mirrors — del
 
 ## Roadmap
 
-See [SPEC.md](SPEC.md) (German) for the full design document. Planned next: per-list
-sensors and statistics, sections inside lists, actionable notification helpers.
-External platform sync (CalDAV/Todoist/Google Tasks) is deliberately parked at the end
-of the roadmap.
+- Per-list sensors (open/due/overdue per list & person) and statistics
+- Sections inside lists, kanban view
+- Actionable notification helpers
+- Optional AI integration via HA `ai_task` entities
+- External platform sync (CalDAV/Todoist/Google Tasks) — deliberately last
 
 ## License
 
