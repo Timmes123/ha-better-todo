@@ -13,6 +13,13 @@
   "options": {
     "step": {
       "init": {
+        "title": "Better ToDo Optionen",
+        "menu_options": {
+          "features": "Funktionen",
+          "notifications": "Benachrichtigungen"
+        }
+      },
+      "features": {
         "title": "Better ToDo Funktionen",
         "description": "Funktionen ein- oder ausschalten. Abgeschaltete Funktionen werden überall ausgeblendet.",
         "data": {
@@ -24,6 +31,13 @@
           "tags": "Tags",
           "todo_mirror": "Standard-Todo-Entität pro Liste",
           "calendar": "Kalender-Entität pro Liste"
+        }
+      },
+      "notifications": {
+        "title": "Erinnerungs-Benachrichtigungen",
+        "description": "Benachrichtigungsdienst je Person. Erinnerungen an Aufgaben werden an die zugewiesenen Personen geschickt. Der Strich bedeutet: keine Benachrichtigung für diese Person.",
+        "data": {
+          "notify_unassigned_all": "Aufgaben ohne Zuweisung an alle konfigurierten Dienste melden"
         }
       }
     }

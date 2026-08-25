@@ -13,6 +13,13 @@
   "options": {
     "step": {
       "init": {
+        "title": "Better ToDo options",
+        "menu_options": {
+          "features": "Features",
+          "notifications": "Notifications"
+        }
+      },
+      "features": {
         "title": "Better ToDo features",
         "description": "Enable or disable features. Disabled features are hidden everywhere.",
         "data": {
@@ -24,6 +31,13 @@
           "tags": "Tags",
           "todo_mirror": "Standard todo entity per list",
           "calendar": "Calendar entity per list"
+        }
+      },
+      "notifications": {
+        "title": "Reminder notifications",
+        "description": "Notification service per person. Task reminders are sent to the assigned persons. The dash means: no notifications for this person.",
+        "data": {
+          "notify_unassigned_all": "Send tasks without assignment to every configured service"
         }
       }
     }

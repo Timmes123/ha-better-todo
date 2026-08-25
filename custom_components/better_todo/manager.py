@@ -15,6 +15,8 @@ from homeassistant.util import dt as dt_util
 
 from . import engine
 from .const import (
+    CONF_NOTIFY_TARGETS,
+    CONF_NOTIFY_UNASSIGNED_ALL,
     DEFAULT_FEATURES,
     DEFAULT_REMINDER_TIME,
     DOMAIN,
@@ -492,6 +494,42 @@ class BetterTodoManager:
                             "offset_minutes": offset,
                         },
                     )
+                    await self._async_notify_reminder(task, due_date, offset)
+
+    async def _async_notify_reminder(self, task: dict, due_date, offset: int) -> None:
+        """Send the reminder to the notify services configured in the options.
+
+        Assigned persons get their own target; unassigned tasks go to every
+        configured target when that option is enabled. No targets configured
+        means the events remain the only signal (as before).
+        """
+        targets = self.entry.options.get(CONF_NOTIFY_TARGETS) or {}
+        assigned = task.get("assigned_to") or []
+        services = [targets[p] for p in assigned if targets.get(p)]
+        if not assigned and self.entry.options.get(CONF_NOTIFY_UNASSIGNED_ALL):
+            services = list(targets.values())
+        if not services:
+            return
+        lang_de = (self.hass.config.language or "en").lower().startswith("de")
+        date_str = due_date.strftime("%d.%m.%Y") if lang_de else due_date.isoformat()
+        due_time = task.get("due_time")
+        if lang_de:
+            title = "Aufgabe fällig" if offset == 0 else "Erinnerung"
+            message = f"{task['title']} — fällig am {date_str}"
+            if due_time:
+                message += f" um {due_time} Uhr"
+        else:
+            title = "Task due" if offset == 0 else "Reminder"
+            message = f"{task['title']} — due {date_str}"
+            if due_time:
+                message += f" at {due_time}"
+        for service in dict.fromkeys(services):
+            try:
+                await self.hass.services.async_call(
+                    "notify", service, {"title": title, "message": message}
+                )
+            except Exception:  # noqa: BLE001 - one broken target must not stop the rest
+                _LOGGER.exception("Could not send reminder via notify.%s", service)
 
     async def async_daily_tick(self, _now=None) -> None:
         """Midnight housekeeping: roll periods, fire due/overdue events."""

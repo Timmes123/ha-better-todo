@@ -46,4 +46,9 @@ DEFAULT_FEATURES = {
 
 DEFAULT_REMINDER_TIME = "09:00"
 
+# Options: reminder notifications sent by the integration itself.
+CONF_NOTIFY_TARGETS = "notify_targets"  # {person_entity_id: notify service name}
+CONF_NOTIFY_UNASSIGNED_ALL = "notify_unassigned_all"
+NOTIFY_NONE = "-"
+
 MAX_HISTORY = 5000
