@@ -8,7 +8,7 @@
 [![Validate](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml/badge.svg)](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A feature-rich task manager for Home Assistant with a custom dashboard card — built for
+A task manager for Home Assistant with a custom dashboard card — built for
 **recurring tasks that actually work the way you need them to**.
 
 <p align="center">

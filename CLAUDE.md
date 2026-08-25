@@ -1,6 +1,6 @@
 # HA-betterTodo
 
-Custom Home Assistant integration for a feature-rich, free todo list. Will be published publicly on GitHub (account: **Timmes123**) and installed via HACS as a custom repository — later possibly submitted to the official HACS catalog. A custom Lovelace card will likely be needed alongside the integration, since the built-in HA todo card is limited.
+Custom Home Assistant integration for a flexible, free todo list. Will be published publicly on GitHub (account: **Timmes123**) and installed via HACS as a custom repository — later possibly submitted to the official HACS catalog. A custom Lovelace card will likely be needed alongside the integration, since the built-in HA todo card is limited.
 
 ## Project status (2026-08-25)
 
