@@ -38,6 +38,9 @@ const STR = {
     monthly_day: (d) => `on day ${d}`, monthly_last: "on the last day",
     monthly_nth: (n, wd) => `on the ${n}. ${wd}`, monthly_nth_last: (wd) => `on the last ${wd}`,
     confirm_done: (t) => `Complete "${t}"?`,
+    logged_in: "Logged-in user", mode_day: "on a fixed day", mode_last: "on the last day of the month",
+    mode_nth: "on the nth weekday", day_f: "Day (1–31)", month_f: "Month", nth_last: "last",
+    auto_hint: "empty = automatic from rule",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -71,6 +74,9 @@ const STR = {
     monthly_day: (d) => `am ${d}. Tag`, monthly_last: "am letzten Tag",
     monthly_nth: (n, wd) => `am ${n}. ${wd}`, monthly_nth_last: (wd) => `am letzten ${wd}`,
     confirm_done: (t) => `„${t}" erledigen?`,
+    logged_in: "Angemeldeter Benutzer", mode_day: "an festem Tag", mode_last: "am letzten Tag des Monats",
+    mode_nth: "am N-ten Wochentag", day_f: "Tag (1–31)", month_f: "Monat", nth_last: "letzter",
+    auto_hint: "leer = automatisch aus der Regel",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -104,6 +110,9 @@ const STR = {
     monthly_day: (d) => `le ${d}`, monthly_last: "le dernier jour",
     monthly_nth: (n, wd) => `le ${n}e ${wd}`, monthly_nth_last: (wd) => `le dernier ${wd}`,
     confirm_done: (t) => `Terminer « ${t} » ?`,
+    logged_in: "Utilisateur connecté", mode_day: "à jour fixe", mode_last: "le dernier jour du mois",
+    mode_nth: "le n-ième jour de semaine", day_f: "Jour (1–31)", month_f: "Mois", nth_last: "dernier",
+    auto_hint: "vide = automatique selon la règle",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -137,6 +146,9 @@ const STR = {
     monthly_day: (d) => `el día ${d}`, monthly_last: "el último día",
     monthly_nth: (n, wd) => `el ${n}º ${wd}`, monthly_nth_last: (wd) => `el último ${wd}`,
     confirm_done: (t) => `¿Completar "${t}"?`,
+    logged_in: "Usuario conectado", mode_day: "en un día fijo", mode_last: "el último día del mes",
+    mode_nth: "el n-ésimo día de la semana", day_f: "Día (1–31)", month_f: "Mes", nth_last: "último",
+    auto_hint: "vacío = automático según la regla",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -170,6 +182,9 @@ const STR = {
     monthly_day: (d) => `il giorno ${d}`, monthly_last: "l'ultimo giorno",
     monthly_nth: (n, wd) => `il ${n}º ${wd}`, monthly_nth_last: (wd) => `l'ultimo ${wd}`,
     confirm_done: (t) => `Completare "${t}"?`,
+    logged_in: "Utente connesso", mode_day: "in un giorno fisso", mode_last: "l'ultimo giorno del mese",
+    mode_nth: "l'n-esimo giorno della settimana", day_f: "Giorno (1–31)", month_f: "Mese", nth_last: "ultimo",
+    auto_hint: "vuoto = automatico dalla regola",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -203,6 +218,9 @@ const STR = {
     monthly_day: (d) => `op dag ${d}`, monthly_last: "op de laatste dag",
     monthly_nth: (n, wd) => `op de ${n}e ${wd}`, monthly_nth_last: (wd) => `op de laatste ${wd}`,
     confirm_done: (t) => `"${t}" afronden?`,
+    logged_in: "Ingelogde gebruiker", mode_day: "op een vaste dag", mode_last: "op de laatste dag van de maand",
+    mode_nth: "op de n-de weekdag", day_f: "Dag (1–31)", month_f: "Maand", nth_last: "laatste",
+    auto_hint: "leeg = automatisch volgens regel",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -236,6 +254,9 @@ const STR = {
     monthly_day: (d) => `${d}. dnia`, monthly_last: "ostatniego dnia",
     monthly_nth: (n, wd) => `${n}. ${wd}`, monthly_nth_last: (wd) => `ostatni ${wd}`,
     confirm_done: (t) => `Ukończyć „${t}"?`,
+    logged_in: "Zalogowany użytkownik", mode_day: "w stały dzień", mode_last: "ostatniego dnia miesiąca",
+    mode_nth: "w n-ty dzień tygodnia", day_f: "Dzień (1–31)", month_f: "Miesiąc", nth_last: "ostatni",
+    auto_hint: "puste = automatycznie z reguły",
   },
 };
 
@@ -256,6 +277,58 @@ function remLabel(t, minutes) {
   if (minutes < 60) return t.rem_min(minutes);
   if (minutes < 1440) return t.rem_h(Math.round(minutes / 60));
   return t.rem_d(Math.round(minutes / 1440));
+}
+
+const toIso = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+function nextRuleDate(s) {
+  // First occurrence (>= today) matching a schedule rule — mirrors engine.py.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const clampDay = (y, m, day) => {
+    const last = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(day, last));
+  };
+  const nthDate = (y, m, n, wd) => {
+    if (n === -1) {
+      const last = new Date(y, m + 1, 0);
+      const diff = (((last.getDay() + 6) % 7) - wd + 7) % 7;
+      return new Date(y, m, last.getDate() - diff);
+    }
+    const first = new Date(y, m, 1);
+    const off = (wd - ((first.getDay() + 6) % 7) + 7) % 7;
+    return new Date(y, m, 1 + off + (n - 1) * 7);
+  };
+  if (s.freq === "weekly") {
+    const wds = s.weekdays && s.weekdays.length ? s.weekdays : [(today.getDay() + 6) % 7];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      if (wds.includes((d.getDay() + 6) % 7)) return d;
+    }
+  }
+  if (s.freq === "monthly") {
+    for (let k = 0; k < 24; k++) {
+      const probe = new Date(today.getFullYear(), today.getMonth() + k, 1);
+      const y = probe.getFullYear();
+      const m = probe.getMonth();
+      let d;
+      if (s.nth) d = nthDate(y, m, s.nth.n, s.nth.weekday);
+      else if (s.day === "last") d = new Date(y, m + 1, 0);
+      else d = clampDay(y, m, Number(s.day) || 1);
+      if (d >= today) return d;
+    }
+  }
+  if (s.freq === "yearly") {
+    for (let k = 0; k < 3; k++) {
+      const y = today.getFullYear() + k;
+      const m = (Number(s.month) || today.getMonth() + 1) - 1;
+      const d = s.day === "last" ? new Date(y, m + 1, 0) : clampDay(y, m, Number(s.day) || 1);
+      if (d >= today) return d;
+    }
+  }
+  return today;
 }
 
 function pickLang(hass) {
@@ -773,20 +846,6 @@ class BetterTodoCard extends HTMLElement {
     );
   }
 
-  _monthlyOptions(dateIso) {
-    // Options for how a monthly rule anchors within the month.
-    const t = this.t;
-    const d = dateIso ? new Date(dateIso + "T00:00:00") : new Date();
-    const day = d.getDate();
-    const weekday = (d.getDay() + 6) % 7;
-    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const nth = Math.ceil(day / 7);
-    const opts = [["day", t.monthly_day(day)], ["last", t.monthly_last]];
-    if (nth <= 4) opts.push(["nth", t.monthly_nth(nth, t.wd[weekday])]);
-    if (day > daysInMonth - 7) opts.push(["nth_last", t.monthly_nth_last(t.wd[weekday])]);
-    return opts;
-  }
-
   _openTaskDialog(task) {
     const draft = task
       ? JSON.parse(JSON.stringify(task))
@@ -801,9 +860,14 @@ class BetterTodoCard extends HTMLElement {
     if (!draft.schedule) draft.schedule = { freq: "monthly", interval: 1 };
     if (!draft.interval) draft.interval = { unit: "weeks", value: 1 };
     if (!draft.period) draft.period = "week";
-    draft._monthlyMode = draft.schedule.nth
-      ? (draft.schedule.nth.n === -1 ? "nth_last" : "nth")
-      : (draft.schedule.day === "last" ? "last" : "day");
+    // Editable rule fields, prefilled from an existing schedule.
+    const s = draft.schedule;
+    const now = new Date();
+    draft._mMode = s.nth ? "nth" : (s.day === "last" ? "last" : "day");
+    draft._mDay = s.day && s.day !== "last" ? Number(s.day) : now.getDate();
+    draft._mNthN = s.nth ? Number(s.nth.n) : 1;
+    draft._mNthWd = s.nth ? Number(s.nth.weekday) : (now.getDay() + 6) % 7;
+    draft._yMonth = Number(s.month) || now.getMonth() + 1;
     this._dialog = { kind: "task", draft, isNew: !task };
     this._renderTaskDialog();
   }
@@ -833,11 +897,42 @@ class BetterTodoCard extends HTMLElement {
     } else if (d.type === "scheduled") {
       const freq = d.schedule.freq;
       const weekdaysSel = d.schedule.weekdays || [];
+      const lang = this._hass?.locale?.language || "en";
+      const monthName = (m) => new Date(2000, m - 1, 1).toLocaleDateString(lang, { month: "long" });
+      let ruleFields = "";
+      if (freq === "weekly") {
+        ruleFields = `<div class="field"><div class="wd-row">${t.wd.map((label, i) =>
+          `<label class="wd"><input type="checkbox" data-wd="${i}" ${weekdaysSel.includes(i) ? "checked" : ""}>${esc(label)}</label>`).join("")}</div></div>`;
+      } else if (freq === "monthly") {
+        ruleFields = `
+          <div class="field-row">
+            <select data-f="_mMode" data-rebuild="1">
+              <option value="day" ${d._mMode === "day" ? "selected" : ""}>${esc(t.mode_day)}</option>
+              <option value="last" ${d._mMode === "last" ? "selected" : ""}>${esc(t.mode_last)}</option>
+              <option value="nth" ${d._mMode === "nth" ? "selected" : ""}>${esc(t.mode_nth)}</option>
+            </select>
+            ${d._mMode === "day" ? `<input type="number" min="1" max="31" class="num" data-f="_mDay" value="${esc(d._mDay)}" title="${esc(t.day_f)}">` : ""}
+            ${d._mMode === "nth" ? `
+              <select data-f="_mNthN">
+                ${[1, 2, 3, 4].map((n) => `<option value="${n}" ${d._mNthN === n ? "selected" : ""}>${n}.</option>`).join("")}
+                <option value="-1" ${d._mNthN === -1 ? "selected" : ""}>${esc(t.nth_last)}</option>
+              </select>
+              <select data-f="_mNthWd">
+                ${t.wd.map((label, i) => `<option value="${i}" ${d._mNthWd === i ? "selected" : ""}>${esc(label)}</option>`).join("")}
+              </select>` : ""}
+          </div>`;
+      } else if (freq === "yearly") {
+        ruleFields = `
+          <div class="field-row">
+            <span>${esc(t.day_f)}</span>
+            <input type="number" min="1" max="31" class="num" data-f="_mDay" value="${esc(d._mDay)}">
+            <select data-f="_yMonth">
+              ${Array.from({ length: 12 }, (_, i) => i + 1).map((m) =>
+                `<option value="${m}" ${d._yMonth === m ? "selected" : ""}>${esc(monthName(m))}</option>`).join("")}
+            </select>
+          </div>`;
+      }
       typeFields = `
-        <div class="field-row2">
-          <label class="field grow">${esc(t.first_due_f)}<input type="date" data-f="due_date" data-rebuild="1" value="${esc(d.due_date || "")}" required></label>
-          <label class="field">${esc(t.time_f)}<input type="time" data-f="due_time" value="${esc(d.due_time || "")}"></label>
-        </div>
         <div class="field-row">
           <span>${esc(t.every)}</span>
           <input type="number" min="1" class="num" data-f="schedule.interval" value="${esc(d.schedule.interval || 1)}">
@@ -848,12 +943,11 @@ class BetterTodoCard extends HTMLElement {
             <option value="yearly" ${freq === "yearly" ? "selected" : ""}>${esc(t.freq_yearly)}</option>
           </select>
         </div>
-        ${freq === "weekly" ? `<div class="field"><div class="wd-row">${t.wd.map((label, i) =>
-          `<label class="wd"><input type="checkbox" data-wd="${i}" ${weekdaysSel.includes(i) ? "checked" : ""}>${esc(label)}</label>`).join("")}</div></div>` : ""}
-        ${freq === "monthly" || freq === "yearly" ? `<label class="field">
-          <select data-f="_monthlyMode">${this._monthlyOptions(d.due_date).map(([v, label]) =>
-            `<option value="${v}" ${d._monthlyMode === v ? "selected" : ""}>${esc(label)}</option>`).join("")}</select>
-        </label>` : ""}
+        ${ruleFields}
+        <div class="field-row2">
+          <label class="field grow">${esc(t.first_due_f)} <span class="hint">(${esc(t.auto_hint)})</span><input type="date" data-f="due_date" value="${esc(d.due_date || "")}"></label>
+          <label class="field">${esc(t.time_f)}<input type="time" data-f="due_time" value="${esc(d.due_time || "")}"></label>
+        </div>
         <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${d.lead_days ?? ""}"></label>
         <details class="endblock" ${d.schedule.until || d.schedule.max_occurrences ? "open" : ""}>
           <summary>${esc(t.end_f)}</summary>
@@ -1009,7 +1103,7 @@ class BetterTodoCard extends HTMLElement {
       }
       if (b.dataset.x === "save") {
         if (!(d.title || "").trim()) return;
-        if ((d.type === "scheduled" || d.type === "after_completion") && !d.due_date) return;
+        if (d.type === "after_completion" && !d.due_date) return;
         await this._saveDraft();
       }
       dlg.close();
@@ -1021,20 +1115,22 @@ class BetterTodoCard extends HTMLElement {
   async _saveDraft() {
     const d = JSON.parse(JSON.stringify(this._dialog.draft));
     if (d.type === "scheduled") {
-      const due = new Date((d.due_date || "") + "T00:00:00");
-      const day = due.getDate();
-      const weekday = (due.getDay() + 6) % 7;
+      // Build the rule from the explicit inputs (cron-style, independent of
+      // the optional first-due date).
       const s = d.schedule;
-      s.day = null; s.nth = null;
-      if (s.freq === "monthly" || s.freq === "yearly") {
-        const mode = d._monthlyMode || "day";
-        if (mode === "day") s.day = day;
-        else if (mode === "last") s.day = "last";
-        else if (mode === "nth") s.nth = { n: Math.min(4, Math.ceil(day / 7)), weekday };
-        else if (mode === "nth_last") s.nth = { n: -1, weekday };
+      s.day = null; s.nth = null; s.month = null;
+      if (s.freq === "monthly") {
+        if (d._mMode === "last") s.day = "last";
+        else if (d._mMode === "nth") s.nth = { n: Number(d._mNthN), weekday: Number(d._mNthWd) };
+        else s.day = Math.min(31, Math.max(1, Number(d._mDay) || 1));
+      } else if (s.freq === "yearly") {
+        s.day = Math.min(31, Math.max(1, Number(d._mDay) || 1));
+        s.month = Math.min(12, Math.max(1, Number(d._yMonth) || 1));
+      } else if (s.freq === "weekly" && (!s.weekdays || !s.weekdays.length)) {
+        s.weekdays = [(new Date().getDay() + 6) % 7];
       }
-      if (s.freq === "weekly" && (!s.weekdays || !s.weekdays.length)) s.weekdays = [weekday];
       if (s.freq !== "weekly") s.weekdays = null;
+      if (!d.due_date) d.due_date = toIso(nextRuleDate(s));
       d.interval = null; d.period = null;
     } else if (d.type === "after_completion") {
       d.schedule = null; d.period = null;
@@ -1045,7 +1141,7 @@ class BetterTodoCard extends HTMLElement {
       d.schedule = null; d.interval = null; d.period = null;
     }
     delete d.computed;
-    delete d._monthlyMode;
+    for (const key of Object.keys(d)) if (key.startsWith("_")) delete d[key];
     await this._ws({ type: "better_todo/save_task", task: d });
   }
 
@@ -1097,10 +1193,11 @@ class BetterTodoCard extends HTMLElement {
       .task-title { color: var(--primary-text-color); word-break: break-word; }
       .task.done .task-title { text-decoration: line-through; color: var(--secondary-text-color); }
       .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
-      .badge { font-size: 0.72em; padding: 1px 7px; border-radius: 9px;
+      .badge { font-size: 0.8em; font-weight: 500; padding: 2px 9px; border-radius: 11px;
+        line-height: 1.4; letter-spacing: 0.01em;
         background: var(--secondary-background-color); color: var(--secondary-text-color); white-space: nowrap; }
-      .badge.err { background: color-mix(in srgb, var(--error-color) 18%, transparent); color: var(--error-color); }
-      .badge.warn { background: color-mix(in srgb, var(--warning-color) 22%, transparent); color: var(--warning-color); }
+      .badge.err { background: color-mix(in srgb, var(--error-color) 24%, transparent); color: var(--error-color); }
+      .badge.warn { background: color-mix(in srgb, var(--warning-color) 26%, transparent); color: var(--warning-color); }
       .badge.ok { background: color-mix(in srgb, var(--success-color, #4caf50) 18%, transparent); color: var(--success-color, #4caf50); }
       .badge.person { background: color-mix(in srgb, var(--primary-color) 15%, transparent); color: var(--primary-color); }
       .badge.tag { background: color-mix(in srgb, var(--accent-color, var(--primary-color)) 15%, transparent); color: var(--accent-color, var(--primary-color)); }
@@ -1133,6 +1230,7 @@ class BetterTodoCard extends HTMLElement {
       .field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.9em; color: var(--secondary-text-color); flex-wrap: wrap; }
       .field-row2 { display: flex; gap: 8px; }
       .field-row2 .grow { flex: 1; }
+      .hint { font-size: 0.85em; opacity: 0.8; }
       .field-row .num { width: 64px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--divider-color);
         background: var(--secondary-background-color); color: var(--primary-text-color); }
       .field-row select { padding: 7px 8px; border-radius: 8px; border: 1px solid var(--divider-color);
@@ -1227,7 +1325,7 @@ class BetterTodoCardEditor extends HTMLElement {
         <div class="row">
           <label>${esc(t.assigned_f)}<select data-f="assigned">
             <option value="all" ${(c.assigned || "all") === "all" ? "selected" : ""}>${esc(t.all_persons)}</option>
-            <option value="me" ${c.assigned === "me" ? "selected" : ""}>me</option>
+            <option value="me" ${c.assigned === "me" ? "selected" : ""}>${esc(t.logged_in)}</option>
             ${persons.map((p) => `<option value="${esc(p.entity_id)}" ${c.assigned === p.entity_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
           </select></label>
           <label>${esc(t.sort_f)}<select data-f="sort">
