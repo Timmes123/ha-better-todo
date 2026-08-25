@@ -14,6 +14,7 @@ from homeassistant.components.todo import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
@@ -28,6 +29,7 @@ async def async_setup_entry(
 ) -> None:
     manager: BetterTodoManager = hass.data[DOMAIN]
     known: dict[str, BetterTodoListEntity] = {}
+    registry = er.async_get(hass)
 
     @callback
     def sync_lists() -> None:
@@ -43,8 +45,13 @@ async def async_setup_entry(
             async_add_entities(added)
         for list_id in list(known):
             if list_id not in current:
-                entity = known.pop(list_id)
-                hass.async_create_task(entity.async_remove(force_remove=True))
+                known.pop(list_id)
+        # Deleting the registry entry also removes the live entity; without
+        # this the entry lingers as an unavailable orphan after list deletion.
+        valid = {f"{DOMAIN}_{list_id}_todo" for list_id in current}
+        for reg_entry in er.async_entries_for_config_entry(registry, entry.entry_id):
+            if reg_entry.domain == "todo" and reg_entry.unique_id not in valid:
+                registry.async_remove(reg_entry.entity_id)
 
     sync_lists()
     entry.async_on_unload(async_dispatcher_connect(hass, SIGNAL_UPDATE, sync_lists))
