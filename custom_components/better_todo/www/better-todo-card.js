@@ -22,7 +22,9 @@ const STR = {
     lead_f: "Show days before due (empty = on due date)",
     period_f: "Period", week: "Week", month: "Month", priority_f: "Priority",
     prio_none: "None", prio_low: "Low", prio_med: "Medium", prio_high: "High",
-    assigned_f: "Assigned to", nobody: "Nobody", rotation_f: "Rotate between",
+    assigned_f: "Assigned to", nobody: "Nobody", rotate_f: "Rotate", rotate_start_f: "Start with",
+    rec: (n, u) => n === 1 ? ({ d: "daily", w: "weekly", m: "monthly", y: "yearly" })[u] : `every ${n} ${({ d: "days", w: "weeks", m: "months", y: "years" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "d", w: "wk", m: "mo", y: "yr" })[u]}`,
     subtasks_f: "Subtasks", add_subtask: "Add subtask…", list_name_f: "List name",
     delete_task_confirm: "Delete this task?", no_lists: "No lists yet.", empty: "Nothing to do 🎉",
     edit_list: "Edit list", delete_list_confirm: "Delete this list and all its tasks?",
@@ -62,7 +64,9 @@ const STR = {
     lead_f: "Tage vor Fälligkeit anzeigen (leer = am Stichtag)",
     period_f: "Periode", week: "Woche", month: "Monat", priority_f: "Priorität",
     prio_none: "Keine", prio_low: "Niedrig", prio_med: "Mittel", prio_high: "Hoch",
-    assigned_f: "Zugewiesen an", nobody: "Niemand", rotation_f: "Rotieren zwischen",
+    assigned_f: "Zugewiesen an", nobody: "Niemand", rotate_f: "Rotieren", rotate_start_f: "Beginnen mit",
+    rec: (n, u) => n === 1 ? ({ d: "täglich", w: "wöchentlich", m: "monatlich", y: "jährlich" })[u] : `alle ${n} ${({ d: "Tage", w: "Wochen", m: "Monate", y: "Jahre" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "T", w: "Wo", m: "Mon", y: "J" })[u]}`,
     subtasks_f: "Unteraufgaben", add_subtask: "Unteraufgabe hinzufügen…", list_name_f: "Listenname",
     delete_task_confirm: "Diese Aufgabe löschen?", no_lists: "Noch keine Listen.", empty: "Nichts zu tun 🎉",
     edit_list: "Liste bearbeiten", delete_list_confirm: "Diese Liste und alle ihre Aufgaben löschen?",
@@ -102,7 +106,9 @@ const STR = {
     lead_f: "Afficher x jours avant l'échéance (vide = le jour même)",
     period_f: "Période", week: "Semaine", month: "Mois", priority_f: "Priorité",
     prio_none: "Aucune", prio_low: "Basse", prio_med: "Moyenne", prio_high: "Haute",
-    assigned_f: "Assignée à", nobody: "Personne", rotation_f: "Alterner entre",
+    assigned_f: "Assignée à", nobody: "Personne", rotate_f: "Alterner", rotate_start_f: "Commencer par",
+    rec: (n, u) => n === 1 ? ({ d: "quotidien", w: "hebdomadaire", m: "mensuel", y: "annuel" })[u] : (u === "w" ? `toutes les ${n} semaines` : `tous les ${n} ${({ d: "jours", m: "mois", y: "ans" })[u]}`),
+    rec_in: (n, u) => u === "y" ? `${n} an${n > 1 ? "s" : ""}` : `${n} ${({ d: "j", w: "sem", m: "mois" })[u]}`,
     subtasks_f: "Sous-tâches", add_subtask: "Ajouter une sous-tâche…", list_name_f: "Nom de la liste",
     delete_task_confirm: "Supprimer cette tâche ?", no_lists: "Pas encore de listes.", empty: "Rien à faire 🎉",
     edit_list: "Modifier la liste", delete_list_confirm: "Supprimer cette liste et toutes ses tâches ?",
@@ -142,7 +148,9 @@ const STR = {
     lead_f: "Mostrar días antes del vencimiento (vacío = el mismo día)",
     period_f: "Período", week: "Semana", month: "Mes", priority_f: "Prioridad",
     prio_none: "Ninguna", prio_low: "Baja", prio_med: "Media", prio_high: "Alta",
-    assigned_f: "Asignada a", nobody: "Nadie", rotation_f: "Rotar entre",
+    assigned_f: "Asignada a", nobody: "Nadie", rotate_f: "Rotar", rotate_start_f: "Empezar con",
+    rec: (n, u) => n === 1 ? ({ d: "diaria", w: "semanal", m: "mensual", y: "anual" })[u] : `cada ${n} ${({ d: "días", w: "semanas", m: "meses", y: "años" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "d", w: "sem", m: n > 1 ? "meses" : "mes", y: n > 1 ? "años" : "año" })[u]}`,
     subtasks_f: "Subtareas", add_subtask: "Añadir subtarea…", list_name_f: "Nombre de la lista",
     delete_task_confirm: "¿Eliminar esta tarea?", no_lists: "Aún no hay listas.", empty: "Nada que hacer 🎉",
     edit_list: "Editar lista", delete_list_confirm: "¿Eliminar esta lista y todas sus tareas?",
@@ -182,7 +190,9 @@ const STR = {
     lead_f: "Mostra giorni prima della scadenza (vuoto = il giorno stesso)",
     period_f: "Periodo", week: "Settimana", month: "Mese", priority_f: "Priorità",
     prio_none: "Nessuna", prio_low: "Bassa", prio_med: "Media", prio_high: "Alta",
-    assigned_f: "Assegnata a", nobody: "Nessuno", rotation_f: "Ruota tra",
+    assigned_f: "Assegnata a", nobody: "Nessuno", rotate_f: "Ruota", rotate_start_f: "Inizia con",
+    rec: (n, u) => n === 1 ? ({ d: "giornaliera", w: "settimanale", m: "mensile", y: "annuale" })[u] : `ogni ${n} ${({ d: "giorni", w: "settimane", m: "mesi", y: "anni" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "g", w: "sett", m: n > 1 ? "mesi" : "mese", y: n > 1 ? "anni" : "anno" })[u]}`,
     subtasks_f: "Sottoattività", add_subtask: "Aggiungi sottoattività…", list_name_f: "Nome lista",
     delete_task_confirm: "Eliminare questa attività?", no_lists: "Ancora nessuna lista.", empty: "Niente da fare 🎉",
     edit_list: "Modifica lista", delete_list_confirm: "Eliminare questa lista e tutte le sue attività?",
@@ -222,7 +232,9 @@ const STR = {
     lead_f: "Dagen vóór vervaldatum tonen (leeg = op de dag zelf)",
     period_f: "Periode", week: "Week", month: "Maand", priority_f: "Prioriteit",
     prio_none: "Geen", prio_low: "Laag", prio_med: "Middel", prio_high: "Hoog",
-    assigned_f: "Toegewezen aan", nobody: "Niemand", rotation_f: "Rouleren tussen",
+    assigned_f: "Toegewezen aan", nobody: "Niemand", rotate_f: "Rouleren", rotate_start_f: "Beginnen met",
+    rec: (n, u) => n === 1 ? ({ d: "dagelijks", w: "wekelijks", m: "maandelijks", y: "jaarlijks" })[u] : `elke ${n} ${({ d: "dagen", w: "weken", m: "maanden", y: "jaar" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "d", w: "wk", m: "mnd", y: "jr" })[u]}`,
     subtasks_f: "Subtaken", add_subtask: "Subtaak toevoegen…", list_name_f: "Lijstnaam",
     delete_task_confirm: "Deze taak verwijderen?", no_lists: "Nog geen lijsten.", empty: "Niets te doen 🎉",
     edit_list: "Lijst bewerken", delete_list_confirm: "Deze lijst en al haar taken verwijderen?",
@@ -262,7 +274,9 @@ const STR = {
     lead_f: "Pokaż dni przed terminem (puste = w dniu terminu)",
     period_f: "Okres", week: "Tydzień", month: "Miesiąc", priority_f: "Priorytet",
     prio_none: "Brak", prio_low: "Niski", prio_med: "Średni", prio_high: "Wysoki",
-    assigned_f: "Przypisane do", nobody: "Nikt", rotation_f: "Rotacja między",
+    assigned_f: "Przypisane do", nobody: "Nikt", rotate_f: "Rotacja", rotate_start_f: "Zacznij od",
+    rec: (n, u) => n === 1 ? ({ d: "codziennie", w: "co tydzień", m: "co miesiąc", y: "co rok" })[u] : `co ${n} ${({ d: "dni", w: "tyg.", m: "mies.", y: "lat" })[u]}`,
+    rec_in: (n, u) => `${n} ${({ d: "dni", w: "tyg.", m: "mies.", y: "lat" })[u]}`,
     subtasks_f: "Podzadania", add_subtask: "Dodaj podzadanie…", list_name_f: "Nazwa listy",
     delete_task_confirm: "Usunąć to zadanie?", no_lists: "Brak list.", empty: "Nic do zrobienia 🎉",
     edit_list: "Edytuj listę", delete_list_confirm: "Usunąć tę listę i wszystkie jej zadania?",
@@ -479,6 +493,18 @@ class BetterTodoCard extends HTMLElement {
   _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
+  _recurLabel(task) {
+    const t = this.t;
+    if (task.type === "scheduled") {
+      const s = task.schedule || {};
+      const u = { daily: "d", weekly: "w", monthly: "m", yearly: "y" }[s.freq] || "m";
+      return t.rec(Number(s.interval) || 1, u);
+    }
+    const iv = task.interval || {};
+    const u = { days: "d", weeks: "w", months: "m", years: "y" }[iv.unit] || "w";
+    return `${t.rec_in(Number(iv.value) || 1, u)} ${t.after_done}`;
+  }
+
   _knownTags() {
     // Every tag in the data set, regardless of visibility — used to offer
     // existing tags for reuse in the task dialog.
@@ -506,7 +532,7 @@ class BetterTodoCard extends HTMLElement {
       if (s === "done" && !this._showDone()) continue;
       if (s === "hidden" && !this._showUpcoming()) continue;
       if (s === "upcoming" && !(task.computed.visible || this._showUpcoming())) continue;
-      if (personFilter && personFilter !== "all" && task.assigned_to !== personFilter) continue;
+      if (personFilter && personFilter !== "all" && !(task.assigned_to || []).includes(personFilter)) continue;
       if (this._ui.dueSoon && !this._dueWithin(task, this._config.due_soon_days ?? 7)) continue;
       (task.tags || []).forEach((x) => tags.add(x));
     }
@@ -534,7 +560,7 @@ class BetterTodoCard extends HTMLElement {
         if (s === "upcoming") return t.computed.visible || this._showUpcoming();
         return true;
       })
-      .filter((t) => personFilter === "all" || !personFilter ? true : t.assigned_to === personFilter);
+      .filter((t) => personFilter === "all" || !personFilter ? true : (t.assigned_to || []).includes(personFilter));
     if (tagFilter && tagFilter.length) {
       tasks = tasks.filter((t) => (t.tags || []).some((x) => tagFilter.includes(x)));
     }
@@ -550,8 +576,8 @@ class BetterTodoCard extends HTMLElement {
       if (sort === "priority") return (a.priority || 99) - (b.priority || 99);
       if (sort === "title") return a.title.localeCompare(b.title);
       if (sort === "person") {
-        const pa = this._person(a.assigned_to)?.name || "zzz";
-        const pb = this._person(b.assigned_to)?.name || "zzz";
+        const pa = this._person((a.assigned_to || [])[0])?.name || "zzz";
+        const pb = this._person((b.assigned_to || [])[0])?.name || "zzz";
         return pa.localeCompare(pb);
       }
       const r = (STATE_RANK[a.computed?.state] ?? 3) - (STATE_RANK[b.computed?.state] ?? 3);
@@ -699,13 +725,15 @@ class BetterTodoCard extends HTMLElement {
     if (this._feature("tags")) {
       for (const tag of task.tags || []) badges.push(`<span class="badge tag">#${esc(tag)}</span>`);
     }
-    if (this._feature("assignment") && task.assigned_to) {
-      const p = this._person(task.assigned_to);
-      if (p) badges.push(`<span class="badge person">${esc(p.name)}${task.rotation ? " ⟳" : ""}</span>`);
+    if (this._feature("assignment")) {
+      for (const pid of task.assigned_to || []) {
+        const p = this._person(pid);
+        if (p) badges.push(`<span class="badge person">${esc(p.name)}${task.rotation ? " ⟳" : ""}</span>`);
+      }
     }
     if ((task.reminders || []).length) badges.push(`<span class="badge dim">🔔</span>`);
     const recurring = task.type === "scheduled" || task.type === "after_completion";
-    if (recurring) badges.push(`<span class="badge dim">🔁</span>`);
+    if (recurring) badges.push(`<span class="badge dim">🔁 ${esc(this._recurLabel(task))}</span>`);
 
     const draggable = this._sortMode() === "manual" && !doneish;
     return `<div class="task ${doneish ? "done" : ""} ${s === "overdue" ? "overdue" : ""}" data-id="${esc(task.id)}" data-list="${esc(task.list_id)}" ${draggable ? 'draggable="true"' : ""}>
@@ -982,10 +1010,18 @@ class BetterTodoCard extends HTMLElement {
           list_id: this._activeLists()[0]?.id || this._data.lists[0]?.id,
           title: "", notes: "", type: "simple", due_date: null, due_time: null,
           visible_from: null, lead_days: null, priority: null, subtasks: [],
-          assigned_to: null, rotation: null, tags: [], reminders: [],
+          assigned_to: [], rotation: null, tags: [], reminders: [],
           schedule: { freq: "monthly", interval: 1 }, interval: { unit: "weeks", value: 1 },
           period: "week",
         };
+    if (!Array.isArray(draft.assigned_to)) draft.assigned_to = draft.assigned_to ? [draft.assigned_to] : [];
+    // Working state for the assignment UI: _persons is the selected pool
+    // (with rotation, assigned_to holds only the current person).
+    draft._persons = draft.rotation?.persons ? [...draft.rotation.persons] : [...draft.assigned_to];
+    draft._rotate = !!(draft.rotation && (draft.rotation.persons || []).length);
+    draft._rotate_start = draft._rotate
+      ? draft.rotation.persons[draft.rotation.index || 0] || draft._persons[0]
+      : null;
     if (!draft.schedule) draft.schedule = { freq: "monthly", interval: 1 };
     if (!draft.interval) draft.interval = { unit: "weeks", value: 1 };
     if (!draft.period) draft.period = "week";
@@ -1012,7 +1048,6 @@ class BetterTodoCard extends HTMLElement {
       ["after_completion", t.type_after],
       ...(this._feature("periods") ? [["period", t.type_period]] : []),
     ];
-    const rotationOn = !!(d.rotation && d.rotation.persons && d.rotation.persons.length);
     const hasDue = d.type !== "period";
 
     let typeFields = "";
@@ -1144,14 +1179,16 @@ class BetterTodoCard extends HTMLElement {
           <option value="2" ${d.priority === 2 ? "selected" : ""}>${esc(t.prio_med)}</option>
           <option value="3" ${d.priority === 3 ? "selected" : ""}>${esc(t.prio_low)}</option>
         </select></label>` : ""}
-      ${this._feature("assignment") && persons.length ? `<label class="field">${esc(t.assigned_f)}
-        <select data-f="assigned_to" ${rotationOn ? "disabled" : ""}>
-          <option value="">${esc(t.nobody)}</option>
-          ${persons.map((p) => `<option value="${esc(p.entity_id)}" ${d.assigned_to === p.entity_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
-        </select></label>` : ""}
-      ${this._feature("rotation") && d.type !== "simple" && persons.length ? `<div class="field">
-        <span>${esc(t.rotation_f)}</span>
-        <div class="rot-list">${persons.map((p) => `<label class="rot"><input type="checkbox" data-rot="${esc(p.entity_id)}" ${rotationOn && d.rotation.persons.includes(p.entity_id) ? "checked" : ""}> ${esc(p.name)}</label>`).join("")}</div>
+      ${this._feature("assignment") && persons.length ? `<div class="field">
+        <span>${esc(t.assigned_f)}</span>
+        <div class="chips tagpick">${persons.map((p) => `<button type="button" class="chip tagchip ${(d._persons || []).includes(p.entity_id) ? "on" : ""}" data-personpick="${esc(p.entity_id)}">${esc(p.name)}</button>`).join("")}</div>
+      </div>` : ""}
+      ${this._feature("rotation") && d.type !== "simple" && (d._persons || []).length >= 2 ? `<div class="field">
+        <label class="rot"><input type="checkbox" data-x="rotate" ${d._rotate ? "checked" : ""}> ${esc(t.rotate_f)}</label>
+        ${d._rotate ? `<label class="field">${esc(t.rotate_start_f)}
+          <select data-f="_rotate_start">
+            ${d._persons.map((pid) => `<option value="${esc(pid)}" ${(d._rotate_start || d._persons[0]) === pid ? "selected" : ""}>${esc(this._person(pid)?.name || pid)}</option>`).join("")}
+          </select></label>` : ""}
       </div>` : ""}
       ${this._feature("subtasks") ? `<div class="field">
         <span>${esc(t.subtasks_f)}</span>
@@ -1181,7 +1218,6 @@ class BetterTodoCard extends HTMLElement {
       if (e.target.type === "number") v = v === "" ? null : Number(v);
       if (f === "priority") v = v === "" ? null : Number(v);
       if (["due_date", "visible_from", "due_time", "schedule.until"].includes(f) && v === "") v = null;
-      if (f === "assigned_to" && v === "") v = null;
       if (f === "_tags") {
         d.tags = v.split(",").map((x) => x.trim()).filter(Boolean);
         return;
@@ -1190,13 +1226,10 @@ class BetterTodoCard extends HTMLElement {
       if (e.target.dataset.rebuild) this._renderTaskDialog();
     });
     dlg.addEventListener("change", (e) => {
-      if (e.target.dataset.rot !== undefined && e.target.dataset.rot !== "") {
-        const persons = new Set(d.rotation?.persons || []);
-        if (e.target.checked) persons.add(e.target.dataset.rot);
-        else persons.delete(e.target.dataset.rot);
-        d.rotation = persons.size ? { persons: [...persons], index: d.rotation?.index || 0 } : null;
-        const sel = dlg.querySelector('[data-f="assigned_to"]');
-        if (sel) sel.disabled = !!d.rotation;
+      if (e.target.dataset.x === "rotate") {
+        d._rotate = e.target.checked;
+        if (d._rotate && !d._rotate_start) d._rotate_start = d._persons[0];
+        this._renderTaskDialog();
       }
       if (e.target.dataset.wd !== undefined) {
         const wds = new Set(d.schedule.weekdays || []);
@@ -1218,6 +1251,17 @@ class BetterTodoCard extends HTMLElement {
         const cur = new Set(d.tags || []);
         if (cur.has(tag)) cur.delete(tag); else cur.add(tag);
         d.tags = [...cur];
+        this._renderTaskDialog();
+        return;
+      }
+      const personpick = e.target.closest("[data-personpick]");
+      if (personpick) {
+        const pid = personpick.dataset.personpick;
+        const cur = new Set(d._persons || []);
+        if (cur.has(pid)) cur.delete(pid); else cur.add(pid);
+        d._persons = [...cur];
+        if (d._persons.length < 2) d._rotate = false;
+        if (d._rotate_start && !d._persons.includes(d._rotate_start)) d._rotate_start = d._persons[0] || null;
         this._renderTaskDialog();
         return;
       }
@@ -1285,6 +1329,17 @@ class BetterTodoCard extends HTMLElement {
       d.schedule = null; d.interval = null; d.period = null;
     }
     delete d.computed;
+    // Assignment: with rotation the pool lives in rotation.persons and
+    // assigned_to holds only the current person; without it the selection
+    // is the assignment itself.
+    if (d._rotate && d.type !== "simple" && (d._persons || []).length >= 2) {
+      const start = d._persons.includes(d._rotate_start) ? d._rotate_start : d._persons[0];
+      d.rotation = { persons: [...d._persons], index: d._persons.indexOf(start) };
+      d.assigned_to = [start];
+    } else {
+      d.rotation = null;
+      d.assigned_to = [...(d._persons || [])];
+    }
     for (const key of Object.keys(d)) if (key.startsWith("_")) delete d[key];
     await this._ws({ type: "better_todo/save_task", task: d });
   }

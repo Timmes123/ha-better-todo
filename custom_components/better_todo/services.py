@@ -27,7 +27,7 @@ ADD_TASK_SCHEMA = vol.Schema(
         vol.Optional("type", default=TASK_TYPE_SIMPLE): vol.In(TASK_TYPES),
         vol.Optional("due_date"): cv.string,
         vol.Optional("visible_from"): cv.string,
-        vol.Optional("assigned_to"): cv.string,
+        vol.Optional("assigned_to"): vol.Any(cv.string, [cv.string]),
         vol.Optional("schedule"): dict,
         vol.Optional("interval"): dict,
         vol.Optional("period"): vol.In(["week", "month"]),

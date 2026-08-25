@@ -98,11 +98,19 @@ class BetterTodoManager:
         return task
 
     def normalize(self) -> bool:
-        """Roll period tasks over into the current period. Returns True on change."""
+        """Roll period tasks over into the current period and migrate legacy
+        fields (assigned_to: str -> list). Returns True on change."""
         today = self._today()
         changed = False
         for task in self.data["tasks"]:
             if task.get("type") == TASK_TYPE_PERIOD and engine.rollover(task, today):
+                changed = True
+            assigned = task.get("assigned_to")
+            if isinstance(assigned, str):
+                task["assigned_to"] = [assigned] if assigned else []
+                changed = True
+            elif assigned is None:
+                task["assigned_to"] = []
                 changed = True
         return changed
 
@@ -222,11 +230,20 @@ class BetterTodoManager:
             for st in (task.get("subtasks") or [])
             if (st.get("title") or "").strip()
         ]
+        assigned = task.get("assigned_to")
+        if isinstance(assigned, str):
+            assigned = [assigned]
+        seen: set[str] = set()
+        task["assigned_to"] = [
+            p for p in (str(p).strip() for p in (assigned or []))
+            if p and not (p in seen or seen.add(p))
+        ]
         rotation = task.get("rotation")
         if rotation and rotation.get("persons"):
             rotation["index"] = int(rotation.get("index") or 0) % len(rotation["persons"])
-            if not task.get("assigned_to"):
-                task["assigned_to"] = rotation["persons"][rotation["index"]]
+            # With rotation active the task is assigned to exactly the
+            # current person in the pool.
+            task["assigned_to"] = [rotation["persons"][rotation["index"]]]
         else:
             task["rotation"] = None
 
@@ -255,7 +272,7 @@ class BetterTodoManager:
             "completed_at": None,
             "priority": None,
             "subtasks": [],
-            "assigned_to": None,
+            "assigned_to": [],
             "rotation": None,
             "visible_from": None,
             "due_date": None,
@@ -397,7 +414,7 @@ class BetterTodoManager:
         rotation = task.get("rotation")
         if rotation and rotation.get("persons"):
             rotation["index"] = (int(rotation.get("index") or 0) + 1) % len(rotation["persons"])
-            task["assigned_to"] = rotation["persons"][rotation["index"]]
+            task["assigned_to"] = [rotation["persons"][rotation["index"]]]
 
     @staticmethod
     def _reset_subtasks(task: dict) -> None:
