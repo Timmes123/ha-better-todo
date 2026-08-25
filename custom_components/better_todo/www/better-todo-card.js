@@ -276,6 +276,14 @@ class BetterTodoCard extends HTMLElement {
     };
     this._dialog = null;
     this._drag = null;
+    // Delegated listeners are attached ONCE here — the shadow root element
+    // survives innerHTML swaps, so attaching them per render would stack
+    // duplicate handlers and eventually freeze the page.
+    this.shadowRoot.addEventListener("click", (e) => this._onClick(e));
+    this.shadowRoot.addEventListener("change", (e) => this._onChange(e));
+    this.shadowRoot.addEventListener("dragstart", (e) => this._onDragStart(e));
+    this.shadowRoot.addEventListener("dragover", (e) => this._onDragOver(e));
+    this.shadowRoot.addEventListener("drop", (e) => this._onDrop(e));
   }
 
   setConfig(config) {
@@ -312,6 +320,8 @@ class BetterTodoCard extends HTMLElement {
   get t() { return pickLang(this._hass); }
 
   async _connect() {
+    if (this._connecting) return;
+    this._connecting = true;
     try {
       this._data = await this._hass.callWS({ type: "better_todo/get_data" });
       this._error = null;
@@ -322,6 +332,7 @@ class BetterTodoCard extends HTMLElement {
     } catch (e) {
       this._error = e;
     }
+    this._connecting = false;
     this._render();
   }
 
@@ -442,11 +453,6 @@ class BetterTodoCard extends HTMLElement {
         ${this._renderHeader()}
         <div class="body" ${maxH}>${body}</div>
       </ha-card>`;
-    this.shadowRoot.addEventListener("click", (e) => this._onClick(e));
-    this.shadowRoot.addEventListener("change", (e) => this._onChange(e));
-    this.shadowRoot.addEventListener("dragstart", (e) => this._onDragStart(e));
-    this.shadowRoot.addEventListener("dragover", (e) => this._onDragOver(e));
-    this.shadowRoot.addEventListener("drop", (e) => this._onDrop(e));
   }
 
   _renderHeader() {
@@ -1161,6 +1167,8 @@ class BetterTodoCardEditor extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._config = {};
     this._data = null;
+    // Attached once — never inside _render (see card constructor note).
+    this.shadowRoot.addEventListener("input", (e) => this._onInput(e));
   }
 
   setConfig(config) {
@@ -1235,7 +1243,6 @@ class BetterTodoCardEditor extends HTMLElement {
           ${toggles.map(([key, label, val]) => `<label><input type="checkbox" data-f="${key}" ${val ? "checked" : ""}> ${esc(label)}</label>`).join("")}
         </div>
       </div>`;
-    this.shadowRoot.addEventListener("input", (e) => this._onInput(e));
   }
 
   _onInput(e) {
