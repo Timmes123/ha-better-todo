@@ -1,0 +1,11 @@
+{
+  "domain": "better_todo",
+  "name": "Better ToDo",
+  "codeowners": ["@Timmes123"],
+  "config_flow": true,
+  "documentation": "https://github.com/Timmes123/ha-better-todo",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/Timmes123/ha-better-todo/issues",
+  "version": "0.1.0"
+}
