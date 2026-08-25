@@ -14,10 +14,16 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 
+from homeassistant.helpers.selector import TimeSelector
+
 from .const import (
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
+    CONF_SUMMARY_ENABLED,
+    CONF_SUMMARY_PERSISTENT,
+    CONF_SUMMARY_TIME,
     DEFAULT_FEATURES,
+    DEFAULT_SUMMARY_TIME,
     DOMAIN,
     NOTIFY_NONE,
 )
@@ -92,10 +98,18 @@ class BetterTodoOptionsFlow(OptionsFlow):
                     CONF_NOTIFY_UNASSIGNED_ALL: bool(
                         user_input.get(CONF_NOTIFY_UNASSIGNED_ALL)
                     ),
+                    CONF_SUMMARY_ENABLED: bool(user_input.get(CONF_SUMMARY_ENABLED)),
+                    CONF_SUMMARY_TIME: user_input.get(
+                        CONF_SUMMARY_TIME, DEFAULT_SUMMARY_TIME
+                    ),
+                    CONF_SUMMARY_PERSISTENT: bool(
+                        user_input.get(CONF_SUMMARY_PERSISTENT)
+                    ),
                 }
             )
+        options = self.config_entry.options
         services = sorted(self.hass.services.async_services().get("notify", {}))
-        current = self.config_entry.options.get(CONF_NOTIFY_TARGETS) or {}
+        current = options.get(CONF_NOTIFY_TARGETS) or {}
         schema_dict: dict[Any, Any] = {
             vol.Optional(
                 state.entity_id,
@@ -106,9 +120,25 @@ class BetterTodoOptionsFlow(OptionsFlow):
         schema_dict[
             vol.Optional(
                 CONF_NOTIFY_UNASSIGNED_ALL,
-                default=bool(
-                    self.config_entry.options.get(CONF_NOTIFY_UNASSIGNED_ALL)
-                ),
+                default=bool(options.get(CONF_NOTIFY_UNASSIGNED_ALL)),
+            )
+        ] = bool
+        schema_dict[
+            vol.Optional(
+                CONF_SUMMARY_ENABLED,
+                default=bool(options.get(CONF_SUMMARY_ENABLED)),
+            )
+        ] = bool
+        schema_dict[
+            vol.Optional(
+                CONF_SUMMARY_TIME,
+                default=options.get(CONF_SUMMARY_TIME, DEFAULT_SUMMARY_TIME),
+            )
+        ] = TimeSelector()
+        schema_dict[
+            vol.Optional(
+                CONF_SUMMARY_PERSISTENT,
+                default=bool(options.get(CONF_SUMMARY_PERSISTENT)),
             )
         ] = bool
         return self.async_show_form(

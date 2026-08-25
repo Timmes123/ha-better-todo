@@ -34,10 +34,13 @@
         }
       },
       "notifications": {
-        "title": "Erinnerungs-Benachrichtigungen",
-        "description": "Benachrichtigungsdienst je Person. Erinnerungen an Aufgaben werden an die zugewiesenen Personen geschickt. Der Strich bedeutet: keine Benachrichtigung für diese Person.",
+        "title": "Benachrichtigungen",
+        "description": "Benachrichtigungsdienst je Person. Erinnerungen und die tägliche Zusammenfassung gehen an die zugewiesenen Personen. Der Strich bedeutet: keine Benachrichtigung für diese Person. Wochen- und Monatsaufgaben erscheinen in der Zusammenfassung erst kurz vor Ende ihres Zeitraums.",
         "data": {
-          "notify_unassigned_all": "Aufgaben ohne Zuweisung an alle konfigurierten Dienste melden"
+          "notify_unassigned_all": "Aufgaben ohne Zuweisung an alle konfigurierten Personen melden",
+          "summary_enabled": "Tägliche Zusammenfassung offener Aufgaben senden",
+          "summary_time": "Uhrzeit der Zusammenfassung",
+          "summary_persistent": "Zusammenfassung auch in der HA-Benachrichtigungszentrale anzeigen"
         }
       }
     }

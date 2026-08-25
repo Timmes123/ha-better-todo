@@ -14,11 +14,17 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from . import engine
+from homeassistant.components import persistent_notification
+
 from .const import (
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
+    CONF_SUMMARY_ENABLED,
+    CONF_SUMMARY_PERSISTENT,
+    CONF_SUMMARY_TIME,
     DEFAULT_FEATURES,
     DEFAULT_REMINDER_TIME,
+    DEFAULT_SUMMARY_TIME,
     DOMAIN,
     EVENT_COMPLETED,
     EVENT_CREATED,
@@ -27,6 +33,8 @@ from .const import (
     EVENT_REMINDER,
     MAX_HISTORY,
     SIGNAL_UPDATE,
+    SUMMARY_NOTIFICATION_ID,
+    SUMMARY_PERIOD_LEAD,
     TASK_TYPE_AFTER_COMPLETION,
     TASK_TYPE_PERIOD,
     TASK_TYPE_SCHEDULED,
@@ -53,6 +61,8 @@ class BetterTodoManager:
         self._store: Store = Store(hass, STORAGE_VERSION, DOMAIN)
         self.data: dict[str, Any] = {"lists": [], "tasks": [], "history": []}
         self._fired_reminders: set[tuple[str, int, str]] = set()
+        self._summary_sent: date | None = None
+        self._persistent_active = False
 
     # ------------------------------------------------------------- storage
 
@@ -79,6 +89,7 @@ class BetterTodoManager:
     def _save_notify(self) -> None:
         self._schedule_save()
         self.notify()
+        self._refresh_persistent()
 
     # ------------------------------------------------------------- helpers
 
@@ -459,6 +470,7 @@ class BetterTodoManager:
         """Fire pending task reminders (checked once per minute)."""
         now = now or dt_util.now()
         today = now.date()
+        await self._async_maybe_send_summary(now)
         for task in self.data["tasks"]:
             reminders = task.get("reminders") or []
             if not reminders:
@@ -530,6 +542,121 @@ class BetterTodoManager:
                 )
             except Exception:  # noqa: BLE001 - one broken target must not stop the rest
                 _LOGGER.exception("Could not send reminder via notify.%s", service)
+
+    # --------------------------------------------------- daily summary
+
+    def _summary_entries(self, today: date) -> list[tuple[dict, str, dict]]:
+        """Open tasks for the daily summary: due/overdue tasks always, period
+        tasks only once their period is about to end."""
+        entries: list[tuple[dict, str, dict]] = []
+        for task in self.data["tasks"]:
+            computed = engine.compute_state(task, today)
+            state = computed.get("state")
+            if state in ("due", "overdue"):
+                entries.append((task, state, computed))
+            elif state == "period_open":
+                period = task.get("period") or "week"
+                start = engine.parse_date(task.get("period_start")) or engine.period_start(period, today)
+                days_left = (engine.next_period(period, start) - today).days
+                if days_left <= SUMMARY_PERIOD_LEAD.get(period, 2):
+                    entries.append((task, "period", computed))
+        return entries
+
+    def _summary_line(self, task: dict, kind: str, computed: dict, lang_de: bool) -> str:
+        if kind == "overdue":
+            n = int(computed.get("due_count") or 1)
+            if n > 1:
+                suffix = f"{n}× fällig" if lang_de else f"{n}× due"
+            else:
+                suffix = "überfällig" if lang_de else "overdue"
+        elif kind == "due":
+            due_time = task.get("due_time")
+            if due_time:
+                suffix = f"heute {due_time} Uhr" if lang_de else f"today {due_time}"
+            else:
+                suffix = "heute fällig" if lang_de else "due today"
+        else:
+            week = (task.get("period") or "week") == "week"
+            if lang_de:
+                suffix = "noch diese Woche" if week else "noch diesen Monat"
+            else:
+                suffix = "this week" if week else "this month"
+        return f"- {task['title']} ({suffix})"
+
+    def _lang_de(self) -> bool:
+        return (self.hass.config.language or "en").lower().startswith("de")
+
+    async def _async_maybe_send_summary(self, now) -> None:
+        options = self.entry.options
+        if not options.get(CONF_SUMMARY_ENABLED):
+            return
+        time_str = options.get(CONF_SUMMARY_TIME) or DEFAULT_SUMMARY_TIME
+        try:
+            hour, minute = (int(x) for x in time_str.split(":")[:2])
+        except (ValueError, TypeError):
+            hour, minute = 8, 0
+        fire_at = datetime.combine(now.date(), time(hour, minute), tzinfo=now.tzinfo)
+        if not (fire_at <= now <= fire_at + timedelta(minutes=10)):
+            return
+        if self._summary_sent == now.date():
+            return
+        self._summary_sent = now.date()
+        await self._async_send_summary(now.date())
+
+    async def _async_send_summary(self, today: date) -> None:
+        options = self.entry.options
+        entries = self._summary_entries(today)
+        lang_de = self._lang_de()
+        targets = options.get(CONF_NOTIFY_TARGETS) or {}
+        per_service: dict[str, list[str]] = {}
+        for task, kind, computed in entries:
+            line = self._summary_line(task, kind, computed, lang_de)
+            assigned = task.get("assigned_to") or []
+            services = [targets[p] for p in assigned if targets.get(p)]
+            if not assigned and options.get(CONF_NOTIFY_UNASSIGNED_ALL):
+                services = list(targets.values())
+            for service in dict.fromkeys(services):
+                per_service.setdefault(service, []).append(line)
+        for service, lines in per_service.items():
+            n = len(lines)
+            if lang_de:
+                title = "1 offene Aufgabe" if n == 1 else f"{n} offene Aufgaben"
+            else:
+                title = "1 open task" if n == 1 else f"{n} open tasks"
+            try:
+                await self.hass.services.async_call(
+                    "notify", service, {"title": title, "message": "\n".join(lines)}
+                )
+            except Exception:  # noqa: BLE001 - one broken target must not stop the rest
+                _LOGGER.exception("Could not send summary via notify.%s", service)
+        self._refresh_persistent(force=True)
+
+    @callback
+    def _refresh_persistent(self, force: bool = False) -> None:
+        """Keep the HA notification-center summary in sync with the data.
+
+        Created/replaced at summary time (force=True); afterwards updated on
+        every data change and dismissed once nothing is open any more.
+        """
+        options = self.entry.options
+        if not (options.get(CONF_SUMMARY_ENABLED) and options.get(CONF_SUMMARY_PERSISTENT)):
+            return
+        if not self._persistent_active and not force:
+            return
+        lang_de = self._lang_de()
+        entries = self._summary_entries(self._today())
+        if not entries:
+            persistent_notification.async_dismiss(self.hass, SUMMARY_NOTIFICATION_ID)
+            self._persistent_active = False
+            return
+        lines = [self._summary_line(t, k, c, lang_de) for t, k, c in entries]
+        persistent_notification.async_create(
+            self.hass,
+            "\n".join(lines),
+            title="Offene Aufgaben" if lang_de else "Open tasks",
+            notification_id=SUMMARY_NOTIFICATION_ID,
+        )
+        self._persistent_active = True
 
     async def async_daily_tick(self, _now=None) -> None:
         """Midnight housekeeping: roll periods, fire due/overdue events."""

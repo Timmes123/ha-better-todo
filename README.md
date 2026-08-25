@@ -12,7 +12,7 @@ A task manager for Home Assistant with a custom dashboard card — built for
 **recurring tasks that actually work the way you need them to**.
 
 <p align="center">
-  <img src="images/card-overview.png" width="380" alt="Better ToDo card overview">
+  <img src="images/card-overview.png" width="400" alt="Better ToDo card overview">
 </p>
 
 ## Why another todo integration?
@@ -36,23 +36,29 @@ a fixed schedule. Real life needs more:
 - **Cron-style schedules**: every N days/weeks/months/years, multiple weekdays per week,
   a fixed day of month (1–31), the *last* day of the month, the *nth* or *last* weekday
   ("2nd Saturday", "last Wednesday"), yearly on a fixed date — plus an optional end date
-  or maximum number of repetitions.
-- **Due times & reminders**: up to 5 reminders per task, fired as Home Assistant events —
-  hook up an automation for push notifications (example below).
-- **Multiple lists**, **tags** with filter chips, subtasks, optional priorities.
-- **Assignment & rotation** over Home Assistant `person` entities; a "logged-in user"
-  filter gives every family member their own view without per-user dashboards.
+  or maximum number of repetitions. The repeat badge on every task shows its cadence
+  ("weekly", "every 2 weeks", "2 wk after completion").
+- **Notifications out of the box**: per-task reminders (up to 5) and a daily summary of
+  open tasks are **pushed by the integration itself** — configure once, no automations
+  needed. See [Notifications](#notifications) for the exact mechanics.
+- **Assign tasks to one or more persons** (HA `person` entities). Everyone assigned sees
+  the task in their personal view; completing it completes it for all. Or check
+  **Rotate** and the task belongs to exactly one person at a time, moving on after every
+  completion. A "logged-in user" filter gives every family member their own view without
+  per-user dashboards.
+- **Multiple lists** with in-card management (create, rename, delete), **tags** with
+  filter chips and a tap-to-reuse tag picker, subtasks, optional priorities.
 - **Standard `todo` entity and `calendar` entity per list** — your tasks show up in the
   Companion App, on watches, in voice assistants and in the HA calendar (recurring tasks
   are expanded onto every occurrence). Better ToDo's own storage stays the single source
-  of truth.
+  of truth; deleting a list cleans up its entities.
 - **Services and events** for automations, plus a completion history from day one.
 - **Feature toggles**: switch off everything you don't need (priorities, subtasks,
   assignment, rotation, habit tasks, tags, mirror/calendar entities) — from "dumb list"
   to full feature set.
 - **Custom dashboard card** shipped with the integration (auto-registered, no extra
-  install): filters, sorting, drag & drop, in-card menu, visual config editor, 7 languages
-  (EN/DE/FR/ES/IT/NL/PL), fully theme-aware.
+  install): filters, sorting, drag & drop, card menu with bulk actions, visual config
+  editor, 7 languages (EN/DE/FR/ES/IT/NL/PL), fully theme-aware.
 
 ## Installation
 
@@ -79,9 +85,23 @@ restart. HACS is strongly recommended so you get updates.
 
 ## The card
 
-| Filters & sorting | New-task dialog |
+| Card menu | Filters |
 |:---:|:---:|
-| <img src="images/card-filters.png" width="340" alt="Card with open filter menu"> | <img src="images/task-dialog.png" width="340" alt="Task dialog with cron-style recurrence"> |
+| <img src="images/card-menu.png" width="340" alt="Card menu with Show filters, Edit lists and Clear completed"> | <img src="images/card-filters.png" width="340" alt="Filter bar with list chips, tag chips, person filter and sorting"> |
+
+| Task dialog | List management |
+|:---:|:---:|
+| <img src="images/task-dialog.png" width="340" alt="Task dialog with schedule, reminders, tag picker and rotating assignment"> | <img src="images/list-manager.png" width="340" alt="Edit lists dialog"> |
+
+The **☰ menu** offers *Show filters* (list/tag/person filter, sorting, view toggles),
+*Edit lists* (create, rename, delete — deleting a list removes its tasks and entities),
+*Clear completed* (removes all completed tasks in the currently visible lists, with
+confirmation) and *Reset filters* (shown while any filter deviates from the defaults).
+
+In the task dialog, **existing tags appear as tappable chips** below the tags field —
+no retyping, and a typo stands out immediately as an unexpected extra chip. Assignment
+works the same way: tap the persons, and with 2+ selected on a recurring task a
+**Rotate** checkbox appears with a **Start with** choice.
 
 Minimal configuration:
 
@@ -125,14 +145,59 @@ configure it without YAML.
 | `lists` | all | List names or ids to show |
 | `assigned` | `all` | `all`, `me` (logged-in user) or a `person.*` entity id |
 | `sort` | `smart` | `smart`, `manual` (drag & drop), `due`, `priority`, `title`, `person` |
-| `show_menu` | `true` | In-card filter menu (lists, tags, person, sort, toggles) |
-| `show_add` | `true` | "+" button to add tasks/lists |
+| `show_menu` | `true` | Card menu (filters, list management, bulk actions) |
+| `show_add` | `true` | "+" button to add tasks |
 | `show_completed` | `false` | Show completed tasks |
 | `show_upcoming` | `false` | Show upcoming/hidden tasks |
 | `due_soon_days` | `7` | Window for the "due soon" filter |
 | `compact` | `false` | Denser rows |
 | `max_height` | – | Max card height in px (scrolls inside) |
 | `confirm_complete` | `false` | Ask before completing a task |
+
+## Notifications
+
+Better ToDo sends notifications **itself** — no automations required. Configure them
+once under *Settings → Devices & Services → Better ToDo → Configure → Notifications*:
+
+- Pick a **notify service per person** (e.g. the Companion App device,
+  `notify.mobile_app_…`). The dash means "no notifications for this person".
+- Optionally let **tasks without an assignment** go to every configured person.
+
+Two independent mechanisms build on that mapping:
+
+### Per-task reminders (🔔)
+
+Set up to 5 reminders per task in the task dialog: *at due time*, *X min/h/days
+before*. At the configured moment the assigned persons get a push (with rotation, only
+the person whose turn it is). Tasks without a due **time** use 09:00 as the reference
+point. Reminders are for tasks where the exact moment matters — "trash pickup at 18:00,
+remind me 1 h before".
+
+### Daily summary
+
+Enable *Send a daily summary of open tasks* and pick a time (default 08:00). Every day
+at that time, each person receives one push listing **their** open tasks:
+
+- **Due and overdue tasks** are always included — an overdue task keeps appearing every
+  day (with its "3× due" counter) until it is completed, so nothing silently rots.
+- **Weekly/monthly habit tasks** are only included when their period is about to run
+  out: weekly tasks in the **last 2 days of the week**, monthly tasks in the **last 5
+  days of the month** — and only if they are still open. So "ride the bike once a week"
+  stays quiet from Monday to Friday and only shows up on the weekend if you haven't
+  done it yet. Completed or skipped periods never appear.
+- **No open tasks → no message.** The summary never spams an empty list.
+
+### HA notification center
+
+Optionally the summary is also posted to Home Assistant's notification center (the 🔔
+bell in the sidebar) — visible to everyone on the dashboard, even without the Companion
+App. It is refreshed at summary time, updates as tasks are completed, and disappears
+entirely once nothing is open any more.
+
+### Build your own instead
+
+Everything above also fires as plain HA events (see below), so you can ignore the
+built-in notifications and wire up your own automations if you prefer.
 
 ## Automations
 
@@ -171,10 +236,11 @@ Also available: `better_todo.complete_task`, `better_todo.skip_task`,
 | `better_todo_item_overdue` | a task is overdue (daily at midnight) |
 | `better_todo_item_reminder` | a reminder fires (event data includes `offset_minutes`) |
 
-### Push notifications for reminders
+Event data includes `task_id`, `title`, `list_id` and `assigned_to` (a **list** of
+person entity ids — use `in`, not `==`, when filtering).
 
 ```yaml
-alias: ToDo reminders to my phone
+alias: ToDo reminders, custom style
 triggers:
   - trigger: event
     event_type: better_todo_item_reminder
@@ -187,6 +253,23 @@ actions:
         at {{ trigger.event.data.due_time }}{% endif %}
 ```
 
+## How the mechanics work
+
+- **Overdue never stacks.** A monthly task you ignored for three months is still *one*
+  task, showing "3× due". Completing it once advances one occurrence ("2× due" left);
+  "complete all" clears the backlog. The schedule anchor never drifts: schedule-based
+  tasks stay locked to their rule, after-completion tasks re-anchor to the day you
+  actually completed them.
+- **Streaks are honest.** Weekly/monthly tasks track a streak of completed periods. A
+  missed period resets the streak and counts up "missed"; deliberately **skipping** a
+  period freezes the streak instead — skipping is a decision, not a failure.
+- **Multi-assignment is shared.** A task assigned to several persons is one shared task:
+  everyone sees it, the first completion completes it for all. Rotation is the opposite
+  contract: exactly one owner at a time, handed on after each completion — "Start with"
+  picks who begins.
+- **Lists are cheap.** Create, rename and delete them from the card menu. Deleting a
+  list deletes its tasks and removes the mirrored `todo`/`calendar` entities cleanly.
+
 ## Data & backups
 
 All data lives in Home Assistant's storage (`.storage/better_todo`) and is included in
@@ -197,9 +280,9 @@ normal HA backups. The `todo`/`calendar` entities are read-write mirrors — del
 
 - Per-list sensors (open/due/overdue per list & person) and statistics
 - Sections inside lists, kanban view
-- Actionable notification helpers
+- Actionable notifications (complete/skip straight from the push)
 - Optional AI integration via HA `ai_task` entities
-- External platform sync (CalDAV/Todoist/Google Tasks) — deliberately last
+- External platform sync (CalDAV and similar) — deliberately last
 
 ## License
 

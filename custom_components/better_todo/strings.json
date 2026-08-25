@@ -34,10 +34,13 @@
         }
       },
       "notifications": {
-        "title": "Reminder notifications",
-        "description": "Notification service per person. Task reminders are sent to the assigned persons. The dash means: no notifications for this person.",
+        "title": "Notifications",
+        "description": "Notification service per person. Reminders and the daily summary are sent to the assigned persons. The dash means: no notifications for this person. Weekly and monthly tasks only enter the summary shortly before their period ends.",
         "data": {
-          "notify_unassigned_all": "Send tasks without assignment to every configured service"
+          "notify_unassigned_all": "Send tasks without assignment to every configured person",
+          "summary_enabled": "Send a daily summary of open tasks",
+          "summary_time": "Summary time",
+          "summary_persistent": "Also show the summary in the HA notification center"
         }
       }
     }

@@ -51,4 +51,13 @@ CONF_NOTIFY_TARGETS = "notify_targets"  # {person_entity_id: notify service name
 CONF_NOTIFY_UNASSIGNED_ALL = "notify_unassigned_all"
 NOTIFY_NONE = "-"
 
+# Options: daily summary of open tasks.
+CONF_SUMMARY_ENABLED = "summary_enabled"
+CONF_SUMMARY_TIME = "summary_time"
+CONF_SUMMARY_PERSISTENT = "summary_persistent"
+DEFAULT_SUMMARY_TIME = "08:00:00"
+SUMMARY_NOTIFICATION_ID = "better_todo_summary"
+# Period tasks enter the summary this many days before their period ends.
+SUMMARY_PERIOD_LEAD = {"week": 2, "month": 5}
+
 MAX_HISTORY = 5000
