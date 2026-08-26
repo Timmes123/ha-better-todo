@@ -93,6 +93,13 @@ restart. HACS is strongly recommended so you get updates.
 |:---:|:---:|
 | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/task-dialog.png" width="340" alt="Task dialog with schedule, reminders, tag picker and rotating assignment"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/list-manager.png" width="340" alt="Edit lists dialog"> |
 
+Not a fan of colorful badges? Turn off **Multicolor** in the card editor (or set
+`colorful: false`) and every badge switches to your theme's neutral colors:
+
+| Multicolor (default) | Monochrome (`colorful: false`) |
+|:---:|:---:|
+| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-overview.png" width="340" alt="Card with multicolor badges"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-overview-mono.png" width="340" alt="Card with monochrome badges in theme colors"> |
+
 The **☰ menu** offers *Show filters* (list/tag/person filter, sorting, view toggles),
 *Edit lists* (create, rename, delete — deleting a list removes its tasks and entities),
 *Clear completed* (removes all completed tasks in the currently visible lists, with
@@ -151,6 +158,7 @@ configure it without YAML.
 | `show_upcoming` | `false` | Show upcoming/hidden tasks |
 | `due_soon_days` | `7` | Window for the "due soon" filter |
 | `compact` | `false` | Denser rows |
+| `colorful` | `true` | Multicolor badges; `false` = neutral theme colors only |
 | `max_height` | – | Max card height in px (scrolls inside) |
 | `confirm_complete` | `false` | Ask before completing a task |
 

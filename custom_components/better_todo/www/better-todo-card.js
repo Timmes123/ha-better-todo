@@ -47,7 +47,7 @@ const STR = {
     logged_in: "Logged-in user", mode_day: "on a fixed day", mode_last: "on the last day of the month",
     mode_nth: "on the nth weekday", day_f: "Day (1–31)", month_f: "Month", nth_last: "last",
     auto_hint: "empty = automatic from rule",
-    menu_t: "Menu", error_g: "Error", compact_t: "Compact",
+    menu_t: "Menu", error_g: "Error", compact_t: "Compact", colorful_t: "Multicolor",
     confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
     empty_all_hint: "empty = all",
   },
@@ -92,7 +92,7 @@ const STR = {
     logged_in: "Angemeldeter Benutzer", mode_day: "an festem Tag", mode_last: "am letzten Tag des Monats",
     mode_nth: "am N-ten Wochentag", day_f: "Tag (1–31)", month_f: "Monat", nth_last: "letzter",
     auto_hint: "leer = automatisch aus der Regel",
-    menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt",
+    menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt", colorful_t: "Mehrfarbig",
     confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
     empty_all_hint: "leer = alle",
   },
@@ -137,7 +137,7 @@ const STR = {
     logged_in: "Utilisateur connecté", mode_day: "à jour fixe", mode_last: "le dernier jour du mois",
     mode_nth: "le n-ième jour de semaine", day_f: "Jour (1–31)", month_f: "Mois", nth_last: "dernier",
     auto_hint: "vide = automatique selon la règle",
-    menu_t: "Menu", error_g: "Erreur", compact_t: "Compact",
+    menu_t: "Menu", error_g: "Erreur", compact_t: "Compact", colorful_t: "Multicolore",
     confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
     empty_all_hint: "vide = toutes",
   },
@@ -182,7 +182,7 @@ const STR = {
     logged_in: "Usuario conectado", mode_day: "en un día fijo", mode_last: "el último día del mes",
     mode_nth: "el n-ésimo día de la semana", day_f: "Día (1–31)", month_f: "Mes", nth_last: "último",
     auto_hint: "vacío = automático según la regla",
-    menu_t: "Menú", error_g: "Error", compact_t: "Compacto",
+    menu_t: "Menú", error_g: "Error", compact_t: "Compacto", colorful_t: "Multicolor",
     confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
     empty_all_hint: "vacío = todas",
   },
@@ -227,7 +227,7 @@ const STR = {
     logged_in: "Utente connesso", mode_day: "in un giorno fisso", mode_last: "l'ultimo giorno del mese",
     mode_nth: "l'n-esimo giorno della settimana", day_f: "Giorno (1–31)", month_f: "Mese", nth_last: "ultimo",
     auto_hint: "vuoto = automatico dalla regola",
-    menu_t: "Menu", error_g: "Errore", compact_t: "Compatto",
+    menu_t: "Menu", error_g: "Errore", compact_t: "Compatto", colorful_t: "Multicolore",
     confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
     empty_all_hint: "vuoto = tutte",
   },
@@ -272,7 +272,7 @@ const STR = {
     logged_in: "Ingelogde gebruiker", mode_day: "op een vaste dag", mode_last: "op de laatste dag van de maand",
     mode_nth: "op de n-de weekdag", day_f: "Dag (1–31)", month_f: "Maand", nth_last: "laatste",
     auto_hint: "leeg = automatisch volgens regel",
-    menu_t: "Menu", error_g: "Fout", compact_t: "Compact",
+    menu_t: "Menu", error_g: "Fout", compact_t: "Compact", colorful_t: "Meerkleurig",
     confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
     empty_all_hint: "leeg = alle",
   },
@@ -317,7 +317,7 @@ const STR = {
     logged_in: "Zalogowany użytkownik", mode_day: "w stały dzień", mode_last: "ostatniego dnia miesiąca",
     mode_nth: "w n-ty dzień tygodnia", day_f: "Dzień (1–31)", month_f: "Miesiąc", nth_last: "ostatni",
     auto_hint: "puste = automatycznie z reguły",
-    menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy",
+    menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy", colorful_t: "Wielokolorowy",
     confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
     empty_all_hint: "puste = wszystkie",
   },
@@ -444,6 +444,7 @@ class BetterTodoCard extends HTMLElement {
       title: null, lists: null, assigned: "all", sort: "smart",
       show_menu: true, show_add: true, show_completed: false, show_upcoming: false,
       compact: false, max_height: null, confirm_complete: false, due_soon_days: 7,
+      colorful: true,
       ...config,
     };
   }
@@ -708,7 +709,7 @@ class BetterTodoCard extends HTMLElement {
     }
     const maxH = this._config.max_height ? `style="max-height:${Number(this._config.max_height)}px;overflow-y:auto"` : "";
     this.shadowRoot.innerHTML = `<style>${this._css()}</style>
-      <ha-card class="${this._config.compact ? "compact" : ""}">
+      <ha-card class="${this._config.compact ? "compact" : ""}${this._config.colorful === false ? " mono" : ""}">
         ${this._renderHeader()}
         <div class="body" ${maxH}>${body}</div>
       </ha-card>`;
@@ -1542,6 +1543,12 @@ class BetterTodoCard extends HTMLElement {
       .badge.prio.p1 { background: color-mix(in srgb, var(--error-color) 18%, transparent); color: var(--error-color); }
       .badge.prio.p2 { background: color-mix(in srgb, var(--warning-color) 22%, transparent); color: var(--warning-color); }
       .badge.dim { opacity: 0.75; }
+      /* Monochrome mode (colorful: false): every pill drops its semantic color
+         and uses the neutral theme look instead. */
+      .mono .badge, .mono .badge.err, .mono .badge.warn, .mono .badge.ok, .mono .badge.person,
+      .mono .badge.tag, .mono .badge.prio.p1, .mono .badge.prio.p2 {
+        background: var(--secondary-background-color); color: var(--secondary-text-color); }
+      .mono .chip.tagchip.on { background: var(--primary-color); border-color: var(--primary-color); }
       .details { padding: 0 8px 10px 40px; }
       .notes { font-size: 0.85em; color: var(--secondary-text-color); white-space: pre-wrap; margin-bottom: 6px; }
       .subtasks { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
@@ -1648,6 +1655,7 @@ class BetterTodoCardEditor extends HTMLElement {
       ["show_completed", t.show_done, c.show_completed ?? false],
       ["show_upcoming", t.show_upcoming, c.show_upcoming ?? false],
       ["compact", t.compact_t, c.compact ?? false],
+      ["colorful", t.colorful_t, c.colorful ?? true],
       ["confirm_complete", t.confirm_t, c.confirm_complete ?? false],
     ];
     this.shadowRoot.innerHTML = `<style>
