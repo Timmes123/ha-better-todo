@@ -17,7 +17,7 @@ The user explicitly forbade direct file deployment into their Home Assistant (no
 
 1. Develop locally in this folder
 2. Commit, bump version in `manifest.json`
-3. Tag + publish a GitHub release with `gh`
+3. Tag + publish a GitHub release with `gh`. Since v0.5.0 `hacs.json` has `zip_release: true` / `filename: better_todo.zip`: build the asset with `git archive -o better_todo.zip <tag>:custom_components/better_todo` (tracked files only, contents at zip root), create the release as **draft** with the asset attached, then publish — a release without the asset breaks HACS install/update for that version
 4. Update the integration via HACS (can be driven over MCP)
 5. Restart HA, verify via logs/entities over MCP (read-only access is fine)
 

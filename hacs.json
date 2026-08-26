@@ -1,4 +1,6 @@
 {
   "name": "Better ToDo",
-  "homeassistant": "2025.8.0"
+  "homeassistant": "2025.8.0",
+  "zip_release": true,
+  "filename": "better_todo.zip"
 }
