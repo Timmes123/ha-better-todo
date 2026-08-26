@@ -1549,6 +1549,8 @@ class BetterTodoCard extends HTMLElement {
       .mono .badge.tag, .mono .badge.prio.p1, .mono .badge.prio.p2 {
         background: var(--secondary-background-color); color: var(--secondary-text-color); }
       .mono .chip.tagchip.on { background: var(--primary-color); border-color: var(--primary-color); }
+      .mono .task.overdue .check { border-color: var(--primary-text-color); }
+      .mono .btn.danger { color: var(--primary-text-color); border-color: var(--divider-color); }
       .details { padding: 0 8px 10px 40px; }
       .notes { font-size: 0.85em; color: var(--secondary-text-color); white-space: pre-wrap; margin-bottom: 6px; }
       .subtasks { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
