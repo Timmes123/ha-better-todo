@@ -6,8 +6,10 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo)](https://github.com/Timmes123/ha-better-todo/releases)
 [![Validate](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml/badge.svg)](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](https://github.com/Timmes123/ha-better-todo/blob/main/LICENSE)
 [![Community Forum](https://img.shields.io/badge/community-forum-41BDF5.svg?logo=homeassistant&logoColor=white)](https://community.home-assistant.io/t/better-todo-flexible-recurring-tasks-habits-household-rotation-for-ha/1022821)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-donate-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/timmes123)
+[![PayPal](https://img.shields.io/badge/PayPal-donate-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/timmes123)
 
 A task manager for Home Assistant with a custom dashboard card — built for
 **recurring tasks that actually work the way you need them to**.
@@ -294,12 +296,19 @@ normal HA backups. The `todo`/`calendar` entities are read-write mirrors — del
 - Optional AI integration via HA `ai_task` entities
 - External platform sync (CalDAV and similar) — deliberately last
 
-## Feedback & support
+## Feedback
 
 Questions, ideas or bug reports? Open an
 [issue](https://github.com/Timmes123/ha-better-todo/issues) or join the discussion in the
 [Home Assistant community thread](https://community.home-assistant.io/t/better-todo-flexible-recurring-tasks-habits-household-rotation-for-ha/1022821).
 
+## ☕ Support
+
+If this integration is useful to you and you want to support its development:
+
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy%20me%20a%20coffee-FF5E5B?logo=kofi&logoColor=white)](https://ko-fi.com/timmes123)
+[![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/timmes123)
+
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/Timmes123/ha-better-todo/blob/main/LICENSE)
