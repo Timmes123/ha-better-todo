@@ -39,7 +39,7 @@ const STR = {
     rem_d: (n) => `${n} d before`, add_reminder: "+ reminder",
     sort_f: "Sort", sort_smart: "Smart", sort_manual: "Manual", sort_due: "Due date",
     sort_prio: "Priority", sort_title: "Title", sort_person: "Person",
-    due_soon: (n) => `Due soon (${n} d)`, end_f: "End (optional)",
+    due_soon: (n) => `Due soon (${n} d)`, due_soon_t: "Due soon", end_f: "End (optional)",
     until_f: "Until date", max_occ_f: "Max. repetitions",
     monthly_day: (d) => `on day ${d}`, monthly_last: "on the last day",
     monthly_nth: (n, wd) => `on the ${n}. ${wd}`, monthly_nth_last: (wd) => `on the last ${wd}`,
@@ -84,7 +84,7 @@ const STR = {
     rem_d: (n) => `${n} T vorher`, add_reminder: "+ Erinnerung",
     sort_f: "Sortierung", sort_smart: "Automatisch", sort_manual: "Manuell", sort_due: "Fälligkeit",
     sort_prio: "Priorität", sort_title: "Titel", sort_person: "Person",
-    due_soon: (n) => `Bald fällig (${n} T)`, end_f: "Ende (optional)",
+    due_soon: (n) => `Bald fällig (${n} T)`, due_soon_t: "Bald fällig", end_f: "Ende (optional)",
     until_f: "Enddatum", max_occ_f: "Max. Wiederholungen",
     monthly_day: (d) => `am ${d}. Tag`, monthly_last: "am letzten Tag",
     monthly_nth: (n, wd) => `am ${n}. ${wd}`, monthly_nth_last: (wd) => `am letzten ${wd}`,
@@ -129,7 +129,7 @@ const STR = {
     rem_d: (n) => `${n} j avant`, add_reminder: "+ rappel",
     sort_f: "Tri", sort_smart: "Automatique", sort_manual: "Manuel", sort_due: "Échéance",
     sort_prio: "Priorité", sort_title: "Titre", sort_person: "Personne",
-    due_soon: (n) => `Bientôt dû (${n} j)`, end_f: "Fin (optionnel)",
+    due_soon: (n) => `Bientôt dû (${n} j)`, due_soon_t: "Bientôt dû", end_f: "Fin (optionnel)",
     until_f: "Date de fin", max_occ_f: "Répétitions max.",
     monthly_day: (d) => `le ${d}`, monthly_last: "le dernier jour",
     monthly_nth: (n, wd) => `le ${n}e ${wd}`, monthly_nth_last: (wd) => `le dernier ${wd}`,
@@ -174,7 +174,7 @@ const STR = {
     rem_d: (n) => `${n} d antes`, add_reminder: "+ recordatorio",
     sort_f: "Orden", sort_smart: "Automático", sort_manual: "Manual", sort_due: "Vencimiento",
     sort_prio: "Prioridad", sort_title: "Título", sort_person: "Persona",
-    due_soon: (n) => `Próximas (${n} d)`, end_f: "Fin (opcional)",
+    due_soon: (n) => `Próximas (${n} d)`, due_soon_t: "Próximas", end_f: "Fin (opcional)",
     until_f: "Fecha final", max_occ_f: "Repeticiones máx.",
     monthly_day: (d) => `el día ${d}`, monthly_last: "el último día",
     monthly_nth: (n, wd) => `el ${n}º ${wd}`, monthly_nth_last: (wd) => `el último ${wd}`,
@@ -219,7 +219,7 @@ const STR = {
     rem_d: (n) => `${n} g prima`, add_reminder: "+ promemoria",
     sort_f: "Ordinamento", sort_smart: "Automatico", sort_manual: "Manuale", sort_due: "Scadenza",
     sort_prio: "Priorità", sort_title: "Titolo", sort_person: "Persona",
-    due_soon: (n) => `In scadenza (${n} g)`, end_f: "Fine (opzionale)",
+    due_soon: (n) => `In scadenza (${n} g)`, due_soon_t: "In scadenza", end_f: "Fine (opzionale)",
     until_f: "Data finale", max_occ_f: "Ripetizioni max",
     monthly_day: (d) => `il giorno ${d}`, monthly_last: "l'ultimo giorno",
     monthly_nth: (n, wd) => `il ${n}º ${wd}`, monthly_nth_last: (wd) => `l'ultimo ${wd}`,
@@ -264,7 +264,7 @@ const STR = {
     rem_d: (n) => `${n} d eerder`, add_reminder: "+ herinnering",
     sort_f: "Sortering", sort_smart: "Automatisch", sort_manual: "Handmatig", sort_due: "Vervaldatum",
     sort_prio: "Prioriteit", sort_title: "Titel", sort_person: "Persoon",
-    due_soon: (n) => `Binnenkort (${n} d)`, end_f: "Einde (optioneel)",
+    due_soon: (n) => `Binnenkort (${n} d)`, due_soon_t: "Binnenkort", end_f: "Einde (optioneel)",
     until_f: "Einddatum", max_occ_f: "Max. herhalingen",
     monthly_day: (d) => `op dag ${d}`, monthly_last: "op de laatste dag",
     monthly_nth: (n, wd) => `op de ${n}e ${wd}`, monthly_nth_last: (wd) => `op de laatste ${wd}`,
@@ -309,7 +309,7 @@ const STR = {
     rem_d: (n) => `${n} dni przed`, add_reminder: "+ przypomnienie",
     sort_f: "Sortowanie", sort_smart: "Automatyczne", sort_manual: "Ręczne", sort_due: "Termin",
     sort_prio: "Priorytet", sort_title: "Tytuł", sort_person: "Osoba",
-    due_soon: (n) => `Wkrótce (${n} dni)`, end_f: "Koniec (opcjonalnie)",
+    due_soon: (n) => `Wkrótce (${n} dni)`, due_soon_t: "Wkrótce", end_f: "Koniec (opcjonalnie)",
     until_f: "Data końcowa", max_occ_f: "Maks. powtórzeń",
     monthly_day: (d) => `${d}. dnia`, monthly_last: "ostatniego dnia",
     monthly_nth: (n, wd) => `${n}. ${wd}`, monthly_nth_last: (wd) => `ostatni ${wd}`,
@@ -421,7 +421,7 @@ class BetterTodoCard extends HTMLElement {
     this._sub = null;
     this._ui = {
       menu: false, dropdown: false, expanded: null, lists: null, person: null,
-      showDone: null, showUpcoming: null, tags: null, dueSoon: false, sort: null,
+      showDone: null, showUpcoming: null, tags: null, dueSoon: null, sort: null,
     };
     this._dialog = null;
     this._dialogEl = null;
@@ -443,7 +443,7 @@ class BetterTodoCard extends HTMLElement {
     this._config = {
       title: null, lists: null, assigned: "all", sort: "smart",
       show_menu: true, show_add: true, show_completed: false, show_upcoming: false,
-      compact: false, max_height: null, confirm_complete: false, due_soon_days: 7,
+      compact: false, max_height: null, confirm_complete: false, due_soon_days: 7, due_soon: false,
       colorful: true,
       ...config,
     };
@@ -602,6 +602,7 @@ class BetterTodoCard extends HTMLElement {
 
   _showDone() { return this._ui.showDone ?? !!this._config.show_completed; }
   _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
+  _dueSoon() { return this._ui.dueSoon ?? !!this._config.due_soon; }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
   _recurLabel(task) {
@@ -627,7 +628,7 @@ class BetterTodoCard extends HTMLElement {
   _filtersActive() {
     const u = this._ui;
     return !!(u.lists || u.person !== null || (u.tags && u.tags.length)
-      || u.dueSoon || u.sort || u.showDone !== null || u.showUpcoming !== null);
+      || u.dueSoon !== null || u.sort || u.showDone !== null || u.showUpcoming !== null);
   }
 
   _allTags() {
@@ -644,7 +645,7 @@ class BetterTodoCard extends HTMLElement {
       if (s === "hidden" && !this._showUpcoming()) continue;
       if (s === "upcoming" && !(task.computed.visible || this._showUpcoming())) continue;
       if (!this._matchesPerson(task, personFilter)) continue;
-      if (this._ui.dueSoon && !this._dueWithin(task, this._config.due_soon_days ?? 7)) continue;
+      if (this._dueSoon() && !this._dueWithin(task, this._config.due_soon_days ?? 7)) continue;
       (task.tags || []).forEach((x) => tags.add(x));
     }
     return [...tags].sort();
@@ -678,7 +679,7 @@ class BetterTodoCard extends HTMLElement {
     if (tagFilter && tagFilter.length) {
       tasks = tasks.filter((t) => (t.tags || []).some((x) => tagFilter.includes(x)));
     }
-    if (this._ui.dueSoon) {
+    if (this._dueSoon()) {
       tasks = tasks.filter((t) => this._dueWithin(t, this._config.due_soon_days ?? 7));
     }
     const doneRank = (t) => (["done", "period_done"].includes(t.computed?.state) ? 1 : 0);
@@ -784,7 +785,7 @@ class BetterTodoCard extends HTMLElement {
       <div class="menu-row toggles">
         <label><input type="checkbox" data-action="show-done" ${this._showDone() ? "checked" : ""}> ${esc(t.show_done)}</label>
         <label><input type="checkbox" data-action="show-upcoming" ${this._showUpcoming() ? "checked" : ""}> ${esc(t.show_upcoming)}</label>
-        <label><input type="checkbox" data-action="due-soon" ${this._ui.dueSoon ? "checked" : ""}> ${esc(t.due_soon(this._config.due_soon_days ?? 7))}</label>
+        <label><input type="checkbox" data-action="due-soon" ${this._dueSoon() ? "checked" : ""}> ${esc(t.due_soon(this._config.due_soon_days ?? 7))}</label>
       </div>
     </div>`;
   }
@@ -920,7 +921,7 @@ class BetterTodoCard extends HTMLElement {
     }
     else if (action === "dd-reset") {
       Object.assign(this._ui, {
-        lists: null, person: null, tags: null, dueSoon: false, sort: null,
+        lists: null, person: null, tags: null, dueSoon: null, sort: null,
         showDone: null, showUpcoming: null, dropdown: false,
       });
       this._render();
@@ -1671,6 +1672,7 @@ class BetterTodoCardEditor extends HTMLElement {
       ["show_add", `+ ${t.new_task}`, c.show_add ?? true],
       ["show_completed", t.show_done, c.show_completed ?? false],
       ["show_upcoming", t.show_upcoming, c.show_upcoming ?? false],
+      ["due_soon", t.due_soon_t, c.due_soon ?? false],
       ["compact", t.compact_t, c.compact ?? false],
       ["colorful", t.colorful_t, c.colorful ?? true],
       ["confirm_complete", t.confirm_t, c.confirm_complete ?? false],
