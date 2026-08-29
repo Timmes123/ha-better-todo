@@ -1298,6 +1298,7 @@ class BetterTodoCard extends HTMLElement {
             <option value="days" ${d.interval.unit === "days" ? "selected" : ""}>${esc(t.freq_daily)}</option>
             <option value="weeks" ${d.interval.unit === "weeks" ? "selected" : ""}>${esc(t.freq_weekly)}</option>
             <option value="months" ${d.interval.unit === "months" ? "selected" : ""}>${esc(t.freq_monthly)}</option>
+            <option value="years" ${d.interval.unit === "years" ? "selected" : ""}>${esc(t.freq_yearly)}</option>
           </select>
           <span>${esc(t.after_done)}</span>
         </div>

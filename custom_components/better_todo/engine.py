@@ -11,7 +11,7 @@ from datetime import date, timedelta
 MAX_ITER = 1000
 
 VALID_FREQS = ("daily", "weekly", "monthly", "yearly")
-VALID_INTERVAL_UNITS = ("days", "weeks", "months")
+VALID_INTERVAL_UNITS = ("days", "weeks", "months", "years")
 
 
 def validate_schedule(sched: dict) -> dict:
@@ -238,6 +238,8 @@ def add_interval(start: date, interval: dict) -> date:
         return start + timedelta(weeks=value)
     if unit == "months":
         return add_months(start, value)
+    if unit == "years":
+        return add_months(start, value * 12)
     raise ValueError(f"Unknown interval unit: {unit}")
 
 

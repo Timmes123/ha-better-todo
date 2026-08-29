@@ -104,7 +104,7 @@ Regelmechanik (eigene Regelstruktur, kein volles RRULE):
 
 **c) Wiederholend, erledigungs-basiert** — nächste Fälligkeit = Erledigungsdatum + Intervall.
 Beispiel: Klo reinigen fällig 1.1., erledigt 20.1. → nächste Fälligkeit 20.2.
-Intervall in Tagen/Wochen/Monaten. Nächste Instanz entsteht **erst bei Erledigung**
+Intervall in Tagen/Wochen/Monaten/Jahren. Nächste Instanz entsteht **erst bei Erledigung**
 (nichts wird auf Vorrat angelegt).
 
 **d) Perioden-Aufgabe (Habit)** — pro Woche/Monat genau einmal zu erledigen,
