@@ -441,7 +441,7 @@ class BetterTodoCard extends HTMLElement {
 
   setConfig(config) {
     this._config = {
-      title: null, lists: null, assigned: "all", sort: "smart",
+      title: null, lists: null, tags: null, assigned: "all", sort: "smart",
       show_menu: true, show_add: true, show_completed: false, show_upcoming: false,
       compact: false, max_height: null, confirm_complete: false, due_soon_days: 7, due_soon: false,
       colorful: true,
@@ -603,6 +603,11 @@ class BetterTodoCard extends HTMLElement {
   _showDone() { return this._ui.showDone ?? !!this._config.show_completed; }
   _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
   _dueSoon() { return this._ui.dueSoon ?? !!this._config.due_soon; }
+  // null = no tag filter; a session override of [] clears a configured default.
+  _tagFilter() {
+    const tags = this._ui.tags ?? this._config.tags;
+    return Array.isArray(tags) && tags.length ? tags : null;
+  }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
   _recurLabel(task) {
@@ -627,7 +632,7 @@ class BetterTodoCard extends HTMLElement {
 
   _filtersActive() {
     const u = this._ui;
-    return !!(u.lists || u.person !== null || (u.tags && u.tags.length)
+    return !!(u.lists || u.person !== null || u.tags !== null
       || u.dueSoon !== null || u.sort || u.showDone !== null || u.showUpcoming !== null);
   }
 
@@ -637,7 +642,7 @@ class BetterTodoCard extends HTMLElement {
     // tags stay listed so they can be deselected.
     const personFilter = this._personFilter();
     const activeIds = this._activeLists().map((l) => l.id);
-    const tags = new Set(this._ui.tags || []);
+    const tags = new Set(this._tagFilter() || []);
     for (const task of this._data?.tasks || []) {
       if (!activeIds.includes(task.list_id)) continue;
       const s = task.computed?.state;
@@ -664,7 +669,7 @@ class BetterTodoCard extends HTMLElement {
 
   _visibleTasks(listId) {
     const personFilter = this._personFilter();
-    const tagFilter = this._ui.tags;
+    const tagFilter = this._tagFilter();
     const sort = this._sortMode();
     let tasks = (this._data?.tasks || [])
       .filter((t) => t.list_id === listId)
@@ -761,7 +766,7 @@ class BetterTodoCard extends HTMLElement {
     const personFilter = this._personFilter();
     const persons = this._data.persons || [];
     const tags = this._feature("tags") ? this._allTags() : [];
-    const selTags = this._ui.tags || [];
+    const selTags = this._tagFilter() || [];
     const sort = this._sortMode();
     return `<div class="menu">
       <div class="chips">
@@ -1012,9 +1017,9 @@ class BetterTodoCard extends HTMLElement {
   }
 
   _toggleTagFilter(tag) {
-    let cur = this._ui.tags || [];
+    let cur = this._tagFilter() || [];
     cur = cur.includes(tag) ? cur.filter((x) => x !== tag) : [...cur, tag];
-    this._ui.tags = cur.length ? cur : null;
+    this._ui.tags = cur;
     this._render();
   }
 
@@ -1667,6 +1672,13 @@ class BetterTodoCardEditor extends HTMLElement {
     const lists = this._data?.lists || [];
     const persons = this._data?.persons || [];
     const selLists = c.lists || [];
+    const selTags = c.tags || [];
+    // Every tag in the data set, plus configured ones no task carries any
+    // more — those must stay visible so they can be deselected.
+    const knownTags = [...new Set([
+      ...(this._data?.tasks || []).flatMap((task) => task.tags || []),
+      ...selTags,
+    ])].sort();
     const toggles = [
       ["show_menu", t.menu_t, c.show_menu ?? true],
       ["show_add", `+ ${t.new_task}`, c.show_add ?? true],
@@ -1694,6 +1706,9 @@ class BetterTodoCardEditor extends HTMLElement {
         <label>${esc(t.title_f)}<input type="text" data-f="title" value="${esc(c.title || "")}"></label>
         ${lists.length ? `<div><label>${esc(t.list_f)}</label><div class="lists">
           ${lists.map((l) => `<label><input type="checkbox" data-list="${esc(l.id)}" ${selLists.includes(l.id) || selLists.includes(l.name) ? "checked" : ""}> ${esc(l.name)}</label>`).join("")}
+        </div><div class="hint">${esc(t.empty_all_hint)}</div></div>` : ""}
+        ${knownTags.length ? `<div><label>${esc(t.tags_f)}</label><div class="lists">
+          ${knownTags.map((x) => `<label><input type="checkbox" data-tag="${esc(x)}" ${selTags.includes(x) ? "checked" : ""}> #${esc(x)}</label>`).join("")}
         </div><div class="hint">${esc(t.empty_all_hint)}</div></div>` : ""}
         <div class="row">
           <label>${esc(t.assigned_f)}<select data-f="assigned">
@@ -1724,6 +1739,14 @@ class BetterTodoCardEditor extends HTMLElement {
         .filter((x) => x.checked).map((x) => x.dataset.list);
       if (checked.length) this._config.lists = checked;
       else delete this._config.lists;
+      this._fire();
+      return;
+    }
+    if (el.dataset.tag) {
+      const checked = [...this.shadowRoot.querySelectorAll("[data-tag]")]
+        .filter((x) => x.checked).map((x) => x.dataset.tag);
+      if (checked.length) this._config.tags = checked;
+      else delete this._config.tags;
       this._fire();
       return;
     }
