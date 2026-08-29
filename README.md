@@ -153,13 +153,16 @@ configure it without YAML.
 |---|---|---|
 | `title` | – | Card title |
 | `lists` | all | List names or ids to show |
-| `assigned` | `all` | `all`, `me` (logged-in user) or a `person.*` entity id |
+| `tags` | all | Tags to show (any match) |
+| `assigned` | `all` | `all`, `me` (logged-in user), `me_unassigned` (logged-in user + unassigned) or a `person.*` entity id |
 | `sort` | `smart` | `smart`, `manual` (drag & drop), `due`, `priority`, `title`, `person` |
 | `show_menu` | `true` | Card menu (filters, list management, bulk actions) |
 | `show_add` | `true` | "+" button to add tasks |
 | `show_completed` | `false` | Show completed tasks |
 | `show_upcoming` | `false` | Show upcoming/hidden tasks |
-| `due_soon_days` | `7` | Window for the "due soon" filter |
+| `upcoming_days` | – | Horizon in days for `show_upcoming` (empty = no limit); tasks visible through their own lead window are unaffected |
+| `due_soon` | `false` | Start with the "due only" filter active |
+| `due_soon_days` | `7` | Lead time in days for the "due only" filter |
 | `compact` | `false` | Denser rows |
 | `colorful` | `true` | Multicolor badges; `false` = neutral theme colors only |
 | `max_height` | – | Max card height in px (scrolls inside) |
