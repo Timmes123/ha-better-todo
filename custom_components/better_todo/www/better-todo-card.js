@@ -1249,6 +1249,9 @@ class BetterTodoCard extends HTMLElement {
           </div>
         </details>`;
     } else if (d.type === "after_completion") {
+      // The first due date anchors the completion-based cycle and is
+      // mandatory, so an empty field defaults to today.
+      if (!d.due_date) d.due_date = this._todayIso();
       typeFields = `
         <div class="field-row2">
           <label class="field grow">${esc(t.first_due_f)}<input type="date" data-f="due_date" value="${esc(d.due_date || "")}" required></label>
