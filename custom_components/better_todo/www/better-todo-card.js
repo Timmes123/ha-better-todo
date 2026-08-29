@@ -44,7 +44,7 @@ const STR = {
     monthly_day: (d) => `on day ${d}`, monthly_last: "on the last day",
     monthly_nth: (n, wd) => `on the ${n}. ${wd}`, monthly_nth_last: (wd) => `on the last ${wd}`,
     confirm_done: (t) => `Complete "${t}"?`,
-    logged_in: "Logged-in user", mode_day: "on a fixed day", mode_last: "on the last day of the month",
+    logged_in: "Logged-in user", logged_in_un: "Logged-in user + unassigned", mode_day: "on a fixed day", mode_last: "on the last day of the month",
     mode_nth: "on the nth weekday", day_f: "Day (1–31)", month_f: "Month", nth_last: "last",
     auto_hint: "empty = automatic from rule",
     menu_t: "Menu", error_g: "Error", compact_t: "Compact", colorful_t: "Multicolor",
@@ -89,7 +89,7 @@ const STR = {
     monthly_day: (d) => `am ${d}. Tag`, monthly_last: "am letzten Tag",
     monthly_nth: (n, wd) => `am ${n}. ${wd}`, monthly_nth_last: (wd) => `am letzten ${wd}`,
     confirm_done: (t) => `„${t}" erledigen?`,
-    logged_in: "Angemeldeter Benutzer", mode_day: "an festem Tag", mode_last: "am letzten Tag des Monats",
+    logged_in: "Angemeldeter Benutzer", logged_in_un: "Angemeldeter Benutzer + nicht zugewiesen", mode_day: "an festem Tag", mode_last: "am letzten Tag des Monats",
     mode_nth: "am N-ten Wochentag", day_f: "Tag (1–31)", month_f: "Monat", nth_last: "letzter",
     auto_hint: "leer = automatisch aus der Regel",
     menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt", colorful_t: "Mehrfarbig",
@@ -134,7 +134,7 @@ const STR = {
     monthly_day: (d) => `le ${d}`, monthly_last: "le dernier jour",
     monthly_nth: (n, wd) => `le ${n}e ${wd}`, monthly_nth_last: (wd) => `le dernier ${wd}`,
     confirm_done: (t) => `Terminer « ${t} » ?`,
-    logged_in: "Utilisateur connecté", mode_day: "à jour fixe", mode_last: "le dernier jour du mois",
+    logged_in: "Utilisateur connecté", logged_in_un: "Utilisateur connecté + non assignées", mode_day: "à jour fixe", mode_last: "le dernier jour du mois",
     mode_nth: "le n-ième jour de semaine", day_f: "Jour (1–31)", month_f: "Mois", nth_last: "dernier",
     auto_hint: "vide = automatique selon la règle",
     menu_t: "Menu", error_g: "Erreur", compact_t: "Compact", colorful_t: "Multicolore",
@@ -179,7 +179,7 @@ const STR = {
     monthly_day: (d) => `el día ${d}`, monthly_last: "el último día",
     monthly_nth: (n, wd) => `el ${n}º ${wd}`, monthly_nth_last: (wd) => `el último ${wd}`,
     confirm_done: (t) => `¿Completar "${t}"?`,
-    logged_in: "Usuario conectado", mode_day: "en un día fijo", mode_last: "el último día del mes",
+    logged_in: "Usuario conectado", logged_in_un: "Usuario conectado + sin asignar", mode_day: "en un día fijo", mode_last: "el último día del mes",
     mode_nth: "el n-ésimo día de la semana", day_f: "Día (1–31)", month_f: "Mes", nth_last: "último",
     auto_hint: "vacío = automático según la regla",
     menu_t: "Menú", error_g: "Error", compact_t: "Compacto", colorful_t: "Multicolor",
@@ -224,7 +224,7 @@ const STR = {
     monthly_day: (d) => `il giorno ${d}`, monthly_last: "l'ultimo giorno",
     monthly_nth: (n, wd) => `il ${n}º ${wd}`, monthly_nth_last: (wd) => `l'ultimo ${wd}`,
     confirm_done: (t) => `Completare "${t}"?`,
-    logged_in: "Utente connesso", mode_day: "in un giorno fisso", mode_last: "l'ultimo giorno del mese",
+    logged_in: "Utente connesso", logged_in_un: "Utente connesso + non assegnate", mode_day: "in un giorno fisso", mode_last: "l'ultimo giorno del mese",
     mode_nth: "l'n-esimo giorno della settimana", day_f: "Giorno (1–31)", month_f: "Mese", nth_last: "ultimo",
     auto_hint: "vuoto = automatico dalla regola",
     menu_t: "Menu", error_g: "Errore", compact_t: "Compatto", colorful_t: "Multicolore",
@@ -269,7 +269,7 @@ const STR = {
     monthly_day: (d) => `op dag ${d}`, monthly_last: "op de laatste dag",
     monthly_nth: (n, wd) => `op de ${n}e ${wd}`, monthly_nth_last: (wd) => `op de laatste ${wd}`,
     confirm_done: (t) => `"${t}" afronden?`,
-    logged_in: "Ingelogde gebruiker", mode_day: "op een vaste dag", mode_last: "op de laatste dag van de maand",
+    logged_in: "Ingelogde gebruiker", logged_in_un: "Ingelogde gebruiker + niet toegewezen", mode_day: "op een vaste dag", mode_last: "op de laatste dag van de maand",
     mode_nth: "op de n-de weekdag", day_f: "Dag (1–31)", month_f: "Maand", nth_last: "laatste",
     auto_hint: "leeg = automatisch volgens regel",
     menu_t: "Menu", error_g: "Fout", compact_t: "Compact", colorful_t: "Meerkleurig",
@@ -314,7 +314,7 @@ const STR = {
     monthly_day: (d) => `${d}. dnia`, monthly_last: "ostatniego dnia",
     monthly_nth: (n, wd) => `${n}. ${wd}`, monthly_nth_last: (wd) => `ostatni ${wd}`,
     confirm_done: (t) => `Ukończyć „${t}"?`,
-    logged_in: "Zalogowany użytkownik", mode_day: "w stały dzień", mode_last: "ostatniego dnia miesiąca",
+    logged_in: "Zalogowany użytkownik", logged_in_un: "Zalogowany użytkownik + nieprzypisane", mode_day: "w stały dzień", mode_last: "ostatniego dnia miesiąca",
     mode_nth: "w n-ty dzień tygodnia", day_f: "Dzień (1–31)", month_f: "Miesiąc", nth_last: "ostatni",
     auto_hint: "puste = automatycznie z reguły",
     menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy", colorful_t: "Wielokolorowy",
@@ -583,10 +583,21 @@ class BetterTodoCard extends HTMLElement {
   }
 
   _personFilter() {
-    if (this._ui.person !== null) return this._ui.person;
-    const cfg = this._config.assigned || "all";
-    if (cfg === "me") return this._myPerson()?.entity_id || "all";
-    return cfg;
+    const raw = this._ui.person !== null ? this._ui.person : (this._config.assigned || "all");
+    if (raw === "me") return this._myPerson()?.entity_id || "all";
+    // "me+<id>" keeps the or-unassigned semantics in one token; with no
+    // matching person entity only unassigned tasks pass.
+    if (raw === "me_unassigned") return "me+" + (this._myPerson()?.entity_id || "");
+    return raw;
+  }
+
+  _matchesPerson(task, personFilter) {
+    if (!personFilter || personFilter === "all") return true;
+    const assigned = task.assigned_to || [];
+    if (personFilter.startsWith("me+")) {
+      return !assigned.length || assigned.includes(personFilter.slice(3));
+    }
+    return assigned.includes(personFilter);
   }
 
   _showDone() { return this._ui.showDone ?? !!this._config.show_completed; }
@@ -632,7 +643,7 @@ class BetterTodoCard extends HTMLElement {
       if (s === "done" && !this._showDone()) continue;
       if (s === "hidden" && !this._showUpcoming()) continue;
       if (s === "upcoming" && !(task.computed.visible || this._showUpcoming())) continue;
-      if (personFilter && personFilter !== "all" && !(task.assigned_to || []).includes(personFilter)) continue;
+      if (!this._matchesPerson(task, personFilter)) continue;
       if (this._ui.dueSoon && !this._dueWithin(task, this._config.due_soon_days ?? 7)) continue;
       (task.tags || []).forEach((x) => tags.add(x));
     }
@@ -663,7 +674,7 @@ class BetterTodoCard extends HTMLElement {
         if (s === "upcoming") return t.computed.visible || this._showUpcoming();
         return true;
       })
-      .filter((t) => personFilter === "all" || !personFilter ? true : (t.assigned_to || []).includes(personFilter));
+      .filter((t) => this._matchesPerson(t, personFilter));
     if (tagFilter && tagFilter.length) {
       tasks = tasks.filter((t) => (t.tags || []).some((x) => tagFilter.includes(x)));
     }
@@ -762,6 +773,7 @@ class BetterTodoCard extends HTMLElement {
       <div class="menu-row selects">
         ${this._feature("assignment") && persons.length ? `<select data-action="person-filter">
           <option value="all" ${personFilter === "all" ? "selected" : ""}>${esc(t.all_persons)}</option>
+          <option value="me_unassigned" ${personFilter.startsWith("me+") ? "selected" : ""}>${esc(t.logged_in_un)}</option>
           ${persons.map((p) => `<option value="${esc(p.entity_id)}" ${personFilter === p.entity_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
         </select>` : ""}
         <select data-action="sort">
@@ -1685,6 +1697,7 @@ class BetterTodoCardEditor extends HTMLElement {
           <label>${esc(t.assigned_f)}<select data-f="assigned">
             <option value="all" ${(c.assigned || "all") === "all" ? "selected" : ""}>${esc(t.all_persons)}</option>
             <option value="me" ${c.assigned === "me" ? "selected" : ""}>${esc(t.logged_in)}</option>
+            <option value="me_unassigned" ${c.assigned === "me_unassigned" ? "selected" : ""}>${esc(t.logged_in_un)}</option>
             ${persons.map((p) => `<option value="${esc(p.entity_id)}" ${c.assigned === p.entity_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
           </select></label>
           <label>${esc(t.sort_f)}<select data-f="sort">
