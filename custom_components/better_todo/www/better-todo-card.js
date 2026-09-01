@@ -51,6 +51,7 @@ const STR = {
     menu_t: "Menu", error_g: "Error", compact_t: "Compact", colorful_t: "Multicolor",
     confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
     empty_all_hint: "empty = all",
+    move_up: "Move up", move_down: "Move down",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -97,6 +98,7 @@ const STR = {
     menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt", colorful_t: "Mehrfarbig",
     confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
     empty_all_hint: "leer = alle",
+    move_up: "Nach oben", move_down: "Nach unten",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -143,6 +145,7 @@ const STR = {
     menu_t: "Menu", error_g: "Erreur", compact_t: "Compact", colorful_t: "Multicolore",
     confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
     empty_all_hint: "vide = toutes",
+    move_up: "Monter", move_down: "Descendre",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -189,6 +192,7 @@ const STR = {
     menu_t: "Menú", error_g: "Error", compact_t: "Compacto", colorful_t: "Multicolor",
     confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
     empty_all_hint: "vacío = todas",
+    move_up: "Subir", move_down: "Bajar",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -235,6 +239,7 @@ const STR = {
     menu_t: "Menu", error_g: "Errore", compact_t: "Compatto", colorful_t: "Multicolore",
     confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
     empty_all_hint: "vuoto = tutte",
+    move_up: "Sposta su", move_down: "Sposta giù",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -281,6 +286,7 @@ const STR = {
     menu_t: "Menu", error_g: "Fout", compact_t: "Compact", colorful_t: "Meerkleurig",
     confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
     empty_all_hint: "leeg = alle",
+    move_up: "Omhoog", move_down: "Omlaag",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -327,6 +333,7 @@ const STR = {
     menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy", colorful_t: "Wielokolorowy",
     confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
     empty_all_hint: "puste = wszystkie",
+    move_up: "Przenieś w górę", move_down: "Przenieś w dół",
   },
 };
 
@@ -1080,6 +1087,22 @@ class BetterTodoCard extends HTMLElement {
     return dlg;
   }
 
+  _updateDialog(innerHtml, onWire) {
+    // Re-render an already open dialog IN PLACE. Recreating the <dialog>
+    // for every chip toggle resets the scroll position and (on mobile)
+    // re-runs the title autofocus, which pops the keyboard back open each
+    // time — the delegated listeners live on the dialog element itself, so
+    // an innerHTML swap keeps them wired.
+    const dlg = this._dialogEl;
+    if (dlg && dlg.isConnected && dlg.open) {
+      const scroll = dlg.scrollTop;
+      dlg.innerHTML = innerHtml;
+      dlg.scrollTop = scroll;
+      return dlg;
+    }
+    return this._showDialog(innerHtml, onWire);
+  }
+
   _openChooser(task) {
     const t = this.t;
     const n = task.computed.due_count;
@@ -1134,35 +1157,90 @@ class BetterTodoCard extends HTMLElement {
   }
 
   _openManageLists() {
-    const t = this.t;
     this._dialog = { kind: "lists" };
+    this._renderManageLists();
+  }
+
+  _renderManageLists() {
+    const t = this.t;
     const lists = this._data?.lists || [];
-    this._showDialog(
-      `<div class="dlg-title">${esc(t.manage_lists)}</div>
+    const html = `<div class="dlg-title">${esc(t.manage_lists)}</div>
        <div class="list-manage">
-         ${lists.map((l) => `<button class="btn list-row" data-x="edit" data-id="${esc(l.id)}"><span>${esc(l.name)}</span><span class="row-edit">✎</span></button>`).join("")}
+         ${lists.map((l, i) => `<div class="list-row2" draggable="true" data-lrow="${esc(l.id)}">
+           <span class="grip">⋮⋮</span>
+           <button class="btn list-row" data-x="edit" data-id="${esc(l.id)}"><span>${esc(l.name)}</span><span class="row-edit">✎</span></button>
+           <button class="icon-btn small" data-x="up" data-id="${esc(l.id)}" title="${esc(t.move_up)}" ${i === 0 ? "disabled" : ""}>▲</button>
+           <button class="icon-btn small" data-x="down" data-id="${esc(l.id)}" title="${esc(t.move_down)}" ${i === lists.length - 1 ? "disabled" : ""}>▼</button>
+         </div>`).join("")}
        </div>
        <div class="dlg-actions">
          <button class="btn" data-x="new">+ ${esc(t.new_list)}</button>
          <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
-       </div>`,
-      (dlg) => {
-        dlg.addEventListener("click", (e) => {
-          const b = e.target.closest("[data-x]");
-          if (!b) return;
-          if (b.dataset.x === "edit") {
-            const list = (this._data?.lists || []).find((l) => l.id === b.dataset.id);
-            dlg.close();
-            this._openListDialog(list);
-          } else if (b.dataset.x === "new") {
-            dlg.close();
-            this._openListDialog(null);
-          } else {
-            dlg.close();
-          }
-        });
+       </div>`;
+    this._updateDialog(html, (dlg) => this._wireManageLists(dlg));
+  }
+
+  _wireManageLists(dlg) {
+    dlg.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-x]");
+      if (!b) return;
+      if (b.dataset.x === "edit") {
+        const list = (this._data?.lists || []).find((l) => l.id === b.dataset.id);
+        dlg.close();
+        this._openListDialog(list);
+      } else if (b.dataset.x === "up") this._moveList(b.dataset.id, -1);
+      else if (b.dataset.x === "down") this._moveList(b.dataset.id, 1);
+      else if (b.dataset.x === "new") {
+        dlg.close();
+        this._openListDialog(null);
+      } else {
+        dlg.close();
       }
-    );
+    });
+    // Desktop drag&drop on the rows; touch devices use the arrow buttons
+    // (HTML5 drag events do not fire on touch input).
+    dlg.addEventListener("dragstart", (e) => {
+      const row = e.target.closest?.("[data-lrow]");
+      if (!row) return;
+      this._dragList = row.dataset.lrow;
+      e.dataTransfer.effectAllowed = "move";
+    });
+    dlg.addEventListener("dragover", (e) => {
+      if (this._dragList && e.target.closest?.("[data-lrow]")) e.preventDefault();
+    });
+    dlg.addEventListener("drop", (e) => {
+      const row = e.target.closest?.("[data-lrow]");
+      const drag = this._dragList;
+      this._dragList = null;
+      if (!row || !drag || row.dataset.lrow === drag) return;
+      e.preventDefault();
+      const lists = [...(this._data?.lists || [])];
+      const from = lists.findIndex((l) => l.id === drag);
+      const to = lists.findIndex((l) => l.id === row.dataset.lrow);
+      if (from < 0 || to < 0) return;
+      const [item] = lists.splice(from, 1);
+      lists.splice(to, 0, item);
+      this._applyListOrder(lists);
+    });
+    dlg.addEventListener("dragend", () => { this._dragList = null; });
+  }
+
+  _moveList(id, delta) {
+    const lists = [...(this._data?.lists || [])];
+    const idx = lists.findIndex((l) => l.id === id);
+    const to = idx + delta;
+    if (idx < 0 || to < 0 || to >= lists.length) return;
+    const [item] = lists.splice(idx, 1);
+    lists.splice(to, 0, item);
+    this._applyListOrder(lists);
+  }
+
+  _applyListOrder(lists) {
+    // Optimistic: show the new order immediately; the subscribe push
+    // confirms it right after the backend persisted.
+    if (this._data) this._data.lists = lists;
+    this._renderManageLists();
+    this._wsBg({ type: "better_todo/reorder_lists", list_ids: lists.map((l) => l.id) });
   }
 
   _openTaskDialog(task) {
@@ -1366,7 +1444,7 @@ class BetterTodoCard extends HTMLElement {
         <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
       </div>`;
 
-    this._showDialog(html, (dlg) => this._wireTaskDialog(dlg));
+    this._updateDialog(html, (dlg) => this._wireTaskDialog(dlg));
   }
 
   _wireTaskDialog(dlg) {
@@ -1535,6 +1613,11 @@ class BetterTodoCard extends HTMLElement {
       .list-manage { display: flex; flex-direction: column; gap: 6px; }
       .tagpick { margin: -6px 0 12px; }
       .list-row { display: flex; justify-content: space-between; align-items: center; text-align: left; }
+      .list-row2 { display: flex; align-items: center; gap: 6px; }
+      .list-row2 .grip { margin-top: 0; flex: none; }
+      .list-row2 .list-row { flex: 1; min-width: 0; }
+      .icon-btn:disabled { opacity: 0.3; cursor: default; }
+      .icon-btn:disabled:hover { background: none; color: var(--secondary-text-color); }
       .row-edit { opacity: 0.6; margin-left: 12px; }
       .menu { padding: 8px 0 4px; border-bottom: 1px solid var(--divider-color); margin-bottom: 8px; }
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }

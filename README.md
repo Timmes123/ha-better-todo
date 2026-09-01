@@ -49,8 +49,9 @@ a fixed schedule. Real life needs more:
   **Rotate** and the task belongs to exactly one person at a time, moving on after every
   completion. A "logged-in user" filter gives every family member their own view without
   per-user dashboards.
-- **Multiple lists** with in-card management (create, rename, delete), **tags** with
-  filter chips and a tap-to-reuse tag picker, subtasks, optional priorities.
+- **Multiple lists** with in-card management (create, rename, reorder via drag & drop
+  or arrow buttons, delete), **tags** with filter chips and a tap-to-reuse tag picker,
+  subtasks, optional priorities.
 - **Standard `todo` entity and `calendar` entity per list** — your tasks show up in the
   Companion App, on watches, in voice assistants and in the HA calendar (recurring tasks
   are expanded onto every occurrence). Better ToDo's own storage stays the single source

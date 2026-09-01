@@ -464,6 +464,21 @@ class BetterTodoManager:
                 task["order"] = position[task["id"]]
         self._save_notify()
 
+    def reorder_lists(self, list_ids: list[str]) -> None:
+        """Apply a manual order to the lists."""
+        position = {list_id: index for index, list_id in enumerate(list_ids)}
+        # A list missing from the payload (e.g. created concurrently by
+        # another user) keeps a stable position after the reordered ones.
+        rest = sorted(
+            (l for l in self.data["lists"] if l["id"] not in position),
+            key=lambda l: l.get("order", 0),
+        )
+        for offset, lst in enumerate(rest):
+            position[lst["id"]] = len(list_ids) + offset
+        for lst in self.data["lists"]:
+            lst["order"] = position[lst["id"]]
+        self._save_notify()
+
     def toggle_subtask(self, task_id: str, subtask_id: str, done: bool) -> None:
         task = self._task(task_id)
         for subtask in task.get("subtasks") or []:

@@ -34,6 +34,7 @@ def async_register_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_skip_task)
     websocket_api.async_register_command(hass, ws_toggle_subtask)
     websocket_api.async_register_command(hass, ws_reorder)
+    websocket_api.async_register_command(hass, ws_reorder_lists)
     websocket_api.async_register_command(hass, ws_clear_completed)
 
 
@@ -206,6 +207,17 @@ def ws_skip_task(hass, connection, msg):
 @_handle
 def ws_reorder(hass, connection, msg):
     _manager(hass).reorder_tasks(msg["list_id"], msg["task_ids"])
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "better_todo/reorder_lists",
+        vol.Required("list_ids"): [str],
+    }
+)
+@_handle
+def ws_reorder_lists(hass, connection, msg):
+    _manager(hass).reorder_lists(msg["list_ids"])
 
 
 @websocket_api.websocket_command(
