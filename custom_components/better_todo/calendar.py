@@ -131,6 +131,8 @@ class BetterTodoCalendarEntity(CalendarEntity):
             if typ in (TASK_TYPE_SIMPLE, TASK_TYPE_AFTER_COMPLETION):
                 if task.get("status") == "done":
                     return None
+                if typ == TASK_TYPE_AFTER_COMPLETION:
+                    due = engine.interval_first_active(due, task.get("interval") or {})
                 return due if due >= today else None
         except (ValueError, TypeError, KeyError):
             return None
@@ -169,6 +171,8 @@ class BetterTodoCalendarEntity(CalendarEntity):
             elif typ in (TASK_TYPE_SIMPLE, TASK_TYPE_AFTER_COMPLETION):
                 if task.get("status") == "done":
                     continue
+                if typ == TASK_TYPE_AFTER_COMPLETION:
+                    due = engine.interval_first_active(due, task.get("interval") or {})
                 if start <= due <= end:
                     events.append(self._make_event(task, due))
         events.sort(key=lambda e: str(e.start))

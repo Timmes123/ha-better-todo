@@ -84,7 +84,7 @@
         },
         "interval": {
           "name": "Interval",
-          "description": "Interval after completion, e.g. unit=months, value=1."
+          "description": "Interval after completion, e.g. unit=months, value=1; optional months=[4,5,6] for active months."
         },
         "period": {
           "name": "Period",
@@ -208,7 +208,7 @@
         },
         "interval": {
           "name": "Interval",
-          "description": "Replaces the after-completion interval, e.g. unit=weeks, value=1."
+          "description": "Replaces the after-completion interval, e.g. unit=weeks, value=1, months=[4,5,6,7,8]."
         },
         "period": {
           "name": "Period",

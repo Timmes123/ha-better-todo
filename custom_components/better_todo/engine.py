@@ -93,7 +93,30 @@ def validate_interval(interval: dict) -> dict:
         raise ValueError(f"Unknown interval unit: {unit}")
     interval["unit"] = unit
     interval["value"] = max(1, int(interval.get("value") or 1))
+    # Active months, same semantics as for schedules: a due date that lands
+    # outside moves to the first day of the next active month.
+    months = interval.get("months")
+    if months:
+        months = sorted({int(m) for m in months})
+        if months[0] < 1 or months[-1] > 12:
+            raise ValueError("months must be 1-12")
+        interval["months"] = months if len(months) < 12 else None
+    else:
+        interval["months"] = None
     return interval
+
+
+def interval_first_active(d: date, interval: dict) -> date:
+    """``d`` when inside the interval's active months, else the first day of
+    the next active month."""
+    months = interval.get("months")
+    if not months or d.month in months:
+        return d
+    for k in range(1, 13):
+        m = (d.month - 1 + k) % 12 + 1
+        if m in months:
+            return date(d.year + (d.month - 1 + k) // 12, m, 1)
+    return d
 
 
 def pin_monthly_day(sched: dict, anchor: date) -> bool:
@@ -266,14 +289,16 @@ def add_interval(start: date, interval: dict) -> date:
     unit = interval.get("unit", "days")
     value = max(1, int(interval.get("value") or 1))
     if unit == "days":
-        return start + timedelta(days=value)
-    if unit == "weeks":
-        return start + timedelta(weeks=value)
-    if unit == "months":
-        return add_months(start, value)
-    if unit == "years":
-        return add_months(start, value * 12)
-    raise ValueError(f"Unknown interval unit: {unit}")
+        d = start + timedelta(days=value)
+    elif unit == "weeks":
+        d = start + timedelta(weeks=value)
+    elif unit == "months":
+        d = add_months(start, value)
+    elif unit == "years":
+        d = add_months(start, value * 12)
+    else:
+        raise ValueError(f"Unknown interval unit: {unit}")
+    return interval_first_active(d, interval)
 
 
 def period_start(period: str, d: date) -> date:
@@ -363,7 +388,9 @@ def compute_state(task: dict, today: date) -> dict:
         }
 
     if typ == "after_completion":
-        due = parse_date(task.get("due_date")) or today
+        due = interval_first_active(
+            parse_date(task.get("due_date")) or today, task.get("interval") or {}
+        )
         days_until = (due - today).days
         if days_until > 0:
             lead = task.get("lead_days")

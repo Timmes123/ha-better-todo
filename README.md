@@ -40,8 +40,10 @@ a fixed schedule. Real life needs more:
   a fixed day of month (1–31), the *last* day of the month, the *nth* or *last* weekday
   ("2nd Saturday", "last Wednesday"), yearly on a fixed date — plus an optional end date
   or maximum number of repetitions, and **active months** for seasonal chores ("mow the
-  lawn" weekly, but only April–August). The repeat badge on every task shows its cadence
-  ("weekly · Apr–Aug", "every 2 weeks", "2 wk after completion").
+  lawn" weekly, but only April–August) — available for fixed schedules and for
+  after-completion intervals alike (a due date outside the active months moves to the
+  first day of the next active month). The repeat badge on every task shows its cadence
+  ("weekly · Apr–Aug", "every 2 weeks", "4 d after completion · Apr–Aug").
 - **Notifications out of the box**: per-task reminders (up to 5) and a daily summary of
   open tasks are **pushed by the integration itself** — configure once, no automations
   needed. See [Notifications](#notifications) for the exact mechanics.
@@ -282,6 +284,17 @@ data:
 ```
 
 ```yaml
+# Same idea for an after-completion task: 4 days after the last watering, summer only
+service: better_todo.add_task
+data:
+  list: Garden
+  title: Water the lawn
+  type: after_completion
+  due_date: "2026-05-01"
+  interval: { unit: days, value: 4, months: [5, 6, 7, 8, 9] }
+```
+
+```yaml
 # Change an existing task, e.g. switch its cadence on a date trigger
 service: better_todo.update_task
 data:
@@ -299,8 +312,8 @@ you pass — `new_title`, `new_list`, `notes`, `type`, `due_date`, `due_time`,
 
 The task id is shown (with a copy button) in the expanded task details of the card and
 comes with every event below. Weather-dependent chores don't need a rule at all: make
-"water the lawn" recurring *4 days after completion* and let an automation call
-`better_todo.skip_task` whenever rain is forecast.
+"water the lawn" recurring *4 days after completion* (active months May–September) and
+let an automation call `better_todo.skip_task` whenever rain is forecast.
 
 ### Events
 

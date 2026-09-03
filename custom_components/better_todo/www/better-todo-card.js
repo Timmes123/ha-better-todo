@@ -731,7 +731,8 @@ class BetterTodoCard extends HTMLElement {
     }
     const iv = task.interval || {};
     const u = { days: "d", weeks: "w", months: "m", years: "y" }[iv.unit] || "w";
-    return `${t.rec_in(Number(iv.value) || 1, u)} ${t.after_done}`;
+    const months = this._monthsLabel(iv.months);
+    return `${t.rec_in(Number(iv.value) || 1, u)} ${t.after_done}` + (months ? ` · ${months}` : "");
   }
 
   _knownTags() {
@@ -1394,6 +1395,18 @@ class BetterTodoCard extends HTMLElement {
     this._renderTaskDialog();
   }
 
+  _monthsRow(months) {
+    // Month chips shared by fixed-schedule and after-completion tasks; the
+    // click handler writes to whichever rule the draft's type uses.
+    const t = this.t;
+    const sel = (months || []).map(Number);
+    return `<div class="field">
+      <span>${esc(t.months_f)} <span class="hint">(${esc(t.empty_all_hint)})</span></span>
+      <div class="chips mo-row">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) =>
+        `<button type="button" class="chip ${sel.includes(m) ? "on" : ""}" data-mo="${m}">${esc(this._monthShort(m))}</button>`).join("")}</div>
+    </div>`;
+  }
+
   _renderTaskDialog() {
     const t = this.t;
     const d = this._dialog.draft;
@@ -1455,12 +1468,7 @@ class BetterTodoCard extends HTMLElement {
       }
       // Active months: a yearly rule already names its month, so the chips
       // only make sense for daily/weekly/monthly.
-      const monthsSel = (d.schedule.months || []).map(Number);
-      const monthsRow = freq === "yearly" ? "" : `<div class="field">
-          <span>${esc(t.months_f)} <span class="hint">(${esc(t.empty_all_hint)})</span></span>
-          <div class="chips mo-row">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) =>
-            `<button type="button" class="chip ${monthsSel.includes(m) ? "on" : ""}" data-mo="${m}">${esc(this._monthShort(m))}</button>`).join("")}</div>
-        </div>`;
+      const monthsRow = freq === "yearly" ? "" : this._monthsRow(d.schedule.months);
       typeFields = `
         <div class="field-row">
           <span>${esc(t.every)}</span>
@@ -1506,6 +1514,7 @@ class BetterTodoCard extends HTMLElement {
           </select>
           <span>${esc(t.after_done)}</span>
         </div>
+        ${this._monthsRow(d.interval.months)}
         <label class="field">${esc(t.lead_f)}<input type="number" min="0" data-f="lead_days" value="${esc(d.lead_days ?? "")}"></label>`;
     } else if (d.type === "period") {
       typeFields = `
@@ -1618,9 +1627,10 @@ class BetterTodoCard extends HTMLElement {
       const mo = e.target.closest("[data-mo]");
       if (mo) {
         const m = Number(mo.dataset.mo);
-        const cur = new Set((d.schedule.months || []).map(Number));
+        const rule = d.type === "after_completion" ? d.interval : d.schedule;
+        const cur = new Set((rule.months || []).map(Number));
         if (cur.has(m)) cur.delete(m); else cur.add(m);
-        d.schedule.months = [...cur].sort((a, b) => a - b);
+        rule.months = [...cur].sort((a, b) => a - b);
         this._renderTaskDialog();
         return;
       }
@@ -1702,6 +1712,8 @@ class BetterTodoCard extends HTMLElement {
       d.interval = null; d.period = null;
     } else if (d.type === "after_completion") {
       d.schedule = null; d.period = null;
+      const iv = d.interval;
+      if (!(iv.months || []).length || iv.months.length >= 12) iv.months = null;
     } else if (d.type === "period") {
       d.schedule = null; d.interval = null; d.due_date = null; d.visible_from = null;
       d.due_time = null; d.reminders = [];

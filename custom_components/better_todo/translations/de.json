@@ -84,7 +84,7 @@
         },
         "interval": {
           "name": "Intervall",
-          "description": "Intervall nach Erledigung, z. B. unit=months, value=1."
+          "description": "Intervall nach Erledigung, z. B. unit=months, value=1; optional months=[4,5,6] für aktive Monate."
         },
         "period": {
           "name": "Periode",
@@ -208,7 +208,7 @@
         },
         "interval": {
           "name": "Intervall",
-          "description": "Ersetzt das Intervall nach Erledigung, z. B. unit=weeks, value=1."
+          "description": "Ersetzt das Intervall nach Erledigung, z. B. unit=weeks, value=1, months=[4,5,6,7,8]."
         },
         "period": {
           "name": "Periode",

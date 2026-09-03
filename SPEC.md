@@ -110,7 +110,9 @@ Regelmechanik (eigene Regelstruktur, kein volles RRULE):
 **c) Wiederholend, erledigungs-basiert** — nächste Fälligkeit = Erledigungsdatum + Intervall.
 Beispiel: Klo reinigen fällig 1.1., erledigt 20.1. → nächste Fälligkeit 20.2.
 Intervall in Tagen/Wochen/Monaten/Jahren. Nächste Instanz entsteht **erst bei Erledigung**
-(nichts wird auf Vorrat angelegt).
+(nichts wird auf Vorrat angelegt). Optional **aktive Monate** (`interval.months`,
+0.7.1): landet Erledigung + Intervall außerhalb, rutscht die Fälligkeit auf den ersten
+Tag des nächsten aktiven Monats („Rasen wässern alle 4 Tage, nur Mai–Sep").
 
 **d) Perioden-Aufgabe (Habit)** — pro Woche/Monat genau einmal zu erledigen,
 alle öffnen zu Periodenbeginn gemeinsam neu.
