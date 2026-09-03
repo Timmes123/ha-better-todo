@@ -61,6 +61,9 @@ class BetterTodoManager:
         self.entry = entry
         self._store: Store = Store(hass, STORAGE_VERSION, DOMAIN)
         self.data: dict[str, Any] = {"lists": [], "tasks": [], "history": []}
+        # Integration version, set by async_setup_entry; the card compares it
+        # with its own build to spot a stale (cached) card after an update.
+        self.version: str | None = None
         self._fired_reminders: set[tuple[str, int, str]] = set()
         self._summary_sent: date | None = None
         self._persistent_active = False
@@ -196,6 +199,7 @@ class BetterTodoManager:
                 for task in self.data["tasks"]
             ],
             "persons": self._persons(),
+            "version": self.version,
         }
 
     def _persons(self) -> list[dict]:

@@ -42,6 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     integration = await async_get_integration(hass, DOMAIN)
     version = str(integration.version)
+    manager.version = version
 
     async def _setup_frontend(_event=None) -> None:
         await async_setup_frontend(hass, version)

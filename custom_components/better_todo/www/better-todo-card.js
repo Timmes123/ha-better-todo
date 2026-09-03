@@ -3,6 +3,9 @@
  * via the better_todo/* websocket commands.
  */
 
+// Must match manifest.json — CI checks it. Used to detect a stale cached card.
+const CARD_VERSION = "0.7.5";
+
 const WD_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const STR = {
@@ -59,6 +62,7 @@ const STR = {
     css_hint: "Applied inside the card, see README for class names",
     b_due: "Due date / status", b_person: "Person", b_rec: "Recurrence", b_streak: "Streak / misses",
     months_f: "Active months", task_id_t: "ID", copied: "Copied",
+    outdated: "Better ToDo was updated — reload the page to get the new card.", reload: "Reload",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -113,6 +117,7 @@ const STR = {
     css_hint: "Wirkt innerhalb der Karte, Klassennamen siehe README",
     b_due: "Fälligkeit / Status", b_person: "Person", b_rec: "Wiederholung", b_streak: "Serie / Versäumnisse",
     months_f: "Aktive Monate", task_id_t: "ID", copied: "Kopiert",
+    outdated: "Better ToDo wurde aktualisiert – Seite neu laden für die neue Karte.", reload: "Neu laden",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -167,6 +172,7 @@ const STR = {
     css_hint: "Appliqué dans la carte, noms de classes dans le README",
     b_due: "Échéance / statut", b_person: "Personne", b_rec: "Récurrence", b_streak: "Série / oublis",
     months_f: "Mois actifs", task_id_t: "ID", copied: "Copié",
+    outdated: "Better ToDo a été mis à jour – rechargez la page pour obtenir la nouvelle carte.", reload: "Recharger",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -221,6 +227,7 @@ const STR = {
     css_hint: "Se aplica dentro de la tarjeta, nombres de clase en el README",
     b_due: "Vencimiento / estado", b_person: "Persona", b_rec: "Recurrencia", b_streak: "Racha / fallos",
     months_f: "Meses activos", task_id_t: "ID", copied: "Copiado",
+    outdated: "Better ToDo se ha actualizado: recarga la página para obtener la nueva tarjeta.", reload: "Recargar",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -275,6 +282,7 @@ const STR = {
     css_hint: "Applicato dentro la scheda, nomi delle classi nel README",
     b_due: "Scadenza / stato", b_person: "Persona", b_rec: "Ricorrenza", b_streak: "Serie / mancate",
     months_f: "Mesi attivi", task_id_t: "ID", copied: "Copiato",
+    outdated: "Better ToDo è stato aggiornato: ricarica la pagina per ottenere la nuova scheda.", reload: "Ricarica",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -329,6 +337,7 @@ const STR = {
     css_hint: "Werkt binnen de kaart, klassenamen in de README",
     b_due: "Vervaldatum / status", b_person: "Persoon", b_rec: "Herhaling", b_streak: "Reeks / gemist",
     months_f: "Actieve maanden", task_id_t: "ID", copied: "Gekopieerd",
+    outdated: "Better ToDo is bijgewerkt – herlaad de pagina voor de nieuwe kaart.", reload: "Herladen",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -383,6 +392,7 @@ const STR = {
     css_hint: "Działa wewnątrz karty, nazwy klas w README",
     b_due: "Termin / status", b_person: "Osoba", b_rec: "Powtarzanie", b_streak: "Seria / pominięcia",
     months_f: "Aktywne miesiące", task_id_t: "ID", copied: "Skopiowano",
+    outdated: "Better ToDo został zaktualizowany – odśwież stronę, aby pobrać nową kartę.", reload: "Odśwież",
   },
 };
 
@@ -861,8 +871,14 @@ class BetterTodoCard extends HTMLElement {
       body = this._renderBody();
     }
     const maxH = this._config.max_height ? `style="max-height:${Number(this._config.max_height)}px;overflow-y:auto"` : "";
+    // The backend reports its version with every push. A mismatch means the
+    // browser still runs an older card from before an update — the page was
+    // simply never reloaded (a HA restart only reconnects the websocket).
+    const stale = !!this._data?.version && this._data.version !== CARD_VERSION;
+    const banner = stale ? `<div class="update-hint">${esc(t.outdated)}
+        <button class="btn small" data-action="reload">${esc(t.reload)}</button></div>` : "";
     this._root.innerHTML = `<ha-card class="${this._config.compact ? "compact" : ""}${this._config.colorful === false ? " mono" : ""}">
-        ${this._renderHeader()}
+        ${banner}${this._renderHeader()}
         <div class="body" ${maxH}>${body}</div>
       </ha-card>`;
     // hide_when_empty: only the "nothing to do" state hides the card —
@@ -1072,7 +1088,8 @@ class BetterTodoCard extends HTMLElement {
     const id = el.dataset.id;
     if (action === "subtask") return;
     e.stopPropagation();
-    if (action === "menu") { this._ui.dropdown = !this._ui.dropdown; this._render(); }
+    if (action === "reload") { location.reload(); }
+    else if (action === "menu") { this._ui.dropdown = !this._ui.dropdown; this._render(); }
     else if (action === "dd-filters") { this._ui.menu = !this._ui.menu; this._ui.dropdown = false; this._render(); }
     else if (action === "dd-lists") { this._ui.dropdown = false; this._render(); this._openManageLists(); }
     else if (action === "dd-clear") {
@@ -1870,6 +1887,10 @@ class BetterTodoCard extends HTMLElement {
       .btn.small { padding: 3px 10px; }
       .empty { text-align: center; color: var(--secondary-text-color); padding: 24px 8px; }
       .empty-hint { margin-top: 10px; font-size: 0.85em; opacity: 0.8; }
+      .update-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        margin-bottom: 10px; padding: 8px 12px; border-radius: 10px; font-size: 0.9em;
+        background: color-mix(in srgb, var(--warning-color) 18%, transparent);
+        border: 1px solid color-mix(in srgb, var(--warning-color) 45%, transparent); }
       dialog { border: none; border-radius: 14px; background: var(--card-background-color, #fff);
         color: var(--primary-text-color); padding: 20px; min-width: min(340px, 90vw); max-width: min(460px, 95vw);
         max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
@@ -2085,6 +2106,7 @@ class BetterTodoCardEditor extends HTMLElement {
 }
 
 customElements.define("better-todo-card", BetterTodoCard);
+console.info(`%c BETTER-TODO-CARD %c v${CARD_VERSION} `, "color: white; background: #3f51b5; font-weight: bold;", "color: #3f51b5; background: white; font-weight: bold;");
 customElements.define("better-todo-card-editor", BetterTodoCardEditor);
 window.customCards = window.customCards || [];
 window.customCards.push({
