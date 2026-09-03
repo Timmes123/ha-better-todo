@@ -52,6 +52,7 @@ const STR = {
     confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
     empty_all_hint: "empty = all",
     move_up: "Move up", move_down: "Move down", close: "Close",
+    hidden_hint: "Hidden outside edit mode (\"Hide card when empty\" is on).",
     grp_display: "Display", grp_filters: "Filters", grp_badges: "Badges on tasks",
     grp_behavior: "Behavior", grp_advanced: "Advanced",
     hide_empty_t: "Hide card when empty", css_f: "Custom CSS",
@@ -105,6 +106,7 @@ const STR = {
     confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
     empty_all_hint: "leer = alle",
     move_up: "Nach oben", move_down: "Nach unten", close: "Schließen",
+    hidden_hint: "Außerhalb des Bearbeitungsmodus ausgeblendet („Karte bei Leere ausblenden“ ist aktiv).",
     grp_display: "Anzeige", grp_filters: "Filter", grp_badges: "Badges an der Aufgabe",
     grp_behavior: "Verhalten", grp_advanced: "Erweitert",
     hide_empty_t: "Karte bei Leere ausblenden", css_f: "Eigenes CSS",
@@ -158,6 +160,7 @@ const STR = {
     confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
     empty_all_hint: "vide = toutes",
     move_up: "Monter", move_down: "Descendre", close: "Fermer",
+    hidden_hint: "Masquée hors du mode édition (« Masquer la carte si vide » est activé).",
     grp_display: "Affichage", grp_filters: "Filtres", grp_badges: "Badges sur les tâches",
     grp_behavior: "Comportement", grp_advanced: "Avancé",
     hide_empty_t: "Masquer la carte si vide", css_f: "CSS personnalisé",
@@ -211,6 +214,7 @@ const STR = {
     confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
     empty_all_hint: "vacío = todas",
     move_up: "Subir", move_down: "Bajar", close: "Cerrar",
+    hidden_hint: "Oculta fuera del modo de edición («Ocultar tarjeta si está vacía» está activado).",
     grp_display: "Visualización", grp_filters: "Filtros", grp_badges: "Insignias en las tareas",
     grp_behavior: "Comportamiento", grp_advanced: "Avanzado",
     hide_empty_t: "Ocultar tarjeta si está vacía", css_f: "CSS personalizado",
@@ -264,6 +268,7 @@ const STR = {
     confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
     empty_all_hint: "vuoto = tutte",
     move_up: "Sposta su", move_down: "Sposta giù", close: "Chiudi",
+    hidden_hint: "Nascosta fuori dalla modalità di modifica («Nascondi la scheda se vuota» è attivo).",
     grp_display: "Visualizzazione", grp_filters: "Filtri", grp_badges: "Badge sulle attività",
     grp_behavior: "Comportamento", grp_advanced: "Avanzate",
     hide_empty_t: "Nascondi la scheda se vuota", css_f: "CSS personalizzato",
@@ -317,6 +322,7 @@ const STR = {
     confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
     empty_all_hint: "leeg = alle",
     move_up: "Omhoog", move_down: "Omlaag", close: "Sluiten",
+    hidden_hint: "Verborgen buiten de bewerkmodus (\"Kaart verbergen als leeg\" staat aan).",
     grp_display: "Weergave", grp_filters: "Filters", grp_badges: "Badges bij taken",
     grp_behavior: "Gedrag", grp_advanced: "Geavanceerd",
     hide_empty_t: "Kaart verbergen als leeg", css_f: "Eigen CSS",
@@ -370,6 +376,7 @@ const STR = {
     confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
     empty_all_hint: "puste = wszystkie",
     move_up: "Przenieś w górę", move_down: "Przenieś w dół", close: "Zamknij",
+    hidden_hint: "Ukryta poza trybem edycji („Ukryj kartę, gdy pusta” jest włączone).",
     grp_display: "Wyświetlanie", grp_filters: "Filtry", grp_badges: "Odznaki przy zadaniach",
     grp_behavior: "Zachowanie", grp_advanced: "Zaawansowane",
     hide_empty_t: "Ukryj kartę, gdy pusta", css_f: "Własny CSS",
@@ -543,6 +550,18 @@ class BetterTodoCard extends HTMLElement {
     const first = !this._hass;
     this._hass = hass;
     if (first) this._connect();
+  }
+
+  // HA sets preview=true on every card in dashboard edit mode (and in the
+  // card editor). It is assigned after the card already rendered, so the
+  // change has to trigger a render itself — otherwise a card hidden via
+  // hide_when_empty stays a collapsed, near-invisible strip in edit mode.
+  get preview() { return !!this._preview; }
+  set preview(v) {
+    v = !!v;
+    if (v === this._preview) return;
+    this._preview = v;
+    if (this._data || this._error) this._render();
   }
 
   connectedCallback() {
@@ -945,7 +964,11 @@ class BetterTodoCard extends HTMLElement {
       html += tasks.map((task) => this._renderTask(task)).join("");
       html += `</div>`;
     }
-    if (!any) html += `<div class="empty">${esc(t.empty)}</div>`;
+    if (!any) {
+      const hint = this.preview && this._config.hide_when_empty
+        ? `<div class="empty-hint">${esc(t.hidden_hint)}</div>` : "";
+      html += `<div class="empty">${esc(t.empty)}${hint}</div>`;
+    }
     this._empty = !any;
     return html;
   }
@@ -1846,6 +1869,7 @@ class BetterTodoCard extends HTMLElement {
       .btn.ghost { border: none; color: var(--secondary-text-color); }
       .btn.small { padding: 3px 10px; }
       .empty { text-align: center; color: var(--secondary-text-color); padding: 24px 8px; }
+      .empty-hint { margin-top: 10px; font-size: 0.85em; opacity: 0.8; }
       dialog { border: none; border-radius: 14px; background: var(--card-background-color, #fff);
         color: var(--primary-text-color); padding: 20px; min-width: min(340px, 90vw); max-width: min(460px, 95vw);
         max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.35); }
