@@ -29,6 +29,7 @@ a fixed schedule. Real life needs more:
 | 📄 *"Cancel the contract before Dec 31."* | The task stays invisible until Dec 1 (**visible-from date**), then shows a **live countdown** to the deadline. |
 | 🚴 *"Ride the bike once a week."* | A **weekly task** that reopens every Monday, tracks your **streak** ("15 wk streak 🔥") and how long you've been skipping it ("3 wk missed"). Skipping deliberately **freezes** the streak instead of breaking it. |
 | 🗑️ *"Kids take turns carrying out the trash."* | **Rotating assignment** over a freely chosen pool of persons — every completion passes the task to the next person. |
+| 🌱 *"Mow the lawn every Saturday — but only April to September."* | **Active months** on any recurring task: outside the season it simply stays quiet, and the badge says so ("weekly · Apr–Sep"). |
 
 ## Features
 
@@ -93,11 +94,11 @@ restart. HACS is strongly recommended so you get updates.
 
 | Card menu | Filters |
 |:---:|:---:|
-| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-menu.png" width="340" alt="Card menu with Show filters, Edit lists and Clear completed"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-filters.png" width="340" alt="Filter bar with list chips, tag chips, person filter and sorting"> |
+| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-menu.png" width="340" alt="Card menu with Show filters, Edit lists and Clear completed"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-filters.png" width="340" alt="Filter bar with list chips, tag chips, person filter, sorting and view toggles"> |
 
 | Task dialog | List management |
 |:---:|:---:|
-| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/task-dialog.png" width="340" alt="Task dialog with schedule, reminders, tag picker and rotating assignment"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/list-manager.png" width="340" alt="Edit lists dialog"> |
+| <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/task-dialog.png" width="340" alt="Task dialog with schedule, active months, reminders, tag picker and rotating assignment"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/list-manager.png" width="340" alt="Edit lists dialog with rename and reorder"> |
 
 Not a fan of colorful badges? Turn off **Multicolor** in the card editor (or set
 `colorful: false`) and every badge switches to your theme's neutral colors:
@@ -107,7 +108,7 @@ Not a fan of colorful badges? Turn off **Multicolor** in the card editor (or set
 | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-overview.png" width="340" alt="Card with multicolor badges"> | <img src="https://raw.githubusercontent.com/Timmes123/ha-better-todo/main/images/card-overview-mono.png" width="340" alt="Card with monochrome badges in theme colors"> |
 
 The **☰ menu** offers *Show filters* (list/tag/person filter, sorting, view toggles),
-*Edit lists* (create, rename, delete — deleting a list removes its tasks and entities),
+*Edit lists* (create, rename, reorder, delete — deleting a list removes its tasks and entities),
 *Clear completed* (removes all completed tasks in the currently visible lists, with
 confirmation) and *Reset filters* (shown while any filter deviates from the defaults).
 
