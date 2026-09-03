@@ -185,17 +185,29 @@ configure it without YAML.
 
 Everything visual comes from your theme's variables, so the card blends in without
 configuration. For anything beyond that, the `css` option injects your own rules into
-the card (it is a multi-line field in the visual editor under *Advanced*). The card keeps
-your rules and anything a theme tool adds across every refresh.
+the card. The card keeps your rules and anything a theme tool adds across every refresh.
+
+**Visual editor:** open the card's editor, expand *Advanced* and paste your rules into
+the *Custom CSS* field — plain CSS, one rule per line, nothing else needed:
+
+```css
+ha-card { background: rgba(0, 0, 0, 0.35); }   /* translucent card */
+ha-card { padding: 8px 12px; }                 /* tighter padding */
+.task-title { font-size: 1.1em; }              /* bigger task titles */
+.head-title { color: var(--accent-color); }    /* colored card title */
+.badge { font-size: 0.7em; }                   /* smaller badges */
+```
+
+**YAML:** the same rules go under `css`. The `|` after `css:` is YAML syntax for a
+multi-line text block (it is not part of the CSS and not needed in the visual editor).
+Use CSS comments (`/* … */`) inside the block — a `#` there is not a YAML comment, it
+becomes part of the CSS and breaks the rule after it.
 
 ```yaml
 type: custom:better-todo-card
 css: |
-  ha-card { background: rgba(0, 0, 0, 0.35); }   # translucent card
-  ha-card { padding: 8px 12px; }                 # tighter padding
-  .task-title { font-size: 1.1em; }              # bigger task titles
-  .head-title { color: var(--accent-color); }    # colored card title
-  .badge { font-size: 0.7em; }                   # smaller badges
+  ha-card { background: rgba(0, 0, 0, 0.35); }
+  .task-title { font-size: 1.1em; }
 ```
 
 Stable class names you can target: `ha-card`, `.head`, `.head-title`, `.menu`, `.chip`,
