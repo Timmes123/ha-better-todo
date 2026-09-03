@@ -50,43 +50,179 @@
       "name": "Add task",
       "description": "Adds a task to a list (the list is created if it does not exist).",
       "fields": {
-        "list": { "name": "List", "description": "Name of the list." },
-        "title": { "name": "Title", "description": "Task title." },
-        "notes": { "name": "Notes", "description": "Optional notes." },
-        "type": { "name": "Type", "description": "Task type: simple, scheduled, after_completion or period." },
-        "due_date": { "name": "Due date", "description": "Due date (first due date for recurring tasks)." },
-        "visible_from": { "name": "Visible from", "description": "The task appears on this date." },
-        "assigned_to": { "name": "Assigned to", "description": "Person entity the task is assigned to." },
-        "schedule": { "name": "Schedule", "description": "Recurrence rule for scheduled tasks, e.g. freq=monthly, interval=1, day=1." },
-        "interval": { "name": "Interval", "description": "Interval after completion, e.g. unit=months, value=1." },
-        "period": { "name": "Period", "description": "Period for habit tasks: week or month." }
+        "list": {
+          "name": "List",
+          "description": "Name of the list."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Task title."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Optional notes."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Task type: simple, scheduled, after_completion or period."
+        },
+        "due_date": {
+          "name": "Due date",
+          "description": "Due date (first due date for recurring tasks)."
+        },
+        "visible_from": {
+          "name": "Visible from",
+          "description": "The task appears on this date."
+        },
+        "assigned_to": {
+          "name": "Assigned to",
+          "description": "Person entity the task is assigned to."
+        },
+        "schedule": {
+          "name": "Schedule",
+          "description": "Recurrence rule for scheduled tasks, e.g. freq=monthly, interval=1, day=1; optional months=[4,5,6] for active months."
+        },
+        "interval": {
+          "name": "Interval",
+          "description": "Interval after completion, e.g. unit=months, value=1."
+        },
+        "period": {
+          "name": "Period",
+          "description": "Period for habit tasks: week or month."
+        }
       }
     },
     "complete_task": {
       "name": "Complete task",
       "description": "Marks a task as completed (by id or exact title).",
       "fields": {
-        "task_id": { "name": "Task ID", "description": "Internal task id." },
-        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." },
-        "all": { "name": "Complete all", "description": "Complete all outstanding occurrences at once." }
+        "task_id": {
+          "name": "Task ID",
+          "description": "Internal task id."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Exact task title (alternative to the id)."
+        },
+        "all": {
+          "name": "Complete all",
+          "description": "Complete all outstanding occurrences at once."
+        },
+        "list": {
+          "name": "List",
+          "description": "List name to scope the title match (optional)."
+        }
       }
     },
     "skip_task": {
       "name": "Skip task",
       "description": "Skips the current occurrence without completing it (streaks are frozen).",
       "fields": {
-        "task_id": { "name": "Task ID", "description": "Internal task id." },
-        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." }
+        "task_id": {
+          "name": "Task ID",
+          "description": "Internal task id."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Exact task title (alternative to the id)."
+        },
+        "list": {
+          "name": "List",
+          "description": "List name to scope the title match (optional)."
+        }
       }
     },
     "remove_task": {
       "name": "Remove task",
       "description": "Deletes a task permanently.",
       "fields": {
-        "task_id": { "name": "Task ID", "description": "Internal task id." },
-        "title": { "name": "Title", "description": "Exact task title (alternative to the id)." }
+        "task_id": {
+          "name": "Task ID",
+          "description": "Internal task id."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Exact task title (alternative to the id)."
+        },
+        "list": {
+          "name": "List",
+          "description": "List name to scope the title match (optional)."
+        }
+      }
+    },
+    "update_task": {
+      "name": "Update task",
+      "description": "Changes fields of an existing task (by id or exact title). Only the fields passed are changed.",
+      "fields": {
+        "task_id": {
+          "name": "Task ID",
+          "description": "Internal task id."
+        },
+        "title": {
+          "name": "Title",
+          "description": "Exact task title (alternative to the id)."
+        },
+        "list": {
+          "name": "List",
+          "description": "List name to scope the title match (optional)."
+        },
+        "new_title": {
+          "name": "New title",
+          "description": "Rename the task."
+        },
+        "new_list": {
+          "name": "New list",
+          "description": "Move the task to this list (created if it does not exist)."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Notes."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Task type: simple, scheduled, after_completion or period."
+        },
+        "due_date": {
+          "name": "Due date",
+          "description": "Due date (next due date for recurring tasks)."
+        },
+        "due_time": {
+          "name": "Due time",
+          "description": "Due time (HH:MM)."
+        },
+        "visible_from": {
+          "name": "Visible from",
+          "description": "The task appears on this date."
+        },
+        "lead_days": {
+          "name": "Lead days",
+          "description": "Show the task this many days before it is due."
+        },
+        "assigned_to": {
+          "name": "Assigned to",
+          "description": "Person entity (or list of them) the task is assigned to."
+        },
+        "schedule": {
+          "name": "Schedule",
+          "description": "Replaces the recurrence rule, e.g. freq=weekly, interval=1, weekdays=[0,3], months=[4,5,6,7,8]."
+        },
+        "interval": {
+          "name": "Interval",
+          "description": "Replaces the after-completion interval, e.g. unit=weeks, value=1."
+        },
+        "period": {
+          "name": "Period",
+          "description": "Period for habit tasks: week or month."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Replaces the tags (list or comma-separated)."
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "1 = high, 2 = medium, 3 = low, empty = none."
+        }
       }
     }
   }
 }
-

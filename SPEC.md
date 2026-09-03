@@ -93,6 +93,11 @@ Regelmechanik (eigene Regelstruktur, kein volles RRULE):
   **„n-ter Wochentag"** (z. B. „2. Samstag", „letzter Mittwoch")
 - optional **Enddatum** und/oder **maximale Anzahl Wiederholungen** — danach gilt die
   Aufgabe als abgeschlossen
+- optional **aktive Monate** (`months`, 2026-09-03): Vorkommen außerhalb werden
+  übersprungen („Rasen mähen" wöchentlich, aber nur Apr–Aug). Für saisonal wechselnde
+  Rhythmen zwei Aufgaben anlegen (wöchentlich Apr–Aug, monatlich Sep–Mär). Bewusst
+  **keine** allgemeine Bedingungs-Engine (Wetter etc.) im Datenmodell — dafür gibt es
+  `skip_task`/`update_task` per Automation.
 - **Überfällig-Verhalten**: immer **eine** offene Aufgabe mit „n× fällig"-Zähler
   (kein Stapeln separater Instanzen — Entscheidung 2026-08-25). Beim Abhaken wählbar:
   **1× erledigen** (Zähler −1, Aufgabe bleibt offen solange n > 0) oder **alle erledigen**.
@@ -128,9 +133,11 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
 
 ## 4. Automatisierungs-Schnittstelle
 
-**Services** (Auszug): `better_todo.add_item`, `complete_item`, `skip_item`,
-`update_item`, `remove_item` — damit Automationen Aufgaben anlegen können
-(z. B. „Waschmaschine fertig → Aufgabe ‚Wäsche aufhängen'").
+**Services**: `better_todo.add_task`, `complete_task`, `skip_task`, `remove_task`,
+`update_task` (seit 0.7.0; ändert nur übergebene Felder, Ziel per `task_id` oder
+`title` + `list`) — damit Automationen Aufgaben anlegen und ändern können
+(z. B. „Waschmaschine fertig → Aufgabe ‚Wäsche aufhängen'"). Die Aufgaben-ID ist in
+der Karte in den aufgeklappten Details sichtbar (mit Kopierknopf).
 
 **Events**: `better_todo_item_completed`, `better_todo_item_due`,
 `better_todo_item_overdue` — damit Automationen auf Aufgaben reagieren können.
@@ -168,6 +175,12 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
   Bestätigung vor dem Erledigen
 - **Visueller Karten-Editor** (GUI-Konfiguration statt nur YAML)
 - Mehrsprachigkeit über DE/EN hinaus (FR, ES, IT, NL, PL, …)
+- (0.7.0, aus GitHub-Issues) **jedes Badge einzeln abschaltbar** (`show_*`, Standard
+  an), **Karte bei Leere ausblenden** (`hide_when_empty`, nur der Zustand „Nichts zu
+  tun"; Fehler/Laden/„keine Listen" bleiben sichtbar), **freies CSS** (`css`) statt
+  einzelner Style-Optionen. Render-Prinzip: fester Rahmen (Styles + Container) wird
+  einmal angelegt, nur der Container-Inhalt wird neu gerendert — Fremd-Styles im
+  Shadow-DOM überleben Updates.
 
 ## 8. Ausbaustufen (Grobplan)
 

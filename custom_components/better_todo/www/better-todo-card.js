@@ -52,6 +52,12 @@ const STR = {
     confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
     empty_all_hint: "empty = all",
     move_up: "Move up", move_down: "Move down",
+    grp_display: "Display", grp_filters: "Filters", grp_badges: "Badges on tasks",
+    grp_behavior: "Behavior", grp_advanced: "Advanced",
+    hide_empty_t: "Hide card when empty", css_f: "Custom CSS",
+    css_hint: "Applied inside the card, see README for class names",
+    b_due: "Due date / status", b_person: "Person", b_rec: "Recurrence", b_streak: "Streak / misses",
+    months_f: "Active months", task_id_t: "ID", copied: "Copied",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -99,6 +105,12 @@ const STR = {
     confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
     empty_all_hint: "leer = alle",
     move_up: "Nach oben", move_down: "Nach unten",
+    grp_display: "Anzeige", grp_filters: "Filter", grp_badges: "Badges an der Aufgabe",
+    grp_behavior: "Verhalten", grp_advanced: "Erweitert",
+    hide_empty_t: "Karte bei Leere ausblenden", css_f: "Eigenes CSS",
+    css_hint: "Wirkt innerhalb der Karte, Klassennamen siehe README",
+    b_due: "Fälligkeit / Status", b_person: "Person", b_rec: "Wiederholung", b_streak: "Serie / Versäumnisse",
+    months_f: "Aktive Monate", task_id_t: "ID", copied: "Kopiert",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -146,6 +158,12 @@ const STR = {
     confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
     empty_all_hint: "vide = toutes",
     move_up: "Monter", move_down: "Descendre",
+    grp_display: "Affichage", grp_filters: "Filtres", grp_badges: "Badges sur les tâches",
+    grp_behavior: "Comportement", grp_advanced: "Avancé",
+    hide_empty_t: "Masquer la carte si vide", css_f: "CSS personnalisé",
+    css_hint: "Appliqué dans la carte, noms de classes dans le README",
+    b_due: "Échéance / statut", b_person: "Personne", b_rec: "Récurrence", b_streak: "Série / oublis",
+    months_f: "Mois actifs", task_id_t: "ID", copied: "Copié",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -193,6 +211,12 @@ const STR = {
     confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
     empty_all_hint: "vacío = todas",
     move_up: "Subir", move_down: "Bajar",
+    grp_display: "Visualización", grp_filters: "Filtros", grp_badges: "Insignias en las tareas",
+    grp_behavior: "Comportamiento", grp_advanced: "Avanzado",
+    hide_empty_t: "Ocultar tarjeta si está vacía", css_f: "CSS personalizado",
+    css_hint: "Se aplica dentro de la tarjeta, nombres de clase en el README",
+    b_due: "Vencimiento / estado", b_person: "Persona", b_rec: "Recurrencia", b_streak: "Racha / fallos",
+    months_f: "Meses activos", task_id_t: "ID", copied: "Copiado",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -240,6 +264,12 @@ const STR = {
     confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
     empty_all_hint: "vuoto = tutte",
     move_up: "Sposta su", move_down: "Sposta giù",
+    grp_display: "Visualizzazione", grp_filters: "Filtri", grp_badges: "Badge sulle attività",
+    grp_behavior: "Comportamento", grp_advanced: "Avanzate",
+    hide_empty_t: "Nascondi la scheda se vuota", css_f: "CSS personalizzato",
+    css_hint: "Applicato dentro la scheda, nomi delle classi nel README",
+    b_due: "Scadenza / stato", b_person: "Persona", b_rec: "Ricorrenza", b_streak: "Serie / mancate",
+    months_f: "Mesi attivi", task_id_t: "ID", copied: "Copiato",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -287,6 +317,12 @@ const STR = {
     confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
     empty_all_hint: "leeg = alle",
     move_up: "Omhoog", move_down: "Omlaag",
+    grp_display: "Weergave", grp_filters: "Filters", grp_badges: "Badges bij taken",
+    grp_behavior: "Gedrag", grp_advanced: "Geavanceerd",
+    hide_empty_t: "Kaart verbergen als leeg", css_f: "Eigen CSS",
+    css_hint: "Werkt binnen de kaart, klassenamen in de README",
+    b_due: "Vervaldatum / status", b_person: "Persoon", b_rec: "Herhaling", b_streak: "Reeks / gemist",
+    months_f: "Actieve maanden", task_id_t: "ID", copied: "Gekopieerd",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -334,6 +370,12 @@ const STR = {
     confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
     empty_all_hint: "puste = wszystkie",
     move_up: "Przenieś w górę", move_down: "Przenieś w dół",
+    grp_display: "Wyświetlanie", grp_filters: "Filtry", grp_badges: "Odznaki przy zadaniach",
+    grp_behavior: "Zachowanie", grp_advanced: "Zaawansowane",
+    hide_empty_t: "Ukryj kartę, gdy pusta", css_f: "Własny CSS",
+    css_hint: "Działa wewnątrz karty, nazwy klas w README",
+    b_due: "Termin / status", b_person: "Osoba", b_rec: "Powtarzanie", b_streak: "Seria / pominięcia",
+    months_f: "Aktywne miesiące", task_id_t: "ID", copied: "Skopiowano",
   },
 };
 
@@ -376,6 +418,8 @@ function nextRuleDate(s, todayIso) {
   // even when the browser is in a different timezone.
   const today = todayIso ? new Date(todayIso + "T00:00:00") : new Date();
   today.setHours(0, 0, 0, 0);
+  // Active months restriction (none = every month).
+  const okM = (d) => !(s.months && s.months.length) || s.months.includes(d.getMonth() + 1);
   const clampDay = (y, m, day) => {
     const last = new Date(y, m + 1, 0).getDate();
     return new Date(y, m, Math.min(day, last));
@@ -392,10 +436,10 @@ function nextRuleDate(s, todayIso) {
   };
   if (s.freq === "weekly") {
     const wds = s.weekdays && s.weekdays.length ? s.weekdays : [(today.getDay() + 6) % 7];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 400; i++) {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
-      if (wds.includes((d.getDay() + 6) % 7)) return d;
+      if (wds.includes((d.getDay() + 6) % 7) && okM(d)) return d;
     }
   }
   if (s.freq === "monthly") {
@@ -407,7 +451,7 @@ function nextRuleDate(s, todayIso) {
       if (s.nth) d = nthDate(y, m, s.nth.n, s.nth.weekday);
       else if (s.day === "last") d = new Date(y, m + 1, 0);
       else d = clampDay(y, m, Number(s.day) || 1);
-      if (d >= today) return d;
+      if (d >= today && okM(d)) return d;
     }
   }
   if (s.freq === "yearly") {
@@ -417,6 +461,12 @@ function nextRuleDate(s, todayIso) {
       const d = s.day === "last" ? new Date(y, m + 1, 0) : clampDay(y, m, Number(s.day) || 1);
       if (d >= today) return d;
     }
+  }
+  // Daily (or fallback): first day from today inside the active months.
+  for (let i = 0; i < 400; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    if (okM(d)) return d;
   }
   return today;
 }
@@ -440,6 +490,16 @@ class BetterTodoCard extends HTMLElement {
     this._dialog = null;
     this._dialogEl = null;
     this._drag = null;
+    // Fixed frame, dynamic content: the base style, the user's custom CSS
+    // and the content container are created once. Every re-render only
+    // replaces the container's innerHTML, so anything third parties (theme
+    // tools like card-mod) attach to the shadow root survives updates.
+    this._baseStyle = document.createElement("style");
+    this._baseStyle.textContent = this._css();
+    this._userStyle = document.createElement("style");
+    this._root = document.createElement("div");
+    this._root.id = "root";
+    this.shadowRoot.append(this._baseStyle, this._userStyle, this._root);
     // Delegated listeners are attached ONCE here — the shadow root element
     // survives innerHTML swaps, so attaching them per render would stack
     // duplicate handlers and eventually freeze the page.
@@ -459,10 +519,17 @@ class BetterTodoCard extends HTMLElement {
       show_menu: true, show_add: true, show_completed: false, show_upcoming: false,
       compact: false, max_height: null, confirm_complete: false, due_soon_days: 7, due_soon: false,
       upcoming_days: null,
-      colorful: true,
+      colorful: true, hide_when_empty: false, css: null,
+      // Per-badge toggles — every badge the card knows, all on by default.
+      show_due: true, show_priority: true, show_subtasks: true, show_tags: true,
+      show_person: true, show_reminder: true, show_recurrence: true, show_streak: true,
       ...config,
     };
+    this._userStyle.textContent = typeof this._config.css === "string" ? this._config.css : "";
+    if (this._data) this._render();
   }
+
+  _show(key) { return this._config[key] !== false; }
 
   static getStubConfig() {
     return { show_menu: true, show_add: true };
@@ -633,12 +700,34 @@ class BetterTodoCard extends HTMLElement {
   }
   _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
 
+  _monthShort(m) {
+    return new Date(2000, m - 1, 1).toLocaleDateString(this._hass?.locale?.language || "en", { month: "short" });
+  }
+
+  _monthsLabel(months) {
+    // Compact "Apr–Aug" / "Sep–Mar" ranges; a Dec→Jan run is joined.
+    if (!months || !months.length || months.length >= 12) return "";
+    const set = new Set(months.map(Number));
+    let start = 1;
+    if (set.has(12) && set.has(1)) while (set.has(start) && start <= 12) start++;
+    const runs = [];
+    let run = null;
+    for (let i = 0; i < 12; i++) {
+      const m = ((start - 1 + i) % 12) + 1;
+      if (set.has(m)) { if (!run) run = [m, m]; else run[1] = m; }
+      else if (run) { runs.push(run); run = null; }
+    }
+    if (run) runs.push(run);
+    return runs.map(([a, b]) => a === b ? this._monthShort(a) : `${this._monthShort(a)}–${this._monthShort(b)}`).join(", ");
+  }
+
   _recurLabel(task) {
     const t = this.t;
     if (task.type === "scheduled") {
       const s = task.schedule || {};
       const u = { daily: "d", weekly: "w", monthly: "m", yearly: "y" }[s.freq] || "m";
-      return t.rec(Number(s.interval) || 1, u);
+      const months = this._monthsLabel(s.months);
+      return t.rec(Number(s.interval) || 1, u) + (months ? ` · ${months}` : "");
     }
     const iv = task.interval || {};
     const u = { days: "d", weeks: "w", months: "m", years: "y" }[iv.unit] || "w";
@@ -748,11 +837,24 @@ class BetterTodoCard extends HTMLElement {
       body = this._renderBody();
     }
     const maxH = this._config.max_height ? `style="max-height:${Number(this._config.max_height)}px;overflow-y:auto"` : "";
-    this.shadowRoot.innerHTML = `<style>${this._css()}</style>
-      <ha-card class="${this._config.compact ? "compact" : ""}${this._config.colorful === false ? " mono" : ""}">
+    this._root.innerHTML = `<ha-card class="${this._config.compact ? "compact" : ""}${this._config.colorful === false ? " mono" : ""}">
         ${this._renderHeader()}
         <div class="body" ${maxH}>${body}</div>
       </ha-card>`;
+    // hide_when_empty: only the "nothing to do" state hides the card —
+    // errors, loading and "no lists yet" stay visible because the user has
+    // to act on them. The editor preview never hides, so the option can be
+    // toggled without the card vanishing from the editor.
+    const hide = !!this._config.hide_when_empty && !this._error && !!this._data && this._empty && !this.preview;
+    this._setHidden(hide);
+  }
+
+  _setHidden(hide) {
+    if (this._hiddenState === hide) return;
+    this._hiddenState = hide;
+    this.hidden = hide;
+    // HA's card wrapper listens for this and collapses the grid slot.
+    this.dispatchEvent(new Event("card-visibility-changed", { bubbles: true, composed: true }));
   }
 
   _renderHeader() {
@@ -821,6 +923,7 @@ class BetterTodoCard extends HTMLElement {
   _renderBody() {
     const t = this.t;
     const lists = this._activeLists();
+    this._empty = false;
     if (!(this._data.lists || []).length) {
       return `<div class="empty">${esc(t.no_lists)}<br><br><button class="btn" data-action="add-list">+ ${esc(t.new_list)}</button></div>`;
     }
@@ -837,6 +940,7 @@ class BetterTodoCard extends HTMLElement {
       html += `</div>`;
     }
     if (!any) html += `<div class="empty">${esc(t.empty)}</div>`;
+    this._empty = !any;
     return html;
   }
 
@@ -849,42 +953,44 @@ class BetterTodoCard extends HTMLElement {
     const badges = [];
     const timeSuffix = task.due_time ? ` · ${esc(task.due_time)}` : "";
 
-    if (s === "overdue" && c.due_count > 1) badges.push(`<span class="badge err">${esc(t.times_due(c.due_count))}</span>`);
-    if (s === "overdue") badges.push(`<span class="badge err">${esc(t.overdue_d(c.days_overdue))}</span>`);
-    if (s === "due") badges.push(`<span class="badge warn">${esc(t.today)}${timeSuffix}</span>`);
-    if (s === "open" && c.days_left !== undefined) {
-      const cls = c.days_left <= 7 ? "warn" : "";
-      badges.push(`<span class="badge ${cls}">${esc(t.days_left(c.days_left))}${timeSuffix}</span>`);
+    if (this._show("show_due")) {
+      if (s === "overdue" && c.due_count > 1) badges.push(`<span class="badge err">${esc(t.times_due(c.due_count))}</span>`);
+      if (s === "overdue") badges.push(`<span class="badge err">${esc(t.overdue_d(c.days_overdue))}</span>`);
+      if (s === "due") badges.push(`<span class="badge warn">${esc(t.today)}${timeSuffix}</span>`);
+      if (s === "open" && c.days_left !== undefined) {
+        const cls = c.days_left <= 7 ? "warn" : "";
+        badges.push(`<span class="badge ${cls}">${esc(t.days_left(c.days_left))}${timeSuffix}</span>`);
+      }
+      if ((s === "upcoming" || s === "hidden") && (c.due || c.visible_from)) {
+        badges.push(`<span class="badge dim">${esc(t.upcoming)} · ${esc(this._fmtDate(c.due || c.visible_from))}${timeSuffix}</span>`);
+      }
     }
-    if ((s === "upcoming" || s === "hidden") && (c.due || c.visible_from)) {
-      badges.push(`<span class="badge dim">${esc(t.upcoming)} · ${esc(this._fmtDate(c.due || c.visible_from))}${timeSuffix}</span>`);
-    }
-    if (task.type === "period") {
+    if (task.type === "period" && this._show("show_streak")) {
       const wk = (c.period || task.period) === "week";
       if (c.streak > 0) badges.push(`<span class="badge ok">🔥 ${esc(wk ? t.streak_w(c.streak) : t.streak_m(c.streak))}</span>`);
       if (c.misses > 0 && !doneish) badges.push(`<span class="badge err">${esc(wk ? t.missed_w(c.misses) : t.missed_m(c.misses))}</span>`);
       if (s === "period_skipped") badges.push(`<span class="badge dim">${esc(t.skipped)}</span>`);
     }
-    if (this._feature("priorities") && task.priority) {
+    if (this._feature("priorities") && this._show("show_priority") && task.priority) {
       const labels = { 1: t.prio_high, 2: t.prio_med, 3: t.prio_low };
       badges.push(`<span class="badge prio p${task.priority}">${esc(labels[task.priority] || "")}</span>`);
     }
-    if (this._feature("subtasks") && (task.subtasks || []).length) {
+    if (this._feature("subtasks") && this._show("show_subtasks") && (task.subtasks || []).length) {
       const done = task.subtasks.filter((x) => x.done).length;
       badges.push(`<span class="badge dim">☑ ${done}/${task.subtasks.length}</span>`);
     }
-    if (this._feature("tags")) {
+    if (this._feature("tags") && this._show("show_tags")) {
       for (const tag of task.tags || []) badges.push(`<span class="badge tag">#${esc(tag)}</span>`);
     }
-    if (this._feature("assignment")) {
+    if (this._feature("assignment") && this._show("show_person")) {
       for (const pid of task.assigned_to || []) {
         const p = this._person(pid);
         if (p) badges.push(`<span class="badge person">${esc(p.name)}${task.rotation ? " ⟳" : ""}</span>`);
       }
     }
-    if ((task.reminders || []).length) badges.push(`<span class="badge dim">🔔</span>`);
+    if ((task.reminders || []).length && this._show("show_reminder")) badges.push(`<span class="badge dim">🔔</span>`);
     const recurring = task.type === "scheduled" || task.type === "after_completion";
-    if (recurring) badges.push(`<span class="badge dim">🔁 ${esc(this._recurLabel(task))}</span>`);
+    if (recurring && this._show("show_recurrence")) badges.push(`<span class="badge dim">🔁 ${esc(this._recurLabel(task))}</span>`);
 
     const draggable = this._sortMode() === "manual" && !doneish;
     return `<div class="task ${doneish ? "done" : ""} ${s === "overdue" ? "overdue" : ""}" data-id="${esc(task.id)}" data-list="${esc(task.list_id)}" ${draggable ? 'draggable="true"' : ""}>
@@ -914,6 +1020,8 @@ class BetterTodoCard extends HTMLElement {
         ${recurring ? `<button class="btn" data-action="skip" data-id="${esc(task.id)}">${esc(t.skip)}</button>` : ""}
         <button class="btn danger" data-action="del-task" data-id="${esc(task.id)}">${esc(t.delete)}</button>
       </div>
+      <div class="tid">${esc(t.task_id_t)}: <code>${esc(task.id)}</code>
+        <button class="icon-btn small" data-action="copy-id" data-id="${esc(task.id)}" title="${esc(t.task_id_t)}">⧉</button></div>
     </div>`;
   }
 
@@ -966,6 +1074,12 @@ class BetterTodoCard extends HTMLElement {
     else if (action === "complete") this._complete(id);
     else if (action === "edit") this._openTaskDialog(this._task(id));
     else if (action === "skip") this._wsBg({ type: "better_todo/skip_task", task_id: id });
+    else if (action === "copy-id") {
+      // Clipboard needs a secure context; fall back to a selectable prompt.
+      const done = () => { el.textContent = "✓"; setTimeout(() => { el.textContent = "⧉"; }, 1500); };
+      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(id).then(done, () => prompt(this.t.task_id_t, id));
+      else prompt(this.t.task_id_t, id);
+    }
     else if (action === "del-task") {
       if (confirm(this.t.delete_task_confirm)) this._wsBg({ type: "better_todo/delete_task", task_id: id });
     }
@@ -1078,6 +1192,9 @@ class BetterTodoCard extends HTMLElement {
     // The close event fires async; ignore it if another dialog has been
     // opened in the meantime (close → immediately open follow-up dialog).
     dlg.addEventListener("close", () => {
+      // The frame is never wiped any more, so closed dialogs must remove
+      // themselves instead of relying on the next render to drop them.
+      dlg.remove();
       if (this._dialogEl !== dlg) return;
       this._dialogEl = null;
       if (this._dialog) { this._dialog = null; this._render(); }
@@ -1336,6 +1453,14 @@ class BetterTodoCard extends HTMLElement {
             </select>
           </div>`;
       }
+      // Active months: a yearly rule already names its month, so the chips
+      // only make sense for daily/weekly/monthly.
+      const monthsSel = (d.schedule.months || []).map(Number);
+      const monthsRow = freq === "yearly" ? "" : `<div class="field">
+          <span>${esc(t.months_f)} <span class="hint">(${esc(t.empty_all_hint)})</span></span>
+          <div class="chips mo-row">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) =>
+            `<button type="button" class="chip ${monthsSel.includes(m) ? "on" : ""}" data-mo="${m}">${esc(this._monthShort(m))}</button>`).join("")}</div>
+        </div>`;
       typeFields = `
         <div class="field-row">
           <span>${esc(t.every)}</span>
@@ -1348,6 +1473,7 @@ class BetterTodoCard extends HTMLElement {
           </select>
         </div>
         ${ruleFields}
+        ${monthsRow}
         <div class="field-row2">
           <label class="field grow">${esc(t.first_due_f)} <span class="hint">(${esc(t.auto_hint)})</span><input type="date" data-f="due_date" value="${esc(d.due_date || "")}"></label>
           <label class="field">${esc(t.time_f)}<input type="time" data-f="due_time" value="${esc(d.due_time || "")}"></label>
@@ -1489,6 +1615,15 @@ class BetterTodoCard extends HTMLElement {
     // Editing must not be lost to an accidental Esc press.
     dlg.addEventListener("cancel", (e) => e.preventDefault());
     dlg.addEventListener("click", async (e) => {
+      const mo = e.target.closest("[data-mo]");
+      if (mo) {
+        const m = Number(mo.dataset.mo);
+        const cur = new Set((d.schedule.months || []).map(Number));
+        if (cur.has(m)) cur.delete(m); else cur.add(m);
+        d.schedule.months = [...cur].sort((a, b) => a - b);
+        this._renderTaskDialog();
+        return;
+      }
       const tagpick = e.target.closest("[data-tagpick]");
       if (tagpick) {
         const tag = tagpick.dataset.tagpick;
@@ -1562,6 +1697,7 @@ class BetterTodoCard extends HTMLElement {
         s.weekdays = [(new Date(this._todayIso() + "T00:00:00").getDay() + 6) % 7];
       }
       if (s.freq !== "weekly") s.weekdays = null;
+      if (s.freq === "yearly" || !(s.months || []).length || s.months.length >= 12) s.months = null;
       if (!d.due_date) d.due_date = toIso(nextRuleDate(s, this._todayIso()));
       d.interval = null; d.period = null;
     } else if (d.type === "after_completion") {
@@ -1593,6 +1729,7 @@ class BetterTodoCard extends HTMLElement {
   _css() {
     return `
       :host { display: block; }
+      :host([hidden]) { display: none !important; }
       ha-card { padding: 12px 16px 16px; }
       * { box-sizing: border-box; font-family: inherit; }
       .head { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
@@ -1678,6 +1815,9 @@ class BetterTodoCard extends HTMLElement {
       .subtask { display: flex; align-items: center; gap: 6px; font-size: 0.9em; color: var(--primary-text-color); cursor: pointer; }
       .st-done { text-decoration: line-through; color: var(--secondary-text-color); }
       .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+      .tid { margin-top: 8px; font-size: 0.75em; color: var(--secondary-text-color); display: flex; align-items: center; gap: 4px; }
+      .tid code { font-family: monospace; opacity: 0.8; word-break: break-all; }
+      .mo-row .chip { padding: 3px 8px; }
       .btn { border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color);
         border-radius: 8px; padding: 5px 14px; cursor: pointer; font-size: 0.85em; }
       .btn:hover { background: var(--secondary-background-color); }
@@ -1779,21 +1919,42 @@ class BetterTodoCardEditor extends HTMLElement {
       ...(this._data?.tasks || []).flatMap((task) => task.tags || []),
       ...selTags,
     ])].sort();
-    const toggles = [
-      ["show_menu", t.menu_t, c.show_menu ?? true],
-      ["show_add", `+ ${t.new_task}`, c.show_add ?? true],
-      ["show_completed", t.show_done, c.show_completed ?? false],
-      ["show_upcoming", t.show_upcoming, c.show_upcoming ?? false],
-      ["due_soon", t.due_soon_t, c.due_soon ?? false],
-      ["compact", t.compact_t, c.compact ?? false],
-      ["colorful", t.colorful_t, c.colorful ?? true],
-      ["confirm_complete", t.confirm_t, c.confirm_complete ?? false],
+    // [key, label, default] — grouped like the card renders them.
+    const displayToggles = [
+      ["show_menu", t.menu_t, true],
+      ["show_add", `+ ${t.new_task}`, true],
+      ["compact", t.compact_t, false],
+      ["colorful", t.colorful_t, true],
+      ["hide_when_empty", t.hide_empty_t, false],
     ];
+    const filterToggles = [
+      ["show_completed", t.show_done, false],
+      ["show_upcoming", t.show_upcoming, false],
+      ["due_soon", t.due_soon_t, false],
+    ];
+    const badgeToggles = [
+      ["show_due", t.b_due, true],
+      ["show_priority", t.priority_f, true],
+      ["show_subtasks", t.subtasks_f, true],
+      ["show_tags", t.tags_f, true],
+      ["show_person", t.b_person, true],
+      ["show_reminder", t.reminders_f, true],
+      ["show_recurrence", t.b_rec, true],
+      ["show_streak", t.b_streak, true],
+    ];
+    const behaviorToggles = [
+      ["confirm_complete", t.confirm_t, false],
+    ];
+    const checks = (items) => `<div class="checks">
+      ${items.map(([key, label, def]) => `<label><input type="checkbox" data-f="${key}" ${(c[key] ?? def) ? "checked" : ""}> ${esc(label)}</label>`).join("")}
+    </div>`;
+    const group = (title, inner) => `<div class="grp"><div class="grp-title">${esc(title)}</div>${inner}</div>`;
     this.shadowRoot.innerHTML = `<style>
         .ed { display: flex; flex-direction: column; gap: 10px; font-family: inherit; color: var(--primary-text-color); }
         label { display: flex; flex-direction: column; gap: 3px; font-size: 0.85em; color: var(--secondary-text-color); }
-        input, select { font-size: 1rem; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--divider-color);
-          background: var(--secondary-background-color); color: var(--primary-text-color); }
+        input, select, textarea { font-size: 1rem; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--divider-color);
+          background: var(--secondary-background-color); color: var(--primary-text-color); font-family: inherit; }
+        textarea { font-family: monospace; font-size: 0.85rem; min-height: 90px; resize: vertical; }
         .row { display: flex; gap: 10px; flex-wrap: wrap; }
         .row label { flex: 1; min-width: 130px; }
         .checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
@@ -1801,6 +1962,9 @@ class BetterTodoCardEditor extends HTMLElement {
         .lists { display: flex; flex-wrap: wrap; gap: 8px 16px; }
         .lists label { flex-direction: row; align-items: center; gap: 5px; font-size: 0.9em; color: var(--primary-text-color); }
         .hint { font-size: 0.75em; color: var(--secondary-text-color); }
+        .grp { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; border-top: 1px solid var(--divider-color); }
+        .grp-title { font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); }
+        details.grp summary { cursor: pointer; font-size: 0.8em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--secondary-text-color); }
       </style>
       <div class="ed">
         <label>${esc(t.title_f)}<input type="text" data-f="title" value="${esc(c.title || "")}"></label>
@@ -1822,14 +1986,19 @@ class BetterTodoCardEditor extends HTMLElement {
               .map(([v, label]) => `<option value="${v}" ${(c.sort || "smart") === v ? "selected" : ""}>${esc(label)}</option>`).join("")}
           </select></label>
         </div>
-        <div class="row">
-          <label>${esc(t.due_lead_f)}<input type="number" min="0" max="90" data-f="due_soon_days" value="${esc(c.due_soon_days ?? 7)}"></label>
-          <label>${esc(t.horizon_f)}<input type="number" min="0" data-f="upcoming_days" value="${esc(c.upcoming_days ?? "")}"></label>
-          <label>${esc(t.max_height_f)}<input type="number" min="0" data-f="max_height" value="${esc(c.max_height ?? "")}"></label>
-        </div>
-        <div class="checks">
-          ${toggles.map(([key, label, val]) => `<label><input type="checkbox" data-f="${key}" ${val ? "checked" : ""}> ${esc(label)}</label>`).join("")}
-        </div>
+        ${group(t.grp_display, `${checks(displayToggles)}
+          <div class="row"><label>${esc(t.max_height_f)}<input type="number" min="0" data-f="max_height" value="${esc(c.max_height ?? "")}"></label></div>`)}
+        ${group(t.grp_filters, `${checks(filterToggles)}
+          <div class="row">
+            <label>${esc(t.due_lead_f)}<input type="number" min="0" max="90" data-f="due_soon_days" value="${esc(c.due_soon_days ?? 7)}"></label>
+            <label>${esc(t.horizon_f)}<input type="number" min="0" data-f="upcoming_days" value="${esc(c.upcoming_days ?? "")}"></label>
+          </div>`)}
+        ${group(t.grp_badges, checks(badgeToggles))}
+        ${group(t.grp_behavior, checks(behaviorToggles))}
+        <details class="grp" ${c.css ? "open" : ""}><summary>${esc(t.grp_advanced)}</summary>
+          <label>${esc(t.css_f)}<textarea data-f="css" spellcheck="false">${esc(c.css || "")}</textarea></label>
+          <div class="hint">${esc(t.css_hint)}</div>
+        </details>
       </div>`;
   }
 
@@ -1853,7 +2022,14 @@ class BetterTodoCardEditor extends HTMLElement {
     }
     const f = el.dataset.f;
     if (!f) return;
-    if (el.type === "checkbox") this._config[f] = el.checked;
+    if (el.type === "checkbox") {
+      // Store only deviations from the default so a fresh config stays
+      // minimal (badge toggles default to true, most others to false).
+      const defTrue = ["show_menu", "show_add", "colorful", "show_due", "show_priority", "show_subtasks",
+        "show_tags", "show_person", "show_reminder", "show_recurrence", "show_streak"].includes(f);
+      if (el.checked === defTrue) delete this._config[f];
+      else this._config[f] = el.checked;
+    }
     else if (el.type === "number") {
       const v = el.value === "" ? null : Number(el.value);
       if (v === null) delete this._config[f];

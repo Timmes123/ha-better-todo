@@ -80,7 +80,7 @@
         },
         "schedule": {
           "name": "Zeitplan",
-          "description": "Wiederholungsregel für plan-basierte Aufgaben, z. B. freq=monthly, interval=1, day=1."
+          "description": "Wiederholungsregel für geplante Aufgaben, z. B. freq=monthly, interval=1, day=1; optional months=[4,5,6] für aktive Monate."
         },
         "interval": {
           "name": "Intervall",
@@ -147,6 +147,80 @@
         "list": {
           "name": "Liste",
           "description": "Listenname zur Eingrenzung der Titelsuche (optional)."
+        }
+      }
+    },
+    "update_task": {
+      "name": "Aufgabe ändern",
+      "description": "Ändert Felder einer bestehenden Aufgabe (per ID oder exaktem Titel). Nur übergebene Felder werden geändert.",
+      "fields": {
+        "task_id": {
+          "name": "Aufgaben-ID",
+          "description": "Interne Aufgaben-ID."
+        },
+        "title": {
+          "name": "Titel",
+          "description": "Exakter Aufgabentitel (Alternative zur ID)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Listenname, um die Titelsuche einzugrenzen (optional)."
+        },
+        "new_title": {
+          "name": "Neuer Titel",
+          "description": "Aufgabe umbenennen."
+        },
+        "new_list": {
+          "name": "Neue Liste",
+          "description": "Aufgabe in diese Liste verschieben (wird bei Bedarf erstellt)."
+        },
+        "notes": {
+          "name": "Notizen",
+          "description": "Notizen."
+        },
+        "type": {
+          "name": "Typ",
+          "description": "Aufgabentyp: simple, scheduled, after_completion oder period."
+        },
+        "due_date": {
+          "name": "Fälligkeitsdatum",
+          "description": "Fälligkeit (nächste Fälligkeit bei wiederkehrenden Aufgaben)."
+        },
+        "due_time": {
+          "name": "Uhrzeit",
+          "description": "Fälligkeits-Uhrzeit (HH:MM)."
+        },
+        "visible_from": {
+          "name": "Sichtbar ab",
+          "description": "Die Aufgabe erscheint an diesem Datum."
+        },
+        "lead_days": {
+          "name": "Vorlauftage",
+          "description": "Aufgabe so viele Tage vor Fälligkeit anzeigen."
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Person-Entität (oder Liste davon), der die Aufgabe zugewiesen ist."
+        },
+        "schedule": {
+          "name": "Zeitplan",
+          "description": "Ersetzt die Wiederholungsregel, z. B. freq=weekly, interval=1, weekdays=[0,3], months=[4,5,6,7,8]."
+        },
+        "interval": {
+          "name": "Intervall",
+          "description": "Ersetzt das Intervall nach Erledigung, z. B. unit=weeks, value=1."
+        },
+        "period": {
+          "name": "Periode",
+          "description": "Periode für Gewohnheits-Aufgaben: week oder month."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Ersetzt die Tags (Liste oder kommagetrennt)."
+        },
+        "priority": {
+          "name": "Priorität",
+          "description": "1 = hoch, 2 = mittel, 3 = niedrig, leer = keine."
         }
       }
     }

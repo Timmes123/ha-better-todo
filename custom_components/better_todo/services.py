@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 
 import voluptuous as vol
@@ -19,6 +20,7 @@ SERVICE_ADD_TASK = "add_task"
 SERVICE_COMPLETE_TASK = "complete_task"
 SERVICE_SKIP_TASK = "skip_task"
 SERVICE_REMOVE_TASK = "remove_task"
+SERVICE_UPDATE_TASK = "update_task"
 
 ADD_TASK_SCHEMA = vol.Schema(
     {
@@ -41,6 +43,34 @@ TASK_REF_SCHEMA = vol.Schema(
         vol.Optional("title"): cv.string,
         vol.Optional("list"): cv.string,
         vol.Optional("all", default=False): cv.boolean,
+    }
+)
+
+# Fields update_task may change; everything else on the task is kept.
+UPDATE_FIELDS = (
+    "notes", "type", "due_date", "due_time", "visible_from", "lead_days",
+    "assigned_to", "schedule", "interval", "period", "tags", "priority",
+)
+
+UPDATE_TASK_SCHEMA = vol.Schema(
+    {
+        vol.Optional("task_id"): cv.string,
+        vol.Optional("title"): cv.string,
+        vol.Optional("list"): cv.string,
+        vol.Optional("new_title"): cv.string,
+        vol.Optional("new_list"): cv.string,
+        vol.Optional("notes"): cv.string,
+        vol.Optional("type"): vol.In(TASK_TYPES),
+        vol.Optional("due_date"): vol.Any(None, cv.string),
+        vol.Optional("due_time"): vol.Any(None, cv.string),
+        vol.Optional("visible_from"): vol.Any(None, cv.string),
+        vol.Optional("lead_days"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("assigned_to"): vol.Any(None, cv.string, [cv.string]),
+        vol.Optional("schedule"): dict,
+        vol.Optional("interval"): dict,
+        vol.Optional("period"): vol.In(["week", "month"]),
+        vol.Optional("tags"): vol.Any(cv.string, [cv.string]),
+        vol.Optional("priority"): vol.Any(None, vol.Coerce(int)),
     }
 )
 
@@ -119,6 +149,27 @@ def async_register_services(hass: HomeAssistant) -> None:
         manager = _manager(hass)
         manager.delete_task(_find_task_id(manager, call))
 
+    async def update_task(call: ServiceCall) -> None:
+        manager = _manager(hass)
+        task_id = _find_task_id(manager, call)
+        existing = next(t for t in manager.data["tasks"] if t["id"] == task_id)
+        # save_task validates the payload as a whole (e.g. a scheduled task
+        # needs due_date + schedule), so start from the full stored task and
+        # overlay only the fields that were passed.
+        data = copy.deepcopy(existing)
+        if "new_title" in call.data:
+            data["title"] = call.data["new_title"]
+        if "new_list" in call.data:
+            data["list_id"] = manager.find_or_create_list(call.data["new_list"])["id"]
+        for key in UPDATE_FIELDS:
+            if key in call.data:
+                data[key] = call.data[key]
+        if isinstance(data.get("tags"), str):
+            data["tags"] = [x.strip() for x in data["tags"].split(",")]
+        # A schedule/interval passed here replaces the stored rule entirely —
+        # partial rule edits would silently inherit stale day/weekday fields.
+        manager.save_task(data)
+
     def _wrap(func):
         # Surface BetterTodoError as a proper service validation error
         # instead of an unhandled exception in the logs.
@@ -138,10 +189,14 @@ def async_register_services(hass: HomeAssistant) -> None:
     hass.services.async_register(DOMAIN, SERVICE_COMPLETE_TASK, _wrap(complete_task), TASK_REF_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SKIP_TASK, _wrap(skip_task), TASK_REF_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_REMOVE_TASK, _wrap(remove_task), TASK_REF_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_UPDATE_TASK, _wrap(update_task), UPDATE_TASK_SCHEMA)
 
 
 @callback
 def async_remove_services(hass: HomeAssistant) -> None:
-    for service in (SERVICE_ADD_TASK, SERVICE_COMPLETE_TASK, SERVICE_SKIP_TASK, SERVICE_REMOVE_TASK):
+    for service in (
+        SERVICE_ADD_TASK, SERVICE_COMPLETE_TASK, SERVICE_SKIP_TASK,
+        SERVICE_REMOVE_TASK, SERVICE_UPDATE_TASK,
+    ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

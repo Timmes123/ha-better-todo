@@ -71,6 +71,16 @@ def validate_schedule(sched: dict) -> dict:
         if max_occ < 1:
             raise ValueError("max_occurrences must be >= 1")
     sched["max_occurrences"] = max_occ
+    # Active months: occurrences outside are skipped ("mow the lawn" weekly
+    # Apr-Aug only). Empty or all twelve means no restriction.
+    months = sched.get("months")
+    if months:
+        months = sorted({int(m) for m in months})
+        if months[0] < 1 or months[-1] > 12:
+            raise ValueError("months must be 1-12")
+        sched["months"] = months if len(months) < 12 else None
+    else:
+        sched["months"] = None
     return sched
 
 
@@ -154,8 +164,30 @@ def _monthly_date(year: int, month: int, sched: dict, fallback_day: int) -> date
     return date(year, month, min(int(day or fallback_day), last))
 
 
+def in_active_months(d: date, sched: dict) -> bool:
+    """True when ``d`` falls into the schedule's active months (or none set)."""
+    months = sched.get("months")
+    return not months or d.month in months
+
+
+def first_active(anchor: date, sched: dict) -> date:
+    """``anchor`` itself when it lies in an active month, else the next
+    occurrence that does — the stored anchor may predate a months edit."""
+    return anchor if in_active_months(anchor, sched) else advance(anchor, sched)
+
+
 def advance(anchor: date, sched: dict) -> date:
-    """Return the occurrence following ``anchor`` for a schedule."""
+    """Return the next occurrence after ``anchor`` inside the active months."""
+    d = _advance_rule(anchor, sched)
+    guard = 0
+    while not in_active_months(d, sched) and guard < MAX_ITER:
+        d = _advance_rule(d, sched)
+        guard += 1
+    return d
+
+
+def _advance_rule(anchor: date, sched: dict) -> date:
+    """Return the occurrence following ``anchor`` for the bare rule."""
     freq = sched.get("freq", "monthly")
     interval = max(1, int(sched.get("interval") or 1))
     if freq == "daily":
@@ -187,7 +219,7 @@ def due_info(anchor: date, sched: dict, today: date) -> tuple[int, date]:
     """
     until = parse_date(sched.get("until"))
     count = 0
-    d = anchor
+    d = first_active(anchor, sched)
     while d <= today and count < MAX_ITER and (until is None or d <= until):
         count += 1
         d = advance(d, sched)
@@ -214,6 +246,7 @@ def complete_anchor(
     Returns ``(new_anchor, consumed)`` where ``consumed`` is the number of
     occurrences this completion accounts for (relevant for max_occurrences).
     """
+    anchor = first_active(anchor, sched)
     count, _next_future = due_info(anchor, sched, today)
     if count == 0 or not complete_all:
         # Completing early, or checking off exactly one due occurrence.
@@ -308,8 +341,9 @@ def compute_state(task: dict, today: date) -> dict:
         return {"state": "open"}
 
     if typ == "scheduled":
-        anchor = parse_date(task.get("due_date")) or today
-        count, next_future = due_info(anchor, task.get("schedule") or {}, today)
+        sched = task.get("schedule") or {}
+        anchor = first_active(parse_date(task.get("due_date")) or today, sched)
+        count, next_future = due_info(anchor, sched, today)
         if count == 0:
             days_until = (anchor - today).days
             lead = task.get("lead_days")

@@ -39,8 +39,9 @@ a fixed schedule. Real life needs more:
 - **Cron-style schedules**: every N days/weeks/months/years, multiple weekdays per week,
   a fixed day of month (1–31), the *last* day of the month, the *nth* or *last* weekday
   ("2nd Saturday", "last Wednesday"), yearly on a fixed date — plus an optional end date
-  or maximum number of repetitions. The repeat badge on every task shows its cadence
-  ("weekly", "every 2 weeks", "2 wk after completion").
+  or maximum number of repetitions, and **active months** for seasonal chores ("mow the
+  lawn" weekly, but only April–August). The repeat badge on every task shows its cadence
+  ("weekly · Apr–Aug", "every 2 weeks", "2 wk after completion").
 - **Notifications out of the box**: per-task reminders (up to 5) and a daily summary of
   open tasks are **pushed by the integration itself** — configure once, no automations
   needed. See [Notifications](#notifications) for the exact mechanics.
@@ -167,7 +168,39 @@ configure it without YAML.
 | `compact` | `false` | Denser rows |
 | `colorful` | `true` | Multicolor badges; `false` = neutral theme colors only |
 | `max_height` | – | Max card height in px (scrolls inside) |
+| `hide_when_empty` | `false` | Hide the whole card (including its header) while nothing is left to do |
 | `confirm_complete` | `false` | Ask before completing a task |
+| `show_due` | `true` | Due/overdue/upcoming badge |
+| `show_priority` | `true` | Priority badge |
+| `show_subtasks` | `true` | Subtask progress badge (☑ 1/3) |
+| `show_tags` | `true` | Tag badges |
+| `show_person` | `true` | Assigned person badge |
+| `show_reminder` | `true` | 🔔 reminder badge |
+| `show_recurrence` | `true` | 🔁 recurrence badge ("weekly", "4 d after completion") |
+| `show_streak` | `true` | Streak / missed badges on habit tasks |
+| `css` | – | Custom CSS applied inside the card, see below |
+
+### Styling with custom CSS
+
+Everything visual comes from your theme's variables, so the card blends in without
+configuration. For anything beyond that, the `css` option injects your own rules into
+the card (it is a multi-line field in the visual editor under *Advanced*). The card keeps
+your rules and anything a theme tool adds across every refresh.
+
+```yaml
+type: custom:better-todo-card
+css: |
+  ha-card { background: rgba(0, 0, 0, 0.35); }   # translucent card
+  ha-card { padding: 8px 12px; }                 # tighter padding
+  .task-title { font-size: 1.1em; }              # bigger task titles
+  .head-title { color: var(--accent-color); }    # colored card title
+  .badge { font-size: 0.7em; }                   # smaller badges
+```
+
+Stable class names you can target: `ha-card`, `.head`, `.head-title`, `.menu`, `.chip`,
+`.list-head`, `.task`, `.task.overdue`, `.task.done`, `.row`, `.check`, `.task-title`,
+`.badges`, `.badge` (plus `.err`, `.warn`, `.ok`, `.person`, `.tag`, `.prio`, `.dim`),
+`.details`, `.notes`, `.subtask`, `.empty`, `dialog`.
 
 ## Notifications
 
@@ -238,9 +271,36 @@ data:
   schedule: { freq: monthly, interval: 1, day: 1 }
 ```
 
+```yaml
+# Seasonal: weekly April–August, monthly the rest of the year (two tasks)
+service: better_todo.add_task
+data:
+  list: Garden
+  title: Mow the lawn
+  type: scheduled
+  schedule: { freq: weekly, interval: 1, weekdays: [5], months: [4, 5, 6, 7, 8] }
+```
+
+```yaml
+# Change an existing task, e.g. switch its cadence on a date trigger
+service: better_todo.update_task
+data:
+  title: Mow the lawn        # or task_id
+  list: Garden
+  schedule: { freq: monthly, interval: 1, day: 1 }
+```
+
 Also available: `better_todo.complete_task`, `better_todo.skip_task`,
-`better_todo.remove_task` (by `task_id` or exact `title`; add `list` to scope
-the title match to one list).
+`better_todo.remove_task` and `better_todo.update_task` (by `task_id` or exact `title`;
+add `list` to scope the title match to one list). `update_task` changes only the fields
+you pass — `new_title`, `new_list`, `notes`, `type`, `due_date`, `due_time`,
+`visible_from`, `lead_days`, `assigned_to`, `schedule`, `interval`, `period`, `tags`,
+`priority`. A passed `schedule` or `interval` replaces the stored rule entirely.
+
+The task id is shown (with a copy button) in the expanded task details of the card and
+comes with every event below. Weather-dependent chores don't need a rule at all: make
+"water the lawn" recurring *4 days after completion* and let an automation call
+`better_todo.skip_task` whenever rain is forecast.
 
 ### Events
 

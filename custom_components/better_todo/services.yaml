@@ -108,3 +108,98 @@ remove_task:
       required: false
       selector:
         text:
+
+update_task:
+  fields:
+    task_id:
+      required: false
+      selector:
+        text:
+    title:
+      required: false
+      example: "Mow the lawn"
+      selector:
+        text:
+    list:
+      required: false
+      selector:
+        text:
+    new_title:
+      required: false
+      selector:
+        text:
+    new_list:
+      required: false
+      selector:
+        text:
+    notes:
+      required: false
+      selector:
+        text:
+          multiline: true
+    type:
+      required: false
+      selector:
+        select:
+          options:
+            - simple
+            - scheduled
+            - after_completion
+            - period
+    due_date:
+      required: false
+      selector:
+        date:
+    due_time:
+      required: false
+      selector:
+        time:
+    visible_from:
+      required: false
+      selector:
+        date:
+    lead_days:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 365
+    assigned_to:
+      required: false
+      selector:
+        entity:
+          domain: person
+          multiple: true
+    schedule:
+      required: false
+      example: '{"freq": "weekly", "interval": 1, "months": [4, 5, 6, 7, 8]}'
+      selector:
+        object:
+    interval:
+      required: false
+      example: '{"unit": "months", "value": 1}'
+      selector:
+        object:
+    period:
+      required: false
+      selector:
+        select:
+          options:
+            - week
+            - month
+    tags:
+      required: false
+      example: "garden, outdoor"
+      selector:
+        text:
+    priority:
+      required: false
+      selector:
+        select:
+          options:
+            - label: High
+              value: "1"
+            - label: Medium
+              value: "2"
+            - label: Low
+              value: "3"
