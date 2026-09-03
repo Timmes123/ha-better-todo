@@ -21,10 +21,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: |
-          m=$(python3 -c "import json;print(json.load(open('custom_components/better_todo/manifest.json'))['version'])")
-          c=$(sed -n 's/^const CARD_VERSION = "\(.*\)";$/\1/p' custom_components/better_todo/www/better-todo-card.js)
-          echo "manifest=$m card=$c"
-          test "$m" = "$c"
+          python3 - <<'PY'
+          import json, re, sys
+          m = json.load(open("custom_components/better_todo/manifest.json"))["version"]
+          js = open("custom_components/better_todo/www/better-todo-card.js", encoding="utf-8").read()
+          c = re.search(r'^const CARD_VERSION = "([^"]+)";', js, re.M)
+          c = c.group(1) if c else None
+          print(f"manifest={m} card={c}")
+          sys.exit(0 if m == c else 1)
+          PY
 
   hacs:
     name: HACS
