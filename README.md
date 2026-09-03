@@ -310,7 +310,7 @@ you pass — `new_title`, `new_list`, `notes`, `type`, `due_date`, `due_time`,
 `visible_from`, `lead_days`, `assigned_to`, `schedule`, `interval`, `period`, `tags`,
 `priority`. A passed `schedule` or `interval` replaces the stored rule entirely.
 
-The task id is shown (with a copy button) in the expanded task details of the card and
+The task id is shown (with a copy button) at the bottom of the task edit dialog and
 comes with every event below. Weather-dependent chores don't need a rule at all: make
 "water the lawn" recurring *4 days after completion* (active months May–September) and
 let an automation call `better_todo.skip_task` whenever rain is forecast.

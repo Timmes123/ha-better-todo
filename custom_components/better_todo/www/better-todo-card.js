@@ -1021,8 +1021,6 @@ class BetterTodoCard extends HTMLElement {
         ${recurring ? `<button class="btn" data-action="skip" data-id="${esc(task.id)}">${esc(t.skip)}</button>` : ""}
         <button class="btn danger" data-action="del-task" data-id="${esc(task.id)}">${esc(t.delete)}</button>
       </div>
-      <div class="tid">${esc(t.task_id_t)}: <code>${esc(task.id)}</code>
-        <button class="icon-btn small" data-action="copy-id" data-id="${esc(task.id)}" title="${esc(t.task_id_t)}">⧉</button></div>
     </div>`;
   }
 
@@ -1075,12 +1073,6 @@ class BetterTodoCard extends HTMLElement {
     else if (action === "complete") this._complete(id);
     else if (action === "edit") this._openTaskDialog(this._task(id));
     else if (action === "skip") this._wsBg({ type: "better_todo/skip_task", task_id: id });
-    else if (action === "copy-id") {
-      // Clipboard needs a secure context; fall back to a selectable prompt.
-      const done = () => { el.textContent = "✓"; setTimeout(() => { el.textContent = "⧉"; }, 1500); };
-      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(id).then(done, () => prompt(this.t.task_id_t, id));
-      else prompt(this.t.task_id_t, id);
-    }
     else if (action === "del-task") {
       if (confirm(this.t.delete_task_confirm)) this._wsBg({ type: "better_todo/delete_task", task_id: id });
     }
@@ -1577,7 +1569,9 @@ class BetterTodoCard extends HTMLElement {
       <div class="dlg-actions">
         <button class="btn primary" data-x="save">${esc(t.save)}</button>
         <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
-      </div>`;
+      </div>
+      ${d.id ? `<div class="tid">${esc(t.task_id_t)}: <code>${esc(d.id)}</code>
+        <button type="button" class="icon-btn small" data-x="copyid" title="${esc(t.task_id_t)}">⧉</button></div>` : ""}`;
 
     this._updateDialog(html, (dlg) => this._wireTaskDialog(dlg));
   }
@@ -1668,6 +1662,15 @@ class BetterTodoCard extends HTMLElement {
       }
       const b = e.target.closest("[data-x]");
       if (!b || b.dataset.x === "addrem") return;
+      if (b.dataset.x === "copyid") {
+        // Task id for automations (update_task etc.). Clipboard needs a
+        // secure context; fall back to a selectable prompt.
+        const id = d.id;
+        const done = () => { b.textContent = "✓"; setTimeout(() => { b.textContent = "⧉"; }, 1500); };
+        if (navigator.clipboard?.writeText) navigator.clipboard.writeText(id).then(done, () => prompt(this.t.task_id_t, id));
+        else prompt(this.t.task_id_t, id);
+        return;
+      }
       if (b.dataset.x === "addsub") {
         const input = dlg.querySelector("#newsub");
         const title = input.value.trim();
@@ -1827,7 +1830,7 @@ class BetterTodoCard extends HTMLElement {
       .subtask { display: flex; align-items: center; gap: 6px; font-size: 0.9em; color: var(--primary-text-color); cursor: pointer; }
       .st-done { text-decoration: line-through; color: var(--secondary-text-color); }
       .actions { display: flex; gap: 6px; flex-wrap: wrap; }
-      .tid { margin-top: 8px; font-size: 0.75em; color: var(--secondary-text-color); display: flex; align-items: center; gap: 4px; }
+      .tid { margin-top: 14px; font-size: 0.75em; color: var(--secondary-text-color); display: flex; align-items: center; gap: 4px; opacity: 0.7; }
       .tid code { font-family: monospace; opacity: 0.8; word-break: break-all; }
       .mo-row .chip { padding: 3px 8px; }
       .btn { border: 1px solid var(--divider-color); background: none; color: var(--primary-text-color);

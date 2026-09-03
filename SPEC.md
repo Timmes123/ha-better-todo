@@ -139,7 +139,7 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
 `update_task` (seit 0.7.0; ändert nur übergebene Felder, Ziel per `task_id` oder
 `title` + `list`) — damit Automationen Aufgaben anlegen und ändern können
 (z. B. „Waschmaschine fertig → Aufgabe ‚Wäsche aufhängen'"). Die Aufgaben-ID ist in
-der Karte in den aufgeklappten Details sichtbar (mit Kopierknopf).
+der Karte unten im Bearbeiten-Dialog sichtbar (mit Kopierknopf; bewusst nicht in der Aufgabenzeile, dort braucht sie niemand).
 
 **Events**: `better_todo_item_completed`, `better_todo_item_due`,
 `better_todo_item_overdue` — damit Automationen auf Aufgaben reagieren können.
