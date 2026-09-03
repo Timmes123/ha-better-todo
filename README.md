@@ -116,13 +116,22 @@ no retyping, and a typo stands out immediately as an unexpected extra chip. Assi
 works the same way: tap the persons, and with 2+ selected on a recurring task a
 **Rotate** checkbox appears with a **Start with** choice.
 
-Minimal configuration:
+### Adding and configuring the card
+
+Everything is configurable in the **visual editor** — no YAML needed: edit your
+dashboard, *Add card*, search for *Better ToDo* and the editor opens. It is organised in
+groups: **Title / List / Tags / Assigned to / Sort** at the top, then *Display*,
+*Filters*, *Badges on tasks*, *Behavior* and *Advanced* (custom CSS). The option table
+below names the editor label next to each YAML key.
+
+Prefer YAML? Every option maps 1:1. The minimal card:
 
 ```yaml
 type: custom:better-todo-card
 ```
 
-A personal "my tasks" card for a wall tablet:
+A personal "my tasks" card for a wall tablet (in the editor: *Assigned to → Logged-in
+user*, untick *Menu* and *+ New task*, *Sort → Due date*):
 
 ```yaml
 type: custom:better-todo-card
@@ -133,7 +142,8 @@ show_add: false
 sort: due
 ```
 
-One card per list, side by side (kanban style):
+One card per list, side by side (kanban style — in the editor, tick one list per card
+and set *Sort → Manual* for drag & drop):
 
 ```yaml
 type: grid
@@ -147,39 +157,36 @@ cards:
     lists: [Healthy Week]
 ```
 
-There is also a **visual editor** — just add the card from the dashboard card picker and
-configure it without YAML.
-
 ### All card options
 
-| Option | Default | Description |
-|---|---|---|
-| `title` | – | Card title |
-| `lists` | all | List names or ids to show |
-| `tags` | all | Tags to show (any match) |
-| `assigned` | `all` | `all`, `me` (logged-in user), `me_unassigned` (logged-in user + unassigned) or a `person.*` entity id |
-| `sort` | `smart` | `smart`, `manual` (drag & drop), `due`, `priority`, `title`, `person` |
-| `show_menu` | `true` | Card menu (filters, list management, bulk actions) |
-| `show_add` | `true` | "+" button to add tasks |
-| `show_completed` | `false` | Show completed tasks |
-| `show_upcoming` | `false` | Show upcoming/hidden tasks |
-| `upcoming_days` | – | Horizon in days for `show_upcoming` (empty = no limit); tasks visible through their own lead window are unaffected |
-| `due_soon` | `false` | Start with the "due only" filter active |
-| `due_soon_days` | `7` | Lead time in days for the "due only" filter |
-| `compact` | `false` | Denser rows |
-| `colorful` | `true` | Multicolor badges; `false` = neutral theme colors only |
-| `max_height` | – | Max card height in px (scrolls inside) |
-| `hide_when_empty` | `false` | Hide the whole card (including its header) while nothing is left to do |
-| `confirm_complete` | `false` | Ask before completing a task |
-| `show_due` | `true` | Due/overdue/upcoming badge |
-| `show_priority` | `true` | Priority badge |
-| `show_subtasks` | `true` | Subtask progress badge (☑ 1/3) |
-| `show_tags` | `true` | Tag badges |
-| `show_person` | `true` | Assigned person badge |
-| `show_reminder` | `true` | 🔔 reminder badge |
-| `show_recurrence` | `true` | 🔁 recurrence badge ("weekly", "4 d after completion") |
-| `show_streak` | `true` | Streak / missed badges on habit tasks |
-| `css` | – | Custom CSS applied inside the card, see below |
+| YAML key | In the editor | Default | Description |
+|---|---|---|---|
+| `title` | Title | – | Card title |
+| `lists` | List (checkboxes, none = all) | all | List names or ids to show |
+| `tags` | Tags (chips, none = all) | all | Tags to show (any match) |
+| `assigned` | Assigned to | `all` | `all`, `me` (logged-in user), `me_unassigned` (logged-in user + unassigned) or a `person.*` entity id |
+| `sort` | Sort | `smart` | `smart`, `manual` (drag & drop), `due`, `priority`, `title`, `person` |
+| `show_menu` | Display › Menu | `true` | Card menu (filters, list management, bulk actions) |
+| `show_add` | Display › + New task | `true` | "+" button to add tasks |
+| `compact` | Display › Compact | `false` | Denser rows |
+| `colorful` | Display › Multicolor | `true` | Multicolor badges; `false` = neutral theme colors only |
+| `hide_when_empty` | Display › Hide card when empty | `false` | Hide the whole card (including its header) while nothing is left to do; stays visible in dashboard edit mode |
+| `max_height` | Display › Max. height (px) | – | Max card height in px (scrolls inside) |
+| `show_completed` | Filters › Show completed | `false` | Show completed tasks |
+| `show_upcoming` | Filters › Show upcoming | `false` | Show upcoming/hidden tasks |
+| `due_soon` | Filters › Due only | `false` | Start with the "due only" filter active |
+| `due_soon_days` | Filters › Due lead time (days) | `7` | Lead time in days for the "due only" filter |
+| `upcoming_days` | Filters › Upcoming: horizon (days) | – | Horizon in days for `show_upcoming` (empty = no limit); tasks visible through their own lead window are unaffected |
+| `show_due` | Badges › Due date / status | `true` | Due/overdue/upcoming badge |
+| `show_priority` | Badges › Priority | `true` | Priority badge |
+| `show_subtasks` | Badges › Subtasks | `true` | Subtask progress badge (☑ 1/3) |
+| `show_tags` | Badges › Tags | `true` | Tag badges |
+| `show_person` | Badges › Person | `true` | Assigned person badge |
+| `show_reminder` | Badges › Reminders | `true` | 🔔 reminder badge |
+| `show_recurrence` | Badges › Recurrence | `true` | 🔁 recurrence badge ("weekly", "4 d after completion") |
+| `show_streak` | Badges › Streak / misses | `true` | Streak / missed badges on habit tasks |
+| `confirm_complete` | Behavior › Confirm before completing | `false` | Ask before completing a task |
+| `css` | Advanced › Custom CSS | – | Custom CSS applied inside the card, see below |
 
 ### Styling with custom CSS
 
@@ -187,8 +194,10 @@ Everything visual comes from your theme's variables, so the card blends in witho
 configuration. For anything beyond that, the `css` option injects your own rules into
 the card. The card keeps your rules and anything a theme tool adds across every refresh.
 
-**Visual editor:** open the card's editor, expand *Advanced* and paste your rules into
-the *Custom CSS* field — plain CSS, one rule per line, nothing else needed:
+**Visual editor:** open the card's editor, scroll to *Advanced* and type your rules into
+the *Custom CSS* field — plain CSS, nothing else needed. Each line below is an
+independent example; pick only the ones you want (a single `.badge { font-size: 0.7em; }`
+is a complete configuration):
 
 ```css
 ha-card { background: rgba(0, 0, 0, 0.35); }   /* translucent card */
@@ -264,6 +273,10 @@ built-in notifications and wire up your own automations if you prefer.
 
 ### Services
 
+In the automation editor, add an action and search for *Better ToDo* — the services
+appear as *Add task*, *Complete task*, *Skip task*, *Remove task* and *Update task*,
+each with a form for its fields. The same in YAML:
+
 ```yaml
 # Create a task when the washing machine finishes
 service: better_todo.add_task
@@ -338,6 +351,9 @@ let an automation call `better_todo.skip_task` whenever rain is forecast.
 
 Event data includes `task_id`, `title`, `list_id` and `assigned_to` (a **list** of
 person entity ids — use `in`, not `==`, when filtering).
+
+In the automation editor, use the *Event* trigger (under *Other triggers*) and enter the
+event type, e.g. `better_todo_item_reminder`. As YAML:
 
 ```yaml
 alias: ToDo reminders, custom style
