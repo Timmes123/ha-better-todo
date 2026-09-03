@@ -51,7 +51,7 @@ const STR = {
     menu_t: "Menu", error_g: "Error", compact_t: "Compact", colorful_t: "Multicolor",
     confirm_t: "Confirm before completing", max_height_f: "Max. height (px)",
     empty_all_hint: "empty = all",
-    move_up: "Move up", move_down: "Move down",
+    move_up: "Move up", move_down: "Move down", close: "Close",
     grp_display: "Display", grp_filters: "Filters", grp_badges: "Badges on tasks",
     grp_behavior: "Behavior", grp_advanced: "Advanced",
     hide_empty_t: "Hide card when empty", css_f: "Custom CSS",
@@ -104,7 +104,7 @@ const STR = {
     menu_t: "Menü", error_g: "Fehler", compact_t: "Kompakt", colorful_t: "Mehrfarbig",
     confirm_t: "Vor Erledigen bestätigen", max_height_f: "Max. Höhe (px)",
     empty_all_hint: "leer = alle",
-    move_up: "Nach oben", move_down: "Nach unten",
+    move_up: "Nach oben", move_down: "Nach unten", close: "Schließen",
     grp_display: "Anzeige", grp_filters: "Filter", grp_badges: "Badges an der Aufgabe",
     grp_behavior: "Verhalten", grp_advanced: "Erweitert",
     hide_empty_t: "Karte bei Leere ausblenden", css_f: "Eigenes CSS",
@@ -157,7 +157,7 @@ const STR = {
     menu_t: "Menu", error_g: "Erreur", compact_t: "Compact", colorful_t: "Multicolore",
     confirm_t: "Confirmer avant de terminer", max_height_f: "Hauteur max. (px)",
     empty_all_hint: "vide = toutes",
-    move_up: "Monter", move_down: "Descendre",
+    move_up: "Monter", move_down: "Descendre", close: "Fermer",
     grp_display: "Affichage", grp_filters: "Filtres", grp_badges: "Badges sur les tâches",
     grp_behavior: "Comportement", grp_advanced: "Avancé",
     hide_empty_t: "Masquer la carte si vide", css_f: "CSS personnalisé",
@@ -210,7 +210,7 @@ const STR = {
     menu_t: "Menú", error_g: "Error", compact_t: "Compacto", colorful_t: "Multicolor",
     confirm_t: "Confirmar antes de completar", max_height_f: "Altura máx. (px)",
     empty_all_hint: "vacío = todas",
-    move_up: "Subir", move_down: "Bajar",
+    move_up: "Subir", move_down: "Bajar", close: "Cerrar",
     grp_display: "Visualización", grp_filters: "Filtros", grp_badges: "Insignias en las tareas",
     grp_behavior: "Comportamiento", grp_advanced: "Avanzado",
     hide_empty_t: "Ocultar tarjeta si está vacía", css_f: "CSS personalizado",
@@ -263,7 +263,7 @@ const STR = {
     menu_t: "Menu", error_g: "Errore", compact_t: "Compatto", colorful_t: "Multicolore",
     confirm_t: "Conferma prima di completare", max_height_f: "Altezza max (px)",
     empty_all_hint: "vuoto = tutte",
-    move_up: "Sposta su", move_down: "Sposta giù",
+    move_up: "Sposta su", move_down: "Sposta giù", close: "Chiudi",
     grp_display: "Visualizzazione", grp_filters: "Filtri", grp_badges: "Badge sulle attività",
     grp_behavior: "Comportamento", grp_advanced: "Avanzate",
     hide_empty_t: "Nascondi la scheda se vuota", css_f: "CSS personalizzato",
@@ -316,7 +316,7 @@ const STR = {
     menu_t: "Menu", error_g: "Fout", compact_t: "Compact", colorful_t: "Meerkleurig",
     confirm_t: "Bevestigen vóór afronden", max_height_f: "Max. hoogte (px)",
     empty_all_hint: "leeg = alle",
-    move_up: "Omhoog", move_down: "Omlaag",
+    move_up: "Omhoog", move_down: "Omlaag", close: "Sluiten",
     grp_display: "Weergave", grp_filters: "Filters", grp_badges: "Badges bij taken",
     grp_behavior: "Gedrag", grp_advanced: "Geavanceerd",
     hide_empty_t: "Kaart verbergen als leeg", css_f: "Eigen CSS",
@@ -369,7 +369,7 @@ const STR = {
     menu_t: "Menu", error_g: "Błąd", compact_t: "Kompaktowy", colorful_t: "Wielokolorowy",
     confirm_t: "Potwierdź przed ukończeniem", max_height_f: "Maks. wysokość (px)",
     empty_all_hint: "puste = wszystkie",
-    move_up: "Przenieś w górę", move_down: "Przenieś w dół",
+    move_up: "Przenieś w górę", move_down: "Przenieś w dół", close: "Zamknij",
     grp_display: "Wyświetlanie", grp_filters: "Filtry", grp_badges: "Odznaki przy zadaniach",
     grp_behavior: "Zachowanie", grp_advanced: "Zaawansowane",
     hide_empty_t: "Ukryj kartę, gdy pusta", css_f: "Własny CSS",
@@ -826,7 +826,11 @@ class BetterTodoCard extends HTMLElement {
   // ------------------------------------------------------------- render
 
   _render() {
-    if (this._dialog) return;
+    // The dialog lives next to the frame in the shadow root, so the frame
+    // can be re-rendered while a dialog is open — pushes from the backend
+    // (e.g. a list reorder, also from another card) then show up right
+    // away underneath. The lists dialog mirrors the same data and is
+    // refreshed in place; the task dialog keeps its draft untouched.
     this._lastDay = this._todayIso();
     const t = this.t;
     let body;
@@ -848,6 +852,7 @@ class BetterTodoCard extends HTMLElement {
     // toggled without the card vanishing from the editor.
     const hide = !!this._config.hide_when_empty && !this._error && !!this._data && this._empty && !this.preview;
     this._setHidden(hide);
+    if (this._dialog?.kind === "lists" && this._dialogEl?.open) this._renderManageLists();
   }
 
   _setHidden(hide) {
@@ -1285,7 +1290,7 @@ class BetterTodoCard extends HTMLElement {
        </div>
        <div class="dlg-actions">
          <button class="btn" data-x="new">+ ${esc(t.new_list)}</button>
-         <button class="btn ghost" data-x="cancel">${esc(t.cancel)}</button>
+         <button class="btn ghost" data-x="close">${esc(t.close)}</button>
        </div>`;
     this._updateDialog(html, (dlg) => this._wireManageLists(dlg));
   }
