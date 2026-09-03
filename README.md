@@ -4,7 +4,8 @@
 
 # Better ToDo
 
-[![GitHub release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo)](https://github.com/Timmes123/ha-better-todo/releases)
+[![Stable release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo?label=stable)](https://github.com/Timmes123/ha-better-todo/releases/latest)
+[![Pre-release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo?include_prereleases&label=pre-release&color=orange)](https://github.com/Timmes123/ha-better-todo/releases)
 [![Validate](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml/badge.svg)](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](https://github.com/Timmes123/ha-better-todo/blob/main/LICENSE)
 [![Community Forum](https://img.shields.io/badge/community-forum-41BDF5.svg?logo=homeassistant&logoColor=white)](https://community.home-assistant.io/t/better-todo-flexible-recurring-tasks-habits-household-rotation-for-ha/1022821)
