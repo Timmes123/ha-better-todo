@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "0.7.5";
+const CARD_VERSION = "0.7.6";
 
 const WD_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -14,7 +14,7 @@ const STR = {
     today: "due today", overdue_d: (n) => `${n} d overdue`, days_left: (n) => `${n} d left`,
     times_due: (n) => `${n}× due`, streak_w: (n) => `${n} wk streak`, streak_m: (n) => `${n} mo streak`,
     missed_w: (n) => `${n} wk missed`, missed_m: (n) => `${n} mo missed`,
-    skipped: "skipped", upcoming: "upcoming", done: "Done", edit: "Edit", skip: "Skip",
+    skipped: "skipped", done: "Done", edit: "Edit", skip: "Skip",
     delete: "Delete", new_task: "New task", new_list: "New list", save: "Save", cancel: "Cancel",
     complete_one: "Complete 1×", complete_all: (n) => `Complete all ${n}`,
     show_done: "Show completed", show_upcoming: "Show upcoming", all_persons: "Everyone",
@@ -69,7 +69,7 @@ const STR = {
     today: "heute fällig", overdue_d: (n) => `seit ${n} T überfällig`, days_left: (n) => `noch ${n} T`,
     times_due: (n) => `${n}× fällig`, streak_w: (n) => `${n} Wo Serie`, streak_m: (n) => `${n} Mon Serie`,
     missed_w: (n) => `seit ${n} Wo nicht`, missed_m: (n) => `seit ${n} Mon nicht`,
-    skipped: "übersprungen", upcoming: "demnächst", done: "Erledigt", edit: "Bearbeiten", skip: "Überspringen",
+    skipped: "übersprungen", done: "Erledigt", edit: "Bearbeiten", skip: "Überspringen",
     delete: "Löschen", new_task: "Neue Aufgabe", new_list: "Neue Liste", save: "Speichern", cancel: "Abbrechen",
     complete_one: "1× erledigen", complete_all: (n) => `Alle ${n} erledigen`,
     show_done: "Erledigte anzeigen", show_upcoming: "Kommende anzeigen", all_persons: "Alle",
@@ -124,7 +124,7 @@ const STR = {
     today: "pour aujourd'hui", overdue_d: (n) => `${n} j de retard`, days_left: (n) => `${n} j restants`,
     times_due: (n) => `${n}× dû`, streak_w: (n) => `série de ${n} sem`, streak_m: (n) => `série de ${n} mois`,
     missed_w: (n) => `${n} sem manquées`, missed_m: (n) => `${n} mois manqués`,
-    skipped: "ignoré", upcoming: "à venir", done: "Terminé", edit: "Modifier", skip: "Ignorer",
+    skipped: "ignoré", done: "Terminé", edit: "Modifier", skip: "Ignorer",
     delete: "Supprimer", new_task: "Nouvelle tâche", new_list: "Nouvelle liste", save: "Enregistrer", cancel: "Annuler",
     complete_one: "Terminer 1×", complete_all: (n) => `Tout terminer (${n})`,
     show_done: "Afficher terminées", show_upcoming: "Afficher à venir", all_persons: "Tous",
@@ -179,7 +179,7 @@ const STR = {
     today: "vence hoy", overdue_d: (n) => `${n} d de retraso`, days_left: (n) => `quedan ${n} d`,
     times_due: (n) => `${n}× pendiente`, streak_w: (n) => `racha de ${n} sem`, streak_m: (n) => `racha de ${n} meses`,
     missed_w: (n) => `${n} sem sin hacer`, missed_m: (n) => `${n} meses sin hacer`,
-    skipped: "omitida", upcoming: "próxima", done: "Hecho", edit: "Editar", skip: "Omitir",
+    skipped: "omitida", done: "Hecho", edit: "Editar", skip: "Omitir",
     delete: "Eliminar", new_task: "Nueva tarea", new_list: "Nueva lista", save: "Guardar", cancel: "Cancelar",
     complete_one: "Completar 1×", complete_all: (n) => `Completar todas (${n})`,
     show_done: "Mostrar completadas", show_upcoming: "Mostrar próximas", all_persons: "Todos",
@@ -234,7 +234,7 @@ const STR = {
     today: "scade oggi", overdue_d: (n) => `${n} g di ritardo`, days_left: (n) => `${n} g rimasti`,
     times_due: (n) => `${n}× in scadenza`, streak_w: (n) => `serie di ${n} sett`, streak_m: (n) => `serie di ${n} mesi`,
     missed_w: (n) => `${n} sett saltate`, missed_m: (n) => `${n} mesi saltati`,
-    skipped: "saltata", upcoming: "in arrivo", done: "Fatto", edit: "Modifica", skip: "Salta",
+    skipped: "saltata", done: "Fatto", edit: "Modifica", skip: "Salta",
     delete: "Elimina", new_task: "Nuova attività", new_list: "Nuova lista", save: "Salva", cancel: "Annulla",
     complete_one: "Completa 1×", complete_all: (n) => `Completa tutte (${n})`,
     show_done: "Mostra completate", show_upcoming: "Mostra future", all_persons: "Tutti",
@@ -289,7 +289,7 @@ const STR = {
     today: "vandaag", overdue_d: (n) => `${n} d te laat`, days_left: (n) => `nog ${n} d`,
     times_due: (n) => `${n}× verschuldigd`, streak_w: (n) => `reeks van ${n} wk`, streak_m: (n) => `reeks van ${n} mnd`,
     missed_w: (n) => `${n} wk gemist`, missed_m: (n) => `${n} mnd gemist`,
-    skipped: "overgeslagen", upcoming: "binnenkort", done: "Klaar", edit: "Bewerken", skip: "Overslaan",
+    skipped: "overgeslagen", done: "Klaar", edit: "Bewerken", skip: "Overslaan",
     delete: "Verwijderen", new_task: "Nieuwe taak", new_list: "Nieuwe lijst", save: "Opslaan", cancel: "Annuleren",
     complete_one: "1× afronden", complete_all: (n) => `Alle ${n} afronden`,
     show_done: "Voltooide tonen", show_upcoming: "Komende tonen", all_persons: "Iedereen",
@@ -344,7 +344,7 @@ const STR = {
     today: "termin dziś", overdue_d: (n) => `${n} dni po terminie`, days_left: (n) => `zostało ${n} dni`,
     times_due: (n) => `${n}× zaległe`, streak_w: (n) => `seria ${n} tyg`, streak_m: (n) => `seria ${n} mies`,
     missed_w: (n) => `${n} tyg pominięte`, missed_m: (n) => `${n} mies pominięte`,
-    skipped: "pominięte", upcoming: "nadchodzące", done: "Gotowe", edit: "Edytuj", skip: "Pomiń",
+    skipped: "pominięte", done: "Gotowe", edit: "Edytuj", skip: "Pomiń",
     delete: "Usuń", new_task: "Nowe zadanie", new_list: "Nowa lista", save: "Zapisz", cancel: "Anuluj",
     complete_one: "Ukończ 1×", complete_all: (n) => `Ukończ wszystkie (${n})`,
     show_done: "Pokaż ukończone", show_upcoming: "Pokaż nadchodzące", all_persons: "Wszyscy",
@@ -1007,7 +1007,7 @@ class BetterTodoCard extends HTMLElement {
         badges.push(`<span class="badge ${cls}">${esc(t.days_left(c.days_left))}${timeSuffix}</span>`);
       }
       if ((s === "upcoming" || s === "hidden") && (c.due || c.visible_from)) {
-        badges.push(`<span class="badge dim">${esc(t.upcoming)} · ${esc(this._fmtDate(c.due || c.visible_from))}${timeSuffix}</span>`);
+        badges.push(`<span class="badge dim">${esc(this._fmtDate(c.due || c.visible_from))}${timeSuffix}</span>`);
       }
     }
     if (task.type === "period" && this._show("show_streak")) {
@@ -1071,7 +1071,12 @@ class BetterTodoCard extends HTMLElement {
   _fmtDate(iso) {
     if (!iso) return "";
     try {
-      return new Date(iso + "T00:00:00").toLocaleDateString(this._hass?.locale?.language || "en", { day: "numeric", month: "short" });
+      // The year is only spelled out when it is not the current one: "1 May"
+      // for this year, "1 May 2028" for anything else — a date years away must
+      // never read like it is just around the corner.
+      const opts = { day: "numeric", month: "short" };
+      if (iso.slice(0, 4) !== this._todayIso().slice(0, 4)) opts.year = "numeric";
+      return new Date(iso + "T00:00:00").toLocaleDateString(this._hass?.locale?.language || "en", opts);
     } catch { return iso; }
   }
 
