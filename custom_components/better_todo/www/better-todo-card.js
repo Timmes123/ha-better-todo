@@ -6,12 +6,17 @@
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
 const CARD_VERSION = "0.7.6";
 
+// Past this many days a day count stops being readable ("1095 d overdue"),
+// so the badge shows the actual date instead.
+const LONG_RANGE_DAYS = 90;
+
 const WD_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const STR = {
   en: {
     wd: WD_EN,
     today: "due today", overdue_d: (n) => `${n} d overdue`, days_left: (n) => `${n} d left`,
+    overdue_on: (d) => `overdue since ${d}`, due_on: (d) => `due ${d}`,
     times_due: (n) => `${n}× due`, streak_w: (n) => `${n} wk streak`, streak_m: (n) => `${n} mo streak`,
     missed_w: (n) => `${n} wk missed`, missed_m: (n) => `${n} mo missed`,
     skipped: "skipped", done: "Done", edit: "Edit", skip: "Skip",
@@ -67,6 +72,7 @@ const STR = {
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
     today: "heute fällig", overdue_d: (n) => `seit ${n} T überfällig`, days_left: (n) => `noch ${n} T`,
+    overdue_on: (d) => `überfällig seit ${d}`, due_on: (d) => `fällig ${d}`,
     times_due: (n) => `${n}× fällig`, streak_w: (n) => `${n} Wo Serie`, streak_m: (n) => `${n} Mon Serie`,
     missed_w: (n) => `seit ${n} Wo nicht`, missed_m: (n) => `seit ${n} Mon nicht`,
     skipped: "übersprungen", done: "Erledigt", edit: "Bearbeiten", skip: "Überspringen",
@@ -122,6 +128,7 @@ const STR = {
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
     today: "pour aujourd'hui", overdue_d: (n) => `${n} j de retard`, days_left: (n) => `${n} j restants`,
+    overdue_on: (d) => `en retard depuis le ${d}`, due_on: (d) => `dû le ${d}`,
     times_due: (n) => `${n}× dû`, streak_w: (n) => `série de ${n} sem`, streak_m: (n) => `série de ${n} mois`,
     missed_w: (n) => `${n} sem manquées`, missed_m: (n) => `${n} mois manqués`,
     skipped: "ignoré", done: "Terminé", edit: "Modifier", skip: "Ignorer",
@@ -177,6 +184,7 @@ const STR = {
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
     today: "vence hoy", overdue_d: (n) => `${n} d de retraso`, days_left: (n) => `quedan ${n} d`,
+    overdue_on: (d) => `vencida desde el ${d}`, due_on: (d) => `vence el ${d}`,
     times_due: (n) => `${n}× pendiente`, streak_w: (n) => `racha de ${n} sem`, streak_m: (n) => `racha de ${n} meses`,
     missed_w: (n) => `${n} sem sin hacer`, missed_m: (n) => `${n} meses sin hacer`,
     skipped: "omitida", done: "Hecho", edit: "Editar", skip: "Omitir",
@@ -232,6 +240,7 @@ const STR = {
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
     today: "scade oggi", overdue_d: (n) => `${n} g di ritardo`, days_left: (n) => `${n} g rimasti`,
+    overdue_on: (d) => `in ritardo dal ${d}`, due_on: (d) => `scade il ${d}`,
     times_due: (n) => `${n}× in scadenza`, streak_w: (n) => `serie di ${n} sett`, streak_m: (n) => `serie di ${n} mesi`,
     missed_w: (n) => `${n} sett saltate`, missed_m: (n) => `${n} mesi saltati`,
     skipped: "saltata", done: "Fatto", edit: "Modifica", skip: "Salta",
@@ -287,6 +296,7 @@ const STR = {
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
     today: "vandaag", overdue_d: (n) => `${n} d te laat`, days_left: (n) => `nog ${n} d`,
+    overdue_on: (d) => `te laat sinds ${d}`, due_on: (d) => `vervalt ${d}`,
     times_due: (n) => `${n}× verschuldigd`, streak_w: (n) => `reeks van ${n} wk`, streak_m: (n) => `reeks van ${n} mnd`,
     missed_w: (n) => `${n} wk gemist`, missed_m: (n) => `${n} mnd gemist`,
     skipped: "overgeslagen", done: "Klaar", edit: "Bewerken", skip: "Overslaan",
@@ -342,6 +352,7 @@ const STR = {
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
     today: "termin dziś", overdue_d: (n) => `${n} dni po terminie`, days_left: (n) => `zostało ${n} dni`,
+    overdue_on: (d) => `zaległe od ${d}`, due_on: (d) => `termin ${d}`,
     times_due: (n) => `${n}× zaległe`, streak_w: (n) => `seria ${n} tyg`, streak_m: (n) => `seria ${n} mies`,
     missed_w: (n) => `${n} tyg pominięte`, missed_m: (n) => `${n} mies pominięte`,
     skipped: "pominięte", done: "Gotowe", edit: "Edytuj", skip: "Pomiń",
@@ -1000,11 +1011,15 @@ class BetterTodoCard extends HTMLElement {
 
     if (this._show("show_due")) {
       if (s === "overdue" && c.due_count > 1) badges.push(`<span class="badge err">${esc(t.times_due(c.due_count))}</span>`);
-      if (s === "overdue") badges.push(`<span class="badge err">${esc(t.overdue_d(c.days_overdue))}</span>`);
+      if (s === "overdue") {
+        const far = c.due && c.days_overdue > LONG_RANGE_DAYS;
+        badges.push(`<span class="badge err">${esc(far ? t.overdue_on(this._fmtDate(c.due)) : t.overdue_d(c.days_overdue))}</span>`);
+      }
       if (s === "due") badges.push(`<span class="badge warn">${esc(t.today)}${timeSuffix}</span>`);
       if (s === "open" && c.days_left !== undefined) {
         const cls = c.days_left <= 7 ? "warn" : "";
-        badges.push(`<span class="badge ${cls}">${esc(t.days_left(c.days_left))}${timeSuffix}</span>`);
+        const far = c.due && c.days_left > LONG_RANGE_DAYS;
+        badges.push(`<span class="badge ${cls}">${esc(far ? t.due_on(this._fmtDate(c.due)) : t.days_left(c.days_left))}${timeSuffix}</span>`);
       }
       if ((s === "upcoming" || s === "hidden") && (c.due || c.visible_from)) {
         badges.push(`<span class="badge dim">${esc(this._fmtDate(c.due || c.visible_from))}${timeSuffix}</span>`);
