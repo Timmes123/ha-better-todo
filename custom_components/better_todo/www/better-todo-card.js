@@ -4,11 +4,14 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "0.7.6";
+const CARD_VERSION = "0.7.7";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
 const LONG_RANGE_DAYS = 90;
+
+// Own filename, used to evict this file from the frontend cache on reload.
+const CARD_FILE = "better-todo-card.js";
 
 const WD_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -1083,6 +1086,26 @@ class BetterTodoCard extends HTMLElement {
     </div>`;
   }
 
+  // A plain location.reload() is not enough: the frontend service worker can
+  // answer with a cached copy of the card even though the Lovelace resource
+  // now carries a new ?v=, because the query string is not part of the match.
+  // That is why only Ctrl+F5 (which bypasses the worker) used to help. Evict
+  // every cached entry for this file first, then reload normally.
+  async _reloadCard() {
+    try {
+      for (const key of await caches.keys()) {
+        const cache = await caches.open(key);
+        for (const req of await cache.keys()) {
+          if (req.url.includes(CARD_FILE)) await cache.delete(req);
+        }
+      }
+    } catch (e) {
+      // No cache API, or storage blocked — fall through, the reload may still work.
+      console.warn("better-todo: could not clear the card cache", e);
+    }
+    location.reload();
+  }
+
   _fmtDate(iso) {
     if (!iso) return "";
     try {
@@ -1108,7 +1131,7 @@ class BetterTodoCard extends HTMLElement {
     const id = el.dataset.id;
     if (action === "subtask") return;
     e.stopPropagation();
-    if (action === "reload") { location.reload(); }
+    if (action === "reload") { this._reloadCard(); }
     else if (action === "menu") { this._ui.dropdown = !this._ui.dropdown; this._render(); }
     else if (action === "dd-filters") { this._ui.menu = !this._ui.menu; this._ui.dropdown = false; this._render(); }
     else if (action === "dd-lists") { this._ui.dropdown = false; this._render(); this._openManageLists(); }
