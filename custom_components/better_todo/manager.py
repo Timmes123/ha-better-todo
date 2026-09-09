@@ -84,17 +84,9 @@ class BetterTodoManager:
         # back to a fresh state instead of failing setup or the minute tick.
         meta = self.data.get("meta") or {}
         try:
-            fired_reminders_set = set()
-            for key in meta.get("fired_reminders") or []:
-                if len(key) == 4:
-                    fired_reminders_set.add(tuple(key))
-                else:
-                    _LOGGER.warning(
-                        "Ignoring invalid fired_reminder key (expected 4 elements, got %d): %s",
-                        len(key),
-                        key,
-                    )
-            self._fired_reminders = fired_reminders_set
+            self._fired_reminders = self._load_fired_reminders(
+                meta.get("fired_reminders") or []
+            )
         except (ValueError, TypeError):
             self._fired_reminders = set()
         try:
@@ -345,6 +337,13 @@ class BetterTodoManager:
             self._fire(EVENT_CREATED, task, None)
         else:
             self.data["tasks"][self.data["tasks"].index(existing)] = task
+            # A changed due date/time or reminder set is a new reminder
+            # schedule: previously fired keys must not suppress it.
+            if any(
+                existing.get(k) != task.get(k)
+                for k in ("due_date", "due_time", "reminders")
+            ):
+                self._forget_fired_reminders(task["id"])
         self._save_notify()
         return task
 
@@ -466,6 +465,7 @@ class BetterTodoManager:
     def delete_task(self, task_id: str) -> None:
         self._task(task_id)  # raises if unknown
         self.data["tasks"] = [t for t in self.data["tasks"] if t["id"] != task_id]
+        self._forget_fired_reminders(task_id)
         self._save_notify()
 
     def reorder_tasks(self, list_id: str, task_ids: list[str]) -> None:
@@ -690,7 +690,6 @@ class BetterTodoManager:
             due_dt = datetime.combine(due_date, time(hour, minute), tzinfo=now.tzinfo)
             for offset in reminders:
                 offset = int(offset)
-                time_str = task.get("due_time") or DEFAULT_REMINDER_TIME
                 key = (task["id"], due_iso, time_str, offset)
                 if key in self._fired_reminders:
                     continue
@@ -698,6 +697,10 @@ class BetterTodoManager:
                 if window_start < fire_at <= now:
                     self._fired_reminders.add(key)
                     fired_any = True
+                    _LOGGER.debug(
+                        "Reminder for %r (due %s %s, %d min before) fires",
+                        task["title"], due_iso, time_str, offset,
+                    )
                     self.hass.bus.async_fire(
                         EVENT_REMINDER,
                         {
@@ -712,6 +715,34 @@ class BetterTodoManager:
                     )
                     await self._async_notify_reminder(task, due_date, offset)
         if fired_any:
+            self._persist_reminder_state()
+
+    def _load_fired_reminders(self, stored: list) -> set[tuple[str, str, str, int]]:
+        """Restore the fired-reminder keys, migrating the pre-v0.7.8 format.
+
+        Keys used to be (task_id, offset, due_date) without the due time;
+        since v0.7.8 they are (task_id, due_date, due_time, offset). Old keys
+        get the task's current due time so a restart right after the update
+        does not re-send reminders that fired within the catch-up window."""
+        due_times = {
+            t["id"]: t.get("due_time") or DEFAULT_REMINDER_TIME
+            for t in self.data["tasks"]
+        }
+        keys: set[tuple[str, str, str, int]] = set()
+        for key in stored:
+            if len(key) == 4:
+                keys.add((str(key[0]), str(key[1]), str(key[2]), int(key[3])))
+            elif len(key) == 3 and key[0] in due_times:
+                keys.add((str(key[0]), str(key[2]), due_times[key[0]], int(key[1])))
+            else:
+                _LOGGER.debug("Dropping fired-reminder key %s", key)
+        return keys
+
+    def _forget_fired_reminders(self, task_id: str) -> None:
+        """Let a task's reminders fire again, e.g. after its time was edited."""
+        keep = {k for k in self._fired_reminders if k[0] != task_id}
+        if keep != self._fired_reminders:
+            self._fired_reminders = keep
             self._persist_reminder_state()
 
     def _persist_reminder_state(self) -> None:
@@ -731,6 +762,11 @@ class BetterTodoManager:
         if not assigned and self.entry.options.get(CONF_NOTIFY_UNASSIGNED_ALL):
             services = list(targets.values())
         if not services:
+            _LOGGER.debug(
+                "No notify target for %r (assigned to %s, targets %s); "
+                "only the %s event was fired",
+                task["title"], assigned or "nobody", sorted(targets), EVENT_REMINDER,
+            )
             return
         lang_de = (self.hass.config.language or "en").lower().startswith("de")
         date_str = due_date.strftime("%d.%m.%Y") if lang_de else due_date.isoformat()
