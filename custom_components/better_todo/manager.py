@@ -718,10 +718,10 @@ class BetterTodoManager:
             self._persist_reminder_state()
 
     def _load_fired_reminders(self, stored: list) -> set[tuple[str, str, str, int]]:
-        """Restore the fired-reminder keys, migrating the pre-v0.7.8 format.
+        """Restore the fired-reminder keys, migrating the pre-v0.7.9 format.
 
         Keys used to be (task_id, offset, due_date) without the due time;
-        since v0.7.8 they are (task_id, due_date, due_time, offset). Old keys
+        since v0.7.9 they are (task_id, due_date, due_time, offset). Old keys
         get the task's current due time so a restart right after the update
         does not re-send reminders that fired within the catch-up window."""
         due_times = {
