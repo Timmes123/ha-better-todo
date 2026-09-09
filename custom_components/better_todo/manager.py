@@ -64,7 +64,7 @@ class BetterTodoManager:
         # Integration version, set by async_setup_entry; the card compares it
         # with its own build to spot a stale (cached) card after an update.
         self.version: str | None = None
-        self._fired_reminders: set[tuple[str, int, str]] = set()
+        self._fired_reminders: set[tuple[str, str, str, int]] = set()
         self._summary_sent: date | None = None
         self._persistent_active = False
         self._last_tick: datetime | None = None
@@ -84,9 +84,17 @@ class BetterTodoManager:
         # back to a fresh state instead of failing setup or the minute tick.
         meta = self.data.get("meta") or {}
         try:
-            self._fired_reminders = {
-                tuple(key) for key in meta.get("fired_reminders") or [] if len(key) == 3
-            }
+            fired_reminders_set = set()
+            for key in meta.get("fired_reminders") or []:
+                if len(key) == 4:
+                    fired_reminders_set.add(tuple(key))
+                else:
+                    _LOGGER.warning(
+                        "Ignoring invalid fired_reminder key (expected 4 elements, got %d): %s",
+                        len(key),
+                        key,
+                    )
+            self._fired_reminders = fired_reminders_set
         except (ValueError, TypeError):
             self._fired_reminders = set()
         try:
@@ -682,7 +690,8 @@ class BetterTodoManager:
             due_dt = datetime.combine(due_date, time(hour, minute), tzinfo=now.tzinfo)
             for offset in reminders:
                 offset = int(offset)
-                key = (task["id"], offset, due_iso)
+                time_str = task.get("due_time") or DEFAULT_REMINDER_TIME
+                key = (task["id"], due_iso, time_str, offset)
                 if key in self._fired_reminders:
                     continue
                 fire_at = due_dt - timedelta(minutes=offset)
@@ -866,7 +875,7 @@ class BetterTodoManager:
         # Prune fired-reminder keys once their due date is safely in the past
         # (older than the 48 h restart catch-up window can ever look back).
         cutoff = (self._today() - timedelta(days=7)).isoformat()
-        pruned = {k for k in self._fired_reminders if str(k[2])[:10] >= cutoff}
+        pruned = {k for k in self._fired_reminders if str(k[1])[:10] >= cutoff}
         if pruned != self._fired_reminders:
             self._fired_reminders = pruned
             self._persist_reminder_state()
