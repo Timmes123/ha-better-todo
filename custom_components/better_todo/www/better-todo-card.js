@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "0.7.9";
+const CARD_VERSION = "0.8.0";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
@@ -47,7 +47,7 @@ const STR = {
     error: "Better ToDo is not reachable. Is the integration installed?",
     tags_f: "Tags", tags_ph: "comma,separated", reminders_f: "Reminders",
     rem_0: "at due time", rem_min: (n) => `${n} min before`, rem_h: (n) => `${n} h before`,
-    rem_d: (n) => `${n} d before`, add_reminder: "+ reminder",
+    rem_d: (n) => `${n} d before`, add_reminder: "+ reminder", overdue_repeat_f: "Repeat while overdue", or_off: "off", or_hours: "hour(s)", or_days: "day(s)",
     sort_f: "Sort", sort_smart: "Smart", sort_manual: "Manual", sort_due: "Due date",
     sort_prio: "Priority", sort_title: "Title", sort_person: "Person",
     due_soon: (n) => `Due only (+${n} d)`, due_soon_t: "Due only",
@@ -103,7 +103,7 @@ const STR = {
     error: "Better ToDo ist nicht erreichbar. Ist die Integration installiert?",
     tags_f: "Tags", tags_ph: "komma,getrennt", reminders_f: "Erinnerungen",
     rem_0: "zur Fälligkeit", rem_min: (n) => `${n} Min vorher`, rem_h: (n) => `${n} Std vorher`,
-    rem_d: (n) => `${n} T vorher`, add_reminder: "+ Erinnerung",
+    rem_d: (n) => `${n} T vorher`, add_reminder: "+ Erinnerung", overdue_repeat_f: "Bei Überfälligkeit erneut erinnern", or_off: "aus", or_hours: "Std", or_days: "Tag(e)",
     sort_f: "Sortierung", sort_smart: "Automatisch", sort_manual: "Manuell", sort_due: "Fälligkeit",
     sort_prio: "Priorität", sort_title: "Titel", sort_person: "Person",
     due_soon: (n) => `Nur Fällige (+${n} T)`, due_soon_t: "Nur Fällige",
@@ -159,7 +159,7 @@ const STR = {
     error: "Better ToDo est injoignable. L'intégration est-elle installée ?",
     tags_f: "Tags", tags_ph: "séparés,par,virgules", reminders_f: "Rappels",
     rem_0: "à l'échéance", rem_min: (n) => `${n} min avant`, rem_h: (n) => `${n} h avant`,
-    rem_d: (n) => `${n} j avant`, add_reminder: "+ rappel",
+    rem_d: (n) => `${n} j avant`, add_reminder: "+ rappel", overdue_repeat_f: "Rappeler tant qu'en retard", or_off: "non", or_hours: "heure(s)", or_days: "jour(s)",
     sort_f: "Tri", sort_smart: "Automatique", sort_manual: "Manuel", sort_due: "Échéance",
     sort_prio: "Priorité", sort_title: "Titre", sort_person: "Personne",
     due_soon: (n) => `Dues uniquement (+${n} j)`, due_soon_t: "Dues uniquement",
@@ -215,7 +215,7 @@ const STR = {
     error: "Better ToDo no responde. ¿Está instalada la integración?",
     tags_f: "Etiquetas", tags_ph: "separadas,por,comas", reminders_f: "Recordatorios",
     rem_0: "al vencer", rem_min: (n) => `${n} min antes`, rem_h: (n) => `${n} h antes`,
-    rem_d: (n) => `${n} d antes`, add_reminder: "+ recordatorio",
+    rem_d: (n) => `${n} d antes`, add_reminder: "+ recordatorio", overdue_repeat_f: "Repetir mientras esté vencida", or_off: "no", or_hours: "hora(s)", or_days: "día(s)",
     sort_f: "Orden", sort_smart: "Automático", sort_manual: "Manual", sort_due: "Vencimiento",
     sort_prio: "Prioridad", sort_title: "Título", sort_person: "Persona",
     due_soon: (n) => `Solo vencimientos (+${n} d)`, due_soon_t: "Solo vencimientos",
@@ -271,7 +271,7 @@ const STR = {
     error: "Better ToDo non raggiungibile. L'integrazione è installata?",
     tags_f: "Tag", tags_ph: "separati,da,virgole", reminders_f: "Promemoria",
     rem_0: "alla scadenza", rem_min: (n) => `${n} min prima`, rem_h: (n) => `${n} h prima`,
-    rem_d: (n) => `${n} g prima`, add_reminder: "+ promemoria",
+    rem_d: (n) => `${n} g prima`, add_reminder: "+ promemoria", overdue_repeat_f: "Ripeti finché in ritardo", or_off: "no", or_hours: "ora/e", or_days: "giorno/i",
     sort_f: "Ordinamento", sort_smart: "Automatico", sort_manual: "Manuale", sort_due: "Scadenza",
     sort_prio: "Priorità", sort_title: "Titolo", sort_person: "Persona",
     due_soon: (n) => `Solo in scadenza (+${n} g)`, due_soon_t: "Solo in scadenza",
@@ -327,7 +327,7 @@ const STR = {
     error: "Better ToDo is niet bereikbaar. Is de integratie geïnstalleerd?",
     tags_f: "Tags", tags_ph: "komma,gescheiden", reminders_f: "Herinneringen",
     rem_0: "op vervalmoment", rem_min: (n) => `${n} min eerder`, rem_h: (n) => `${n} u eerder`,
-    rem_d: (n) => `${n} d eerder`, add_reminder: "+ herinnering",
+    rem_d: (n) => `${n} d eerder`, add_reminder: "+ herinnering", overdue_repeat_f: "Herhalen zolang te laat", or_off: "uit", or_hours: "uur", or_days: "dag(en)",
     sort_f: "Sortering", sort_smart: "Automatisch", sort_manual: "Handmatig", sort_due: "Vervaldatum",
     sort_prio: "Prioriteit", sort_title: "Titel", sort_person: "Persoon",
     due_soon: (n) => `Alleen vervallende (+${n} d)`, due_soon_t: "Alleen vervallende",
@@ -383,7 +383,7 @@ const STR = {
     error: "Better ToDo jest niedostępne. Czy integracja jest zainstalowana?",
     tags_f: "Tagi", tags_ph: "oddzielone,przecinkami", reminders_f: "Przypomnienia",
     rem_0: "w terminie", rem_min: (n) => `${n} min przed`, rem_h: (n) => `${n} godz przed`,
-    rem_d: (n) => `${n} dni przed`, add_reminder: "+ przypomnienie",
+    rem_d: (n) => `${n} dni przed`, add_reminder: "+ przypomnienie", overdue_repeat_f: "Powtarzaj, gdy zaległe", or_off: "nie", or_hours: "godz.", or_days: "dni",
     sort_f: "Sortowanie", sort_smart: "Automatyczne", sort_manual: "Ręczne", sort_due: "Termin",
     sort_prio: "Priorytet", sort_title: "Tytuł", sort_person: "Osoba",
     due_soon: (n) => `Tylko z terminem (+${n} dni)`, due_soon_t: "Tylko z terminem",
@@ -1448,7 +1448,7 @@ class BetterTodoCard extends HTMLElement {
           list_id: this._activeLists()[0]?.id || this._data.lists[0]?.id,
           title: "", notes: "", type: "simple", due_date: null, due_time: null,
           visible_from: null, lead_days: null, priority: null, subtasks: [],
-          assigned_to: [], rotation: null, tags: [], reminders: [],
+          assigned_to: [], rotation: null, tags: [], reminders: [], overdue_repeat: null,
           schedule: { freq: "monthly", interval: 1 }, interval: { unit: "weeks", value: 1 },
           period: "week",
         };
@@ -1499,6 +1499,11 @@ class BetterTodoCard extends HTMLElement {
       ...(this._feature("periods") ? [["period", t.type_period]] : []),
     ];
     const hasDue = d.type !== "period";
+    if (d._orUnit === undefined) {
+      const m = Number(d.overdue_repeat) || 0;
+      d._orUnit = m ? (m % 1440 === 0 ? "d" : "h") : "";
+      d._orN = m ? (d._orUnit === "d" ? m / 1440 : Math.max(1, Math.round(m / 60))) : 1;
+    }
 
     let typeFields = "";
     if (d.type === "simple") {
@@ -1624,6 +1629,16 @@ class BetterTodoCard extends HTMLElement {
             ${REMINDER_PRESETS.filter((m) => !(d.reminders || []).includes(m)).map((m) => `<option value="${m}">${esc(remLabel(t, m))}</option>`).join("")}
           </select>` : ""}
         </div>
+      </div>
+      <div class="field-row">
+        <span>${esc(t.overdue_repeat_f)}</span>
+        <select data-f="_orUnit" data-rebuild="1">
+          <option value="" ${d._orUnit === "" ? "selected" : ""}>${esc(t.or_off)}</option>
+          <option value="h" ${d._orUnit === "h" ? "selected" : ""}>${esc(t.every)} … ${esc(t.or_hours)}</option>
+          <option value="d" ${d._orUnit === "d" ? "selected" : ""}>${esc(t.every)} … ${esc(t.or_days)}</option>
+        </select>
+        ${d._orUnit ? `<input type="number" min="1" max="${d._orUnit === "h" ? 720 : 365}" class="num" data-f="_orN" value="${esc(d._orN)}">
+        <span>${esc(d._orUnit === "h" ? t.or_hours : t.or_days)}</span>` : ""}
       </div>` : ""}
       <label class="field">${esc(t.notes_f)}<textarea data-f="notes" rows="2">${esc(d.notes || "")}</textarea></label>
       ${this._feature("tags") ? (() => {
@@ -1807,11 +1822,15 @@ class BetterTodoCard extends HTMLElement {
       if (!(iv.months || []).length || iv.months.length >= 12) iv.months = null;
     } else if (d.type === "period") {
       d.schedule = null; d.interval = null; d.due_date = null; d.visible_from = null;
-      d.due_time = null; d.reminders = [];
+      d.due_time = null; d.reminders = []; d.overdue_repeat = null;
     } else {
       d.schedule = null; d.interval = null; d.period = null;
     }
     delete d.computed;
+    if (d.type !== "period") {
+      const n = Math.max(1, Math.round(Number(d._orN) || 1));
+      d.overdue_repeat = d._orUnit === "h" ? n * 60 : d._orUnit === "d" ? n * 1440 : null;
+    }
     // Assignment: with rotation the pool lives in rotation.persons and
     // assigned_to holds only the current person; without it the selection
     // is the assignment itself.

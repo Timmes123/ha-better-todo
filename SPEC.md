@@ -73,6 +73,11 @@ Gemeinsame Felder aller Typen:
   bereits gefeuerte Erinnerungen und die Tageszusammenfassung werden persistiert
   (At-least-once: nur ein harter Absturz unmittelbar nach dem Senden kann eine
   Erinnerung wiederholen).
+- `ueberfaellig_wiederholen` (optional, Entscheidung 2026-09-10, Issue #9): freies Intervall
+  in Minuten (UI: Zahl + Stunden/Tage, min. 1 h). Solange die Aufgabe überfällig ist, feuert ab
+  Fälligkeit + k·Intervall erneut das Reminder-Event (negativer `offset_minutes`, zusätzlich
+  `days_overdue`) samt Push; Erledigen beendet es, die nächste Instanz beginnt neu. Kein
+  Stapeln: ein Nachstoß pro Intervall. Ergänzt die Tageszusammenfassung, ersetzt sie nicht.
 - `tags` (optional): freie Schlagwörter, quer zu Listen, filterbar in der Karte
 - `sortierung` innerhalb der Liste (manuell, per Drag & Drop in der Karte)
 

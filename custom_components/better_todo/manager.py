@@ -286,7 +286,7 @@ class BetterTodoManager:
             "list_id", "title", "notes", "type", "priority", "subtasks",
             "assigned_to", "rotation", "visible_from", "due_date", "due_time",
             "lead_days", "schedule", "interval", "period", "order",
-            "tags", "reminders", "ended",
+            "tags", "reminders", "overdue_repeat", "ended",
         )
         for key in editable:
             if key in data:
@@ -341,7 +341,7 @@ class BetterTodoManager:
             # schedule: previously fired keys must not suppress it.
             if any(
                 existing.get(k) != task.get(k)
-                for k in ("due_date", "due_time", "reminders")
+                for k in ("due_date", "due_time", "reminders", "overdue_repeat")
             ):
                 self._forget_fired_reminders(task["id"])
         self._save_notify()
@@ -387,6 +387,17 @@ class BetterTodoManager:
             )[:5]
         except (ValueError, TypeError) as err:
             raise BetterTodoError("Invalid reminders") from err
+        repeat = task.get("overdue_repeat")
+        if repeat in (None, "", 0):
+            task["overdue_repeat"] = None
+        else:
+            try:
+                repeat = int(repeat)
+            except (ValueError, TypeError) as err:
+                raise BetterTodoError("Invalid overdue_repeat") from err
+            if repeat < 60:
+                raise BetterTodoError("overdue_repeat must be at least 60 minutes")
+            task["overdue_repeat"] = repeat
         for key in ("lead_days", "priority", "order"):
             value = task.get(key)
             if value in (None, ""):
@@ -447,6 +458,7 @@ class BetterTodoManager:
             "lead_days": None,
             "tags": [],
             "reminders": [],
+            "overdue_repeat": None,
             "occurrence_count": 0,
             "ended": False,
             "schedule": None,
@@ -678,7 +690,8 @@ class BetterTodoManager:
         await self._async_maybe_send_summary(now, window_start)
         for task in self.data["tasks"]:
             reminders = task.get("reminders") or []
-            if not reminders:
+            repeat = task.get("overdue_repeat") or 0
+            if not reminders and not repeat:
                 continue
             computed = self.computed_state(task, today)
             due_iso = computed.get("due")
@@ -701,21 +714,56 @@ class BetterTodoManager:
                         "Reminder for %r (due %s %s, %d min before) fires",
                         task["title"], due_iso, time_str, offset,
                     )
-                    self.hass.bus.async_fire(
-                        EVENT_REMINDER,
-                        {
-                            "task_id": task["id"],
-                            "title": task["title"],
-                            "list_id": task["list_id"],
-                            "assigned_to": task.get("assigned_to"),
-                            "due": due_iso,
-                            "due_time": task.get("due_time"),
-                            "offset_minutes": offset,
-                        },
-                    )
+                    self._fire_reminder_event(task, due_iso, offset)
                     await self._async_notify_reminder(task, due_date, offset)
+            if repeat:
+                # Overdue nudges: due + k * interval for every k >= 1 that falls
+                # into the window. Stored as negative offsets so the dedup key
+                # and the event payload keep their shape.
+                step = timedelta(minutes=repeat)
+                k = max(1, int((window_start - due_dt) / step))
+                while True:
+                    fire_at = due_dt + k * step
+                    if fire_at > now:
+                        break
+                    offset = -k * repeat
+                    key = (task["id"], due_iso, time_str, offset)
+                    if fire_at > window_start and key not in self._fired_reminders:
+                        self._fired_reminders.add(key)
+                        fired_any = True
+                        _LOGGER.debug(
+                            "Overdue nudge for %r (due %s %s, %d min after) fires",
+                            task["title"], due_iso, time_str, -offset,
+                        )
+                        self._fire_reminder_event(task, due_iso, offset, now, due_dt)
+                        await self._async_notify_reminder(task, due_date, offset, now, due_dt)
+                    k += 1
         if fired_any:
             self._persist_reminder_state()
+
+    def _fire_reminder_event(self, task, due_iso, offset, now=None, due_dt=None) -> None:
+        data = {
+            "task_id": task["id"],
+            "title": task["title"],
+            "list_id": task["list_id"],
+            "assigned_to": task.get("assigned_to"),
+            "due": due_iso,
+            "due_time": task.get("due_time"),
+            "offset_minutes": offset,
+        }
+        if offset < 0 and now is not None and due_dt is not None:
+            data["days_overdue"] = (now.date() - due_dt.date()).days
+        self.hass.bus.async_fire(EVENT_REMINDER, data)
+
+    def _fire_moment(self, key: tuple) -> datetime:
+        """The moment a fired-reminder key refers to (for pruning)."""
+        try:
+            due = engine.parse_date(str(key[1]))
+            hour, minute = self._parse_hhmm(str(key[2])) or (9, 0)
+            due_dt = datetime.combine(due, time(hour, minute), tzinfo=dt_util.now().tzinfo)
+            return due_dt - timedelta(minutes=int(key[3]))
+        except (ValueError, TypeError, IndexError):
+            return dt_util.now()  # unparsable: keep, it costs nothing
 
     def _load_fired_reminders(self, stored: list) -> set[tuple[str, str, str, int]]:
         """Restore the fired-reminder keys, migrating the pre-v0.7.9 format.
@@ -749,7 +797,9 @@ class BetterTodoManager:
         self._meta()["fired_reminders"] = [list(key) for key in self._fired_reminders]
         self._schedule_save()
 
-    async def _async_notify_reminder(self, task: dict, due_date, offset: int) -> None:
+    async def _async_notify_reminder(
+        self, task: dict, due_date, offset: int, now=None, due_dt=None
+    ) -> None:
         """Send the reminder to the notify services configured in the options.
 
         Assigned persons get their own target; unassigned tasks go to every
@@ -771,14 +821,25 @@ class BetterTodoManager:
         lang_de = (self.hass.config.language or "en").lower().startswith("de")
         date_str = due_date.strftime("%d.%m.%Y") if lang_de else due_date.isoformat()
         due_time = task.get("due_time")
+        days = (now.date() - due_dt.date()).days if now and due_dt else 0
         if lang_de:
-            title = "Aufgabe fällig" if offset == 0 else "Erinnerung"
-            message = f"{task['title']} — fällig am {date_str}"
+            if offset < 0:
+                title = "Aufgabe überfällig"
+                since = f"seit {days} Tag{'en' if days != 1 else ''} " if days > 0 else ""
+                message = f"{task['title']} — {since}überfällig, fällig am {date_str}"
+            else:
+                title = "Aufgabe fällig" if offset == 0 else "Erinnerung"
+                message = f"{task['title']} — fällig am {date_str}"
             if due_time:
                 message += f" um {due_time} Uhr"
         else:
-            title = "Task due" if offset == 0 else "Reminder"
-            message = f"{task['title']} — due {date_str}"
+            if offset < 0:
+                title = "Task overdue"
+                since = f"{days} day{'s' if days != 1 else ''} " if days > 0 else ""
+                message = f"{task['title']} — {since}overdue, was due {date_str}"
+            else:
+                title = "Task due" if offset == 0 else "Reminder"
+                message = f"{task['title']} — due {date_str}"
             if due_time:
                 message += f" at {due_time}"
         for service in dict.fromkeys(services):
@@ -908,10 +969,12 @@ class BetterTodoManager:
 
     async def async_daily_tick(self, _now=None) -> None:
         """Midnight housekeeping: roll periods, fire due/overdue events."""
-        # Prune fired-reminder keys once their due date is safely in the past
+        # Prune fired-reminder keys once their fire moment is safely in the past
         # (older than the 48 h restart catch-up window can ever look back).
-        cutoff = (self._today() - timedelta(days=7)).isoformat()
-        pruned = {k for k in self._fired_reminders if str(k[1])[:10] >= cutoff}
+        # Overdue nudges carry negative offsets, so the fire moment - not the
+        # due date - is what must be old enough.
+        cutoff = dt_util.now() - timedelta(days=7)
+        pruned = {k for k in self._fired_reminders if self._fire_moment(k) >= cutoff}
         if pruned != self._fired_reminders:
             self._fired_reminders = pruned
             self._persist_reminder_state()

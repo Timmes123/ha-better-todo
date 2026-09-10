@@ -244,6 +244,15 @@ the person whose turn it is). Tasks without a due **time** use 09:00 as the refe
 point. Reminders are for tasks where the exact moment matters — "trash pickup at 18:00,
 remind me 1 h before".
 
+### Repeat while overdue
+
+Below the reminders, *Repeat while overdue* re-sends a reminder at a free interval — every
+*n* hours or every *n* days (e.g. every 12 h, every 5 days) — counted from the due moment
+and for as long as the task is overdue. Completing the task stops it; a recurring task
+starts over with its next occurrence. Overdue never stacks here either: one nudge per
+interval, no matter how many occurrences were missed. The daily summary (below) already
+lists *all* overdue tasks once a day, so this is for the few tasks that need a firmer hand.
+
 ### Daily summary
 
 Enable *Send a daily summary of open tasks* and pick a time (default 08:00). Every day
@@ -348,7 +357,7 @@ let an automation call `better_todo.skip_task` whenever rain is forecast.
 | `better_todo_item_completed` | a task is completed |
 | `better_todo_item_due` | a task becomes due (daily at midnight) |
 | `better_todo_item_overdue` | a task is overdue (daily at midnight) |
-| `better_todo_item_reminder` | a reminder fires (event data includes `offset_minutes`) |
+| `better_todo_item_reminder` | a reminder fires (event data includes `offset_minutes`; overdue repeats have a negative offset plus `days_overdue`) |
 
 Event data includes `task_id`, `title`, `list_id` and `assigned_to` (a **list** of
 person entity ids — use `in`, not `==`, when filtering).

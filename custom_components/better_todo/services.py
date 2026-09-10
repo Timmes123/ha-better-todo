@@ -50,6 +50,7 @@ TASK_REF_SCHEMA = vol.Schema(
 UPDATE_FIELDS = (
     "notes", "type", "due_date", "due_time", "visible_from", "lead_days",
     "assigned_to", "schedule", "interval", "period", "tags", "priority",
+    "overdue_repeat",
 )
 
 UPDATE_TASK_SCHEMA = vol.Schema(
@@ -71,6 +72,7 @@ UPDATE_TASK_SCHEMA = vol.Schema(
         vol.Optional("period"): vol.In(["week", "month"]),
         vol.Optional("tags"): vol.Any(cv.string, [cv.string]),
         vol.Optional("priority"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("overdue_repeat"): vol.Any(None, vol.Coerce(int)),
     }
 )
 

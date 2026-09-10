@@ -198,6 +198,10 @@
           "name": "Vorlauftage",
           "description": "Aufgabe so viele Tage vor Fälligkeit anzeigen."
         },
+        "overdue_repeat": {
+          "name": "Bei Überfälligkeit wiederholen",
+          "description": "Solange die Aufgabe überfällig ist, alle so viele Minuten nach der Fälligkeit erneut erinnern (z. B. 720 = alle 12 Std, 1440 = täglich). Leer oder 0 schaltet ab."
+        },
         "assigned_to": {
           "name": "Zugewiesen an",
           "description": "Person-Entität (oder Liste davon), der die Aufgabe zugewiesen ist."

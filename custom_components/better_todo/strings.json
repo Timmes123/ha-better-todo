@@ -198,6 +198,10 @@
           "name": "Lead days",
           "description": "Show the task this many days before it is due."
         },
+        "overdue_repeat": {
+          "name": "Repeat while overdue",
+          "description": "Send a reminder again every this many minutes after the due moment while the task is overdue (e.g. 720 = every 12 h, 1440 = daily). Empty or 0 turns it off."
+        },
         "assigned_to": {
           "name": "Assigned to",
           "description": "Person entity (or list of them) the task is assigned to."
