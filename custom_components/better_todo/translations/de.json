@@ -70,6 +70,10 @@
           "name": "Fälligkeitsdatum",
           "description": "Fälligkeit (bei wiederholenden Aufgaben die erste Fälligkeit)."
         },
+        "due_time": {
+          "name": "Uhrzeit",
+          "description": "Fälligkeits-Uhrzeit (HH:MM)."
+        },
         "visible_from": {
           "name": "Sichtbar ab",
           "description": "Die Aufgabe erscheint an diesem Datum."
@@ -77,6 +81,10 @@
         "assigned_to": {
           "name": "Zugewiesen an",
           "description": "Personen-Entität, der die Aufgabe zugewiesen wird."
+        },
+        "overdue_repeat": {
+          "name": "Bei Überfälligkeit wiederholen",
+          "description": "Solange die Aufgabe überfällig ist, alle so viele Minuten nach der Fälligkeit erneut erinnern (z. B. 1 = jede Minute, 15 = alle 15 Min, 1440 = täglich)."
         },
         "schedule": {
           "name": "Zeitplan",
@@ -200,7 +208,7 @@
         },
         "overdue_repeat": {
           "name": "Bei Überfälligkeit wiederholen",
-          "description": "Solange die Aufgabe überfällig ist, alle so viele Minuten nach der Fälligkeit erneut erinnern (z. B. 720 = alle 12 Std, 1440 = täglich). Leer oder 0 schaltet ab."
+          "description": "Solange die Aufgabe überfällig ist, alle so viele Minuten nach der Fälligkeit erneut erinnern (z. B. 1 = jede Minute, 15 = alle 15 Min, 1440 = täglich). Leer oder 0 schaltet ab."
         },
         "assigned_to": {
           "name": "Zugewiesen an",

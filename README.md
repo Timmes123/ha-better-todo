@@ -247,11 +247,17 @@ remind me 1 h before".
 ### Repeat while overdue
 
 Below the reminders, *Repeat while overdue* re-sends a reminder at a free interval — every
-*n* hours or every *n* days (e.g. every 12 h, every 5 days) — counted from the due moment
-and for as long as the task is overdue. Completing the task stops it; a recurring task
-starts over with its next occurrence. Overdue never stacks here either: one nudge per
-interval, no matter how many occurrences were missed. The daily summary (below) already
-lists *all* overdue tasks once a day, so this is for the few tasks that need a firmer hand.
+*n* minutes, hours or days (e.g. every 15 min, every 12 h, every 5 days) — counted from the
+due moment and for as long as the task is overdue. Completing the task stops it; a recurring
+task starts over with its next occurrence. Overdue never stacks here either: one nudge per
+interval, no matter how many occurrences were missed, and after a Home Assistant downtime
+only the latest missed nudge is sent. The daily summary (below) already lists *all* overdue
+tasks once a day, so this is for the few tasks that need a firmer hand.
+
+Short intervals turn a task into a nagging timer: "Oven" due at 18:40, repeat every
+1 min, tick it off when you have taken the tray out; or let an automation create a
+"Washing machine is done" task (via `better_todo.add_task` with `overdue_repeat: 15`) that pings
+every 15 min until someone empties it.
 
 ### Daily summary
 

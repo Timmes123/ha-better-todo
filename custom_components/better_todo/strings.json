@@ -70,6 +70,10 @@
           "name": "Due date",
           "description": "Due date (first due date for recurring tasks)."
         },
+        "due_time": {
+          "name": "Due time",
+          "description": "Due time (HH:MM)."
+        },
         "visible_from": {
           "name": "Visible from",
           "description": "The task appears on this date."
@@ -77,6 +81,10 @@
         "assigned_to": {
           "name": "Assigned to",
           "description": "Person entity the task is assigned to."
+        },
+        "overdue_repeat": {
+          "name": "Repeat while overdue",
+          "description": "Send a reminder again every this many minutes after the due moment while the task is overdue (e.g. 1 = every minute, 15 = every 15 min, 1440 = daily)."
         },
         "schedule": {
           "name": "Schedule",
@@ -200,7 +208,7 @@
         },
         "overdue_repeat": {
           "name": "Repeat while overdue",
-          "description": "Send a reminder again every this many minutes after the due moment while the task is overdue (e.g. 720 = every 12 h, 1440 = daily). Empty or 0 turns it off."
+          "description": "Send a reminder again every this many minutes after the due moment while the task is overdue (e.g. 1 = every minute, 15 = every 15 min, 1440 = daily). Empty or 0 turns it off."
         },
         "assigned_to": {
           "name": "Assigned to",

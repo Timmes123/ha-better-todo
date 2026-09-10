@@ -395,8 +395,8 @@ class BetterTodoManager:
                 repeat = int(repeat)
             except (ValueError, TypeError) as err:
                 raise BetterTodoError("Invalid overdue_repeat") from err
-            if repeat < 60:
-                raise BetterTodoError("overdue_repeat must be at least 60 minutes")
+            if repeat < 1:
+                raise BetterTodoError("overdue_repeat must be at least 1 minute")
             task["overdue_repeat"] = repeat
         for key in ("lead_days", "priority", "order"):
             value = task.get(key)
@@ -717,27 +717,30 @@ class BetterTodoManager:
                     self._fire_reminder_event(task, due_iso, offset)
                     await self._async_notify_reminder(task, due_date, offset)
             if repeat:
-                # Overdue nudges: due + k * interval for every k >= 1 that falls
-                # into the window. Stored as negative offsets so the dedup key
-                # and the event payload keep their shape.
+                # Overdue nudge: the latest due + k * interval that has passed.
+                # Only that one fires - a 1-minute interval after a long HA
+                # downtime must not turn the catch-up window into a burst of
+                # thousands of pushes. Stored as a negative offset so the dedup
+                # key and the event payload keep their shape; only the newest
+                # nudge key per task is kept so the store does not grow.
                 step = timedelta(minutes=repeat)
-                k = max(1, int((window_start - due_dt) / step))
-                while True:
-                    fire_at = due_dt + k * step
-                    if fire_at > now:
-                        break
-                    offset = -k * repeat
-                    key = (task["id"], due_iso, time_str, offset)
-                    if fire_at > window_start and key not in self._fired_reminders:
-                        self._fired_reminders.add(key)
-                        fired_any = True
-                        _LOGGER.debug(
-                            "Overdue nudge for %r (due %s %s, %d min after) fires",
-                            task["title"], due_iso, time_str, -offset,
-                        )
-                        self._fire_reminder_event(task, due_iso, offset, now, due_dt)
-                        await self._async_notify_reminder(task, due_date, offset, now, due_dt)
-                    k += 1
+                k = int((now - due_dt) / step)
+                fire_at = due_dt + k * step
+                offset = -k * repeat
+                key = (task["id"], due_iso, time_str, offset)
+                if k >= 1 and fire_at > window_start and key not in self._fired_reminders:
+                    self._fired_reminders = {
+                        f for f in self._fired_reminders
+                        if not (f[0] == task["id"] and f[3] < 0)
+                    }
+                    self._fired_reminders.add(key)
+                    fired_any = True
+                    _LOGGER.debug(
+                        "Overdue nudge for %r (due %s %s, %d min after) fires",
+                        task["title"], due_iso, time_str, -offset,
+                    )
+                    self._fire_reminder_event(task, due_iso, offset, now, due_dt)
+                    await self._async_notify_reminder(task, due_date, offset, now, due_dt)
         if fired_any:
             self._persist_reminder_state()
 

@@ -29,11 +29,13 @@ ADD_TASK_SCHEMA = vol.Schema(
         vol.Optional("notes"): cv.string,
         vol.Optional("type", default=TASK_TYPE_SIMPLE): vol.In(TASK_TYPES),
         vol.Optional("due_date"): cv.string,
+        vol.Optional("due_time"): cv.string,
         vol.Optional("visible_from"): cv.string,
         vol.Optional("assigned_to"): vol.Any(cv.string, [cv.string]),
         vol.Optional("schedule"): dict,
         vol.Optional("interval"): dict,
         vol.Optional("period"): vol.In(["week", "month"]),
+        vol.Optional("overdue_repeat"): vol.Any(None, vol.Coerce(int)),
     }
 )
 
@@ -130,7 +132,10 @@ def async_register_services(hass: HomeAssistant) -> None:
             "title": call.data["title"],
             "type": call.data.get("type", TASK_TYPE_SIMPLE),
         }
-        for key in ("notes", "due_date", "visible_from", "assigned_to", "schedule", "interval", "period"):
+        for key in (
+            "notes", "due_date", "due_time", "visible_from", "assigned_to",
+            "schedule", "interval", "period", "overdue_repeat",
+        ):
             if key in call.data:
                 task[key] = call.data[key]
         manager.save_task(task)

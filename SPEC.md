@@ -74,10 +74,14 @@ Gemeinsame Felder aller Typen:
   (At-least-once: nur ein harter Absturz unmittelbar nach dem Senden kann eine
   Erinnerung wiederholen).
 - `ueberfaellig_wiederholen` (optional, Entscheidung 2026-09-10, Issue #9): freies Intervall
-  in Minuten (UI: Zahl + Stunden/Tage, min. 1 h). Solange die Aufgabe überfällig ist, feuert ab
+  in Minuten (UI: Zahl + Minuten/Stunden/Tage, min. 1 Min — bewusst kein höheres Minimum, damit
+  eine Aufgabe als nervender Timer/Wecker dienen kann, z. B. Backofen alle 1 Min, Waschmaschine
+  per Automation alle 15 Min). Solange die Aufgabe überfällig ist, feuert ab
   Fälligkeit + k·Intervall erneut das Reminder-Event (negativer `offset_minutes`, zusätzlich
   `days_overdue`) samt Push; Erledigen beendet es, die nächste Instanz beginnt neu. Kein
-  Stapeln: ein Nachstoß pro Intervall. Ergänzt die Tageszusammenfassung, ersetzt sie nicht.
+  Stapeln: ein Nachstoß pro Intervall; nach HA-Downtime feuert nur der jüngste verpasste
+  Zeitpunkt (kein Nachhol-Gewitter), und pro Aufgabe wird nur der letzte Nudge-Key gespeichert.
+  Ergänzt die Tageszusammenfassung, ersetzt sie nicht.
 - `tags` (optional): freie Schlagwörter, quer zu Listen, filterbar in der Karte
 - `sortierung` innerhalb der Liste (manuell, per Drag & Drop in der Karte)
 
