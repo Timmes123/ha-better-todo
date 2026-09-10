@@ -50,9 +50,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.is_running:
         hass.async_create_task(_setup_frontend())
     else:
-        entry.async_on_unload(
-            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_frontend)
+        # A once-listener removes itself after firing. Handing its unsubscribe
+        # to async_on_unload would then make every entry unload (each options
+        # save) log "Unable to remove unknown job listener".
+        pending = {"unsub": None}
+
+        async def _on_started(event) -> None:
+            pending["unsub"] = None
+            await _setup_frontend(event)
+
+        pending["unsub"] = hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STARTED, _on_started
         )
+
+        def _cancel_started_listener() -> None:
+            if pending["unsub"] is not None:
+                pending["unsub"]()
+                pending["unsub"] = None
+
+        entry.async_on_unload(_cancel_started_listener)
 
     # Options changes reload the entry via OptionsFlowWithReload (config_flow).
     entry.async_on_unload(
