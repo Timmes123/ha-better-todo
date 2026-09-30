@@ -1015,11 +1015,16 @@ class BetterTodoManager:
                 task["title"], assigned or "nobody", sorted(targets), EVENT_REMINDER,
             )
             return
-        lang_de = (self.hass.config.language or "en").lower().startswith("de")
-        date_str = due_date.strftime("%d.%m.%Y") if lang_de else due_date.isoformat()
+        lang = self._lang()
+        if lang == "de":
+            date_str = due_date.strftime("%d.%m.%Y")
+        elif lang == "fr":
+            date_str = due_date.strftime("%d/%m/%Y")
+        else:
+            date_str = due_date.isoformat()
         due_time = task.get("due_time")
         days = (now.date() - due_dt.date()).days if now and due_dt else 0
-        if lang_de:
+        if lang == "de":
             if offset < 0:
                 title = "Aufgabe überfällig"
                 since = f"seit {days} Tag{'en' if days != 1 else ''} " if days > 0 else ""
@@ -1029,6 +1034,16 @@ class BetterTodoManager:
                 message = f"{task['title']} — fällig am {date_str}"
             if due_time:
                 message += f" um {due_time} Uhr"
+        elif lang == "fr":
+            if offset < 0:
+                title = "Tâche en retard"
+                since = f" depuis {days} jour{'s' if days != 1 else ''}" if days > 0 else ""
+                message = f"{task['title']} — en retard{since}, prévue le {date_str}"
+            else:
+                title = "Tâche à faire" if offset == 0 else "Rappel"
+                message = f"{task['title']} — prévue le {date_str}"
+            if due_time:
+                message += f" à {due_time}"
         else:
             if offset < 0:
                 title = "Task overdue"
@@ -1069,29 +1084,38 @@ class BetterTodoManager:
                     entries.append((task, "period", computed))
         return entries
 
-    def _summary_line(self, task: dict, kind: str, computed: dict, lang_de: bool) -> str:
+    def _summary_line(self, task: dict, kind: str, computed: dict, lang: str) -> str:
         if kind == "overdue":
             n = int(computed.get("due_count") or 1)
             if n > 1:
-                suffix = f"{n}× fällig" if lang_de else f"{n}× due"
+                suffix = {"de": f"{n}× fällig", "fr": f"à faire {n}×"}.get(lang, f"{n}× due")
             else:
-                suffix = "überfällig" if lang_de else "overdue"
+                suffix = {"de": "überfällig", "fr": "en retard"}.get(lang, "overdue")
         elif kind == "due":
             due_time = task.get("due_time")
             if due_time:
-                suffix = f"heute {due_time} Uhr" if lang_de else f"today {due_time}"
+                suffix = {
+                    "de": f"heute {due_time} Uhr", "fr": f"aujourd'hui à {due_time}",
+                }.get(lang, f"today {due_time}")
             else:
-                suffix = "heute fällig" if lang_de else "due today"
+                suffix = {"de": "heute fällig", "fr": "à faire aujourd'hui"}.get(lang, "due today")
         else:
             week = (task.get("period") or "week") == "week"
-            if lang_de:
+            if lang == "de":
                 suffix = "noch diese Woche" if week else "noch diesen Monat"
+            elif lang == "fr":
+                suffix = "d'ici la fin de la semaine" if week else "d'ici la fin du mois"
             else:
                 suffix = "this week" if week else "this month"
         return f"- {task['title']} ({suffix})"
 
-    def _lang_de(self) -> bool:
-        return (self.hass.config.language or "en").lower().startswith("de")
+    def _lang(self) -> str:
+        """Notification language: 'de', 'fr' or 'en' (fallback)."""
+        lang = (self.hass.config.language or "en").lower()
+        for code in ("de", "fr"):
+            if lang.startswith(code):
+                return code
+        return "en"
 
     async def _async_maybe_send_summary(self, now, window_start) -> None:
         options = self.entry.options
@@ -1112,11 +1136,11 @@ class BetterTodoManager:
     async def _async_send_summary(self, today: date) -> None:
         options = self.entry.options
         entries = self._summary_entries(today)
-        lang_de = self._lang_de()
+        lang = self._lang()
         targets = options.get(CONF_NOTIFY_TARGETS) or {}
         per_service: dict[str, list[str]] = {}
         for task, kind, computed in entries:
-            line = self._summary_line(task, kind, computed, lang_de)
+            line = self._summary_line(task, kind, computed, lang)
             assigned = task.get("assigned_to") or []
             services = [targets[p] for p in assigned if targets.get(p)]
             if not assigned and options.get(CONF_NOTIFY_UNASSIGNED_ALL):
@@ -1125,8 +1149,10 @@ class BetterTodoManager:
                 per_service.setdefault(service, []).append(line)
         for service, lines in per_service.items():
             n = len(lines)
-            if lang_de:
+            if lang == "de":
                 title = "1 offene Aufgabe" if n == 1 else f"{n} offene Aufgaben"
+            elif lang == "fr":
+                title = "1 tâche ouverte" if n == 1 else f"{n} tâches ouvertes"
             else:
                 title = "1 open task" if n == 1 else f"{n} open tasks"
             try:
@@ -1149,17 +1175,17 @@ class BetterTodoManager:
             return
         if not self._persistent_active and not force:
             return
-        lang_de = self._lang_de()
+        lang = self._lang()
         entries = self._summary_entries(self._today())
         if not entries:
             persistent_notification.async_dismiss(self.hass, SUMMARY_NOTIFICATION_ID)
             self._persistent_active = False
             return
-        lines = [self._summary_line(t, k, c, lang_de) for t, k, c in entries]
+        lines = [self._summary_line(t, k, c, lang) for t, k, c in entries]
         persistent_notification.async_create(
             self.hass,
             "\n".join(lines),
-            title="Offene Aufgaben" if lang_de else "Open tasks",
+            title={"de": "Offene Aufgaben", "fr": "Tâches ouvertes"}.get(lang, "Open tasks"),
             notification_id=SUMMARY_NOTIFICATION_ID,
         )
         self._persistent_active = True

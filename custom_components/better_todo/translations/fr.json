@@ -1,0 +1,314 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Better ToDo",
+        "description": "Configurer l'intégration Better ToDo."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Déjà configuré. Une seule instance est possible."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de Better ToDo",
+        "menu_options": {
+          "features": "Fonctionnalités",
+          "notifications": "Notifications"
+        }
+      },
+      "features": {
+        "title": "Fonctionnalités de Better ToDo",
+        "description": "Activer ou désactiver des fonctionnalités. Les fonctionnalités désactivées sont masquées partout.",
+        "data": {
+          "priorities": "Priorités",
+          "subtasks": "Sous-tâches",
+          "assignment": "Attribution à des personnes",
+          "rotation": "Attribution tournante",
+          "periods": "Tâches hebdomadaires/mensuelles avec séries",
+          "tags": "Étiquettes",
+          "todo_mirror": "Entité todo standard par liste",
+          "calendar": "Entité calendrier par liste",
+          "priority_levels": "Niveaux de priorité"
+        },
+        "data_description": {
+          "priority_levels": "3 = haute/moyenne/basse, 5 = de la plus haute à la plus basse (1 est toujours la plus importante)."
+        }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Service de notification par personne. Les rappels et le résumé quotidien sont envoyés aux personnes attribuées. Le tiret signifie : aucune notification pour cette personne. Les tâches hebdomadaires et mensuelles n'apparaissent dans le résumé que peu avant la fin de leur période.",
+        "data": {
+          "notify_unassigned_all": "Envoyer les tâches sans attribution à toutes les personnes configurées",
+          "summary_enabled": "Envoyer un résumé quotidien des tâches ouvertes",
+          "summary_time": "Heure du résumé",
+          "summary_persistent": "Afficher aussi le résumé dans le centre de notifications de HA"
+        }
+      }
+    }
+  },
+  "selector": {
+    "priority_levels": {
+      "options": {
+        "3": "3 niveaux (haute, moyenne, basse)",
+        "5": "5 niveaux (de la plus haute à la plus basse)"
+      }
+    }
+  },
+  "services": {
+    "get_tasks": {
+      "name": "Obtenir les tâches",
+      "description": "Renvoie les tâches avec tous leurs champs (étiquettes, priorité, attribution, état d'échéance) pour les scripts, automatisations et assistants vocaux. Tous les filtres sont facultatifs.",
+      "fields": {
+        "list": {
+          "name": "Liste",
+          "description": "Seulement les tâches de ces listes (nom ou liste de noms)."
+        },
+        "assigned_to": {
+          "name": "Attribuée à",
+          "description": "Seulement les tâches attribuées à ces personnes (entité person ou nom)."
+        },
+        "include_unassigned": {
+          "name": "Inclure les non attribuées",
+          "description": "Avec un filtre par personne, renvoyer aussi les tâches attribuées à personne."
+        },
+        "tags": {
+          "name": "Étiquettes",
+          "description": "Seulement les tâches ayant au moins une de ces étiquettes."
+        },
+        "status": {
+          "name": "État",
+          "description": "open (par défaut), done ou all."
+        },
+        "due": {
+          "name": "Échéance",
+          "description": "today = à faire aujourd'hui ou en retard, overdue = en retard seulement, week = à faire dans les 7 prochains jours."
+        },
+        "priority": {
+          "name": "Priorité max.",
+          "description": "Seulement les tâches de cette priorité ou plus importantes (1 = la plus importante)."
+        }
+      }
+    },
+    "add_task": {
+      "name": "Ajouter une tâche",
+      "description": "Ajoute une tâche à une liste (la liste est créée si elle n'existe pas).",
+      "fields": {
+        "list": {
+          "name": "Liste",
+          "description": "Nom de la liste."
+        },
+        "title": {
+          "name": "Titre",
+          "description": "Titre de la tâche."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Notes facultatives."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Type de tâche : simple, scheduled, after_completion ou period."
+        },
+        "due_date": {
+          "name": "Échéance",
+          "description": "Date d'échéance (première échéance pour les tâches récurrentes)."
+        },
+        "due_time": {
+          "name": "Heure d'échéance",
+          "description": "Heure d'échéance (HH:MM)."
+        },
+        "visible_from": {
+          "name": "Visible à partir du",
+          "description": "La tâche apparaît à cette date."
+        },
+        "lead_days": {
+          "name": "Jours d'avance",
+          "description": "Afficher la tâche ce nombre de jours avant son échéance."
+        },
+        "assigned_to": {
+          "name": "Attribuée à",
+          "description": "Entité person (ou liste d'entités) à laquelle la tâche est attribuée."
+        },
+        "tags": {
+          "name": "Étiquettes",
+          "description": "Étiquettes (liste ou séparées par des virgules)."
+        },
+        "priority": {
+          "name": "Priorité",
+          "description": "1 = la plus importante, jusqu'à 3 ou 5 selon les niveaux configurés ; vide = aucune."
+        },
+        "reminders": {
+          "name": "Rappels",
+          "description": "Minutes avant l'échéance (liste ou séparées par des virgules, 5 maximum), ex. 0 = à l'heure de l'échéance, 60 = 1 h avant, 1440 = 1 jour avant."
+        },
+        "overdue_repeat": {
+          "name": "Répéter tant qu'en retard",
+          "description": "Renvoyer un rappel toutes les N minutes après l'échéance tant que la tâche est en retard (ex. 1 = chaque minute, 15 = toutes les 15 min, 1440 = chaque jour)."
+        },
+        "location": {
+          "name": "Condition de lieu",
+          "description": "N'envoyer les rappels que lorsque la personne est dans (ou hors d')une zone, sinon les retenir jusqu'à ce qu'elle y entre (ou en sorte) : zone = entité zone, mode = inside ou outside."
+        },
+        "schedule": {
+          "name": "Planification",
+          "description": "Règle de récurrence des tâches planifiées, ex. freq=monthly, interval=1, day=1 ; months=[4,5,6] facultatif pour les mois actifs."
+        },
+        "interval": {
+          "name": "Intervalle",
+          "description": "Intervalle après réalisation, ex. unit=months, value=1 ; months=[4,5,6] facultatif pour les mois actifs."
+        },
+        "period": {
+          "name": "Période",
+          "description": "Période des tâches-habitudes : week ou month."
+        }
+      }
+    },
+    "complete_task": {
+      "name": "Terminer une tâche",
+      "description": "Marque une tâche comme terminée (par id ou titre exact).",
+      "fields": {
+        "task_id": {
+          "name": "ID de la tâche",
+          "description": "Identifiant interne de la tâche."
+        },
+        "title": {
+          "name": "Titre",
+          "description": "Titre exact de la tâche (alternative à l'id)."
+        },
+        "all": {
+          "name": "Tout terminer",
+          "description": "Terminer d'un coup toutes les occurrences en attente."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Nom de liste pour restreindre la recherche par titre (facultatif)."
+        }
+      }
+    },
+    "skip_task": {
+      "name": "Passer une tâche",
+      "description": "Saute l'occurrence en cours sans la terminer (les séries sont gelées).",
+      "fields": {
+        "task_id": {
+          "name": "ID de la tâche",
+          "description": "Identifiant interne de la tâche."
+        },
+        "title": {
+          "name": "Titre",
+          "description": "Titre exact de la tâche (alternative à l'id)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Nom de liste pour restreindre la recherche par titre (facultatif)."
+        }
+      }
+    },
+    "remove_task": {
+      "name": "Supprimer une tâche",
+      "description": "Supprime définitivement une tâche.",
+      "fields": {
+        "task_id": {
+          "name": "ID de la tâche",
+          "description": "Identifiant interne de la tâche."
+        },
+        "title": {
+          "name": "Titre",
+          "description": "Titre exact de la tâche (alternative à l'id)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Nom de liste pour restreindre la recherche par titre (facultatif)."
+        }
+      }
+    },
+    "update_task": {
+      "name": "Modifier une tâche",
+      "description": "Modifie les champs d'une tâche existante (par id ou titre exact). Seuls les champs fournis sont modifiés.",
+      "fields": {
+        "task_id": {
+          "name": "ID de la tâche",
+          "description": "Identifiant interne de la tâche."
+        },
+        "title": {
+          "name": "Titre",
+          "description": "Titre exact de la tâche (alternative à l'id)."
+        },
+        "list": {
+          "name": "Liste",
+          "description": "Nom de liste pour restreindre la recherche par titre (facultatif)."
+        },
+        "new_title": {
+          "name": "Nouveau titre",
+          "description": "Renommer la tâche."
+        },
+        "new_list": {
+          "name": "Nouvelle liste",
+          "description": "Déplacer la tâche dans cette liste (créée si elle n'existe pas)."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Notes."
+        },
+        "type": {
+          "name": "Type",
+          "description": "Type de tâche : simple, scheduled, after_completion ou period."
+        },
+        "due_date": {
+          "name": "Échéance",
+          "description": "Date d'échéance (prochaine échéance pour les tâches récurrentes)."
+        },
+        "due_time": {
+          "name": "Heure d'échéance",
+          "description": "Heure d'échéance (HH:MM)."
+        },
+        "visible_from": {
+          "name": "Visible à partir du",
+          "description": "La tâche apparaît à cette date."
+        },
+        "lead_days": {
+          "name": "Jours d'avance",
+          "description": "Afficher la tâche ce nombre de jours avant son échéance."
+        },
+        "overdue_repeat": {
+          "name": "Répéter tant qu'en retard",
+          "description": "Renvoyer un rappel toutes les N minutes après l'échéance tant que la tâche est en retard (ex. 1 = chaque minute, 15 = toutes les 15 min, 1440 = chaque jour). Vide ou 0 pour désactiver."
+        },
+        "assigned_to": {
+          "name": "Attribuée à",
+          "description": "Entité person (ou liste d'entités) à laquelle la tâche est attribuée."
+        },
+        "schedule": {
+          "name": "Planification",
+          "description": "Remplace la règle de récurrence, ex. freq=weekly, interval=1, weekdays=[0,3], months=[4,5,6,7,8]."
+        },
+        "interval": {
+          "name": "Intervalle",
+          "description": "Remplace l'intervalle après réalisation, ex. unit=weeks, value=1, months=[4,5,6,7,8]."
+        },
+        "period": {
+          "name": "Période",
+          "description": "Période des tâches-habitudes : week ou month."
+        },
+        "tags": {
+          "name": "Étiquettes",
+          "description": "Remplace les étiquettes (liste ou séparées par des virgules)."
+        },
+        "priority": {
+          "name": "Priorité",
+          "description": "1 = la plus importante, jusqu'à 3 ou 5 selon les niveaux configurés ; vide = aucune."
+        },
+        "reminders": {
+          "name": "Rappels",
+          "description": "Remplace les rappels : minutes avant l'échéance (liste ou séparées par des virgules, 5 maximum). Vide pour tous les supprimer."
+        },
+        "location": {
+          "name": "Condition de lieu",
+          "description": "N'envoyer les rappels que lorsque la personne est dans (ou hors d')une zone, sinon les retenir jusqu'à ce qu'elle y entre (ou en sorte) : zone = entité zone, mode = inside ou outside. Vide pour supprimer la condition."
+        }
+      }
+    }
+  }
+}
