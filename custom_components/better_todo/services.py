@@ -4,14 +4,21 @@ from __future__ import annotations
 
 import copy
 import logging
+from datetime import timedelta
 
 import voluptuous as vol
 
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
 from homeassistant.exceptions import ServiceValidationError
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN, TASK_TYPES, TASK_TYPE_SIMPLE
+from .const import DOMAIN, LOCATION_MODES, MAX_PRIORITY, TASK_TYPES, TASK_TYPE_SIMPLE
 from .manager import BetterTodoError, BetterTodoManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,6 +28,21 @@ SERVICE_COMPLETE_TASK = "complete_task"
 SERVICE_SKIP_TASK = "skip_task"
 SERVICE_REMOVE_TASK = "remove_task"
 SERVICE_UPDATE_TASK = "update_task"
+SERVICE_GET_TASKS = "get_tasks"
+
+# Tags, reminders and persons may be passed as a list or comma-separated.
+_STR_OR_LIST = vol.Any(cv.string, [cv.string])
+_REMINDERS = vol.Any(None, cv.string, [vol.Coerce(int)])
+_PRIORITY = vol.Any(None, "", vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_PRIORITY)))
+_LOCATION = vol.Any(
+    None,
+    vol.Schema(
+        {
+            vol.Required("zone"): cv.string,
+            vol.Optional("mode", default="inside"): vol.In(LOCATION_MODES),
+        }
+    ),
+)
 
 ADD_TASK_SCHEMA = vol.Schema(
     {
@@ -31,11 +53,16 @@ ADD_TASK_SCHEMA = vol.Schema(
         vol.Optional("due_date"): cv.string,
         vol.Optional("due_time"): cv.string,
         vol.Optional("visible_from"): cv.string,
-        vol.Optional("assigned_to"): vol.Any(cv.string, [cv.string]),
+        vol.Optional("lead_days"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("assigned_to"): _STR_OR_LIST,
         vol.Optional("schedule"): dict,
         vol.Optional("interval"): dict,
         vol.Optional("period"): vol.In(["week", "month"]),
+        vol.Optional("tags"): _STR_OR_LIST,
+        vol.Optional("priority"): _PRIORITY,
+        vol.Optional("reminders"): _REMINDERS,
         vol.Optional("overdue_repeat"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("location"): _LOCATION,
     }
 )
 
@@ -52,7 +79,7 @@ TASK_REF_SCHEMA = vol.Schema(
 UPDATE_FIELDS = (
     "notes", "type", "due_date", "due_time", "visible_from", "lead_days",
     "assigned_to", "schedule", "interval", "period", "tags", "priority",
-    "overdue_repeat",
+    "reminders", "overdue_repeat", "location",
 )
 
 UPDATE_TASK_SCHEMA = vol.Schema(
@@ -68,13 +95,31 @@ UPDATE_TASK_SCHEMA = vol.Schema(
         vol.Optional("due_time"): vol.Any(None, cv.string),
         vol.Optional("visible_from"): vol.Any(None, cv.string),
         vol.Optional("lead_days"): vol.Any(None, vol.Coerce(int)),
-        vol.Optional("assigned_to"): vol.Any(None, cv.string, [cv.string]),
+        vol.Optional("assigned_to"): vol.Any(None, _STR_OR_LIST),
         vol.Optional("schedule"): dict,
         vol.Optional("interval"): dict,
         vol.Optional("period"): vol.In(["week", "month"]),
-        vol.Optional("tags"): vol.Any(cv.string, [cv.string]),
-        vol.Optional("priority"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("tags"): vol.Any(None, _STR_OR_LIST),
+        vol.Optional("priority"): _PRIORITY,
+        vol.Optional("reminders"): _REMINDERS,
         vol.Optional("overdue_repeat"): vol.Any(None, vol.Coerce(int)),
+        vol.Optional("location"): _LOCATION,
+    }
+)
+
+GET_TASKS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("list"): _STR_OR_LIST,
+        vol.Optional("assigned_to"): _STR_OR_LIST,
+        vol.Optional("include_unassigned", default=True): cv.boolean,
+        vol.Optional("tags"): _STR_OR_LIST,
+        # Empty values are accepted so templated scripts can leave a
+        # filter blank ("{{ due | default('') }}") without a validation error.
+        vol.Optional("status", default="open"): vol.Any(None, "", vol.In(["open", "done", "all"])),
+        vol.Optional("due"): vol.Any(None, "", vol.In(["today", "overdue", "week"])),
+        vol.Optional("priority"): vol.Any(
+            None, "", vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_PRIORITY))
+        ),
     }
 )
 
@@ -86,12 +131,51 @@ def _manager(hass: HomeAssistant) -> BetterTodoManager:
     return manager
 
 
+def _as_list(value) -> list[str]:
+    """'a, b' or ['a', 'b'] -> ['a', 'b'] (trimmed, empties dropped)."""
+    if value is None:
+        return []
+    items = value.split(",") if isinstance(value, str) else list(value)
+    return [str(x).strip() for x in items if str(x).strip()]
+
+
+def _as_int_list(value) -> list[int]:
+    try:
+        return [int(x) for x in _as_list(value)]
+    except (ValueError, TypeError) as err:
+        raise BetterTodoError(f"Invalid reminders: {value!r}") from err
+
+
+def _normalize_fields(data: dict) -> None:
+    """Coerce the list-ish service fields into what the manager stores."""
+    if "tags" in data:
+        data["tags"] = _as_list(data["tags"])
+    if "reminders" in data:
+        data["reminders"] = _as_int_list(data["reminders"])
+    if "assigned_to" in data and isinstance(data["assigned_to"], str):
+        data["assigned_to"] = _as_list(data["assigned_to"])
+
+
 async def _resolve_by(hass: HomeAssistant, call: ServiceCall) -> str | None:
     if call.context.user_id:
         user = await hass.auth.async_get_user(call.context.user_id)
         if user:
             return user.name
     return None
+
+
+def _list_ids(manager: BetterTodoManager, names) -> set[str]:
+    """Ids of the lists named (case-insensitive); unknown names raise."""
+    ids: set[str] = set()
+    for name in _as_list(names):
+        matches = {
+            lst["id"] for lst in manager.data["lists"]
+            if lst["name"].casefold() == name.casefold()
+        }
+        if not matches:
+            raise BetterTodoError(f"No list named '{name}'")
+        ids |= matches
+    return ids
 
 
 def _find_task_id(manager: BetterTodoManager, call: ServiceCall) -> str:
@@ -102,15 +186,7 @@ def _find_task_id(manager: BetterTodoManager, call: ServiceCall) -> str:
         raise BetterTodoError("Provide task_id or title")
     # An optional list name scopes the title match, so identically named
     # tasks in other lists cannot be hit by accident.
-    list_ids = None
-    if list_name := (call.data.get("list") or "").strip():
-        list_ids = {
-            lst["id"]
-            for lst in manager.data["lists"]
-            if lst["name"].casefold() == list_name.casefold()
-        }
-        if not list_ids:
-            raise BetterTodoError(f"No list named '{call.data.get('list')}'")
+    list_ids = _list_ids(manager, call.data["list"]) if call.data.get("list") else None
     for task in manager.data["tasks"]:
         if task["title"].casefold() == title and (
             list_ids is None or task["list_id"] in list_ids
@@ -119,12 +195,101 @@ def _find_task_id(manager: BetterTodoManager, call: ServiceCall) -> str:
     raise BetterTodoError(f"No task with title '{call.data.get('title')}'")
 
 
+def _person_ids(manager: BetterTodoManager, values) -> set[str]:
+    """Accept person entity ids or person names (case-insensitive)."""
+    persons = manager.serialized_data()["persons"]
+    ids: set[str] = set()
+    for value in _as_list(values):
+        key = value.casefold()
+        match = next(
+            (p for p in persons if p["entity_id"].casefold() == key or (p["name"] or "").casefold() == key),
+            None,
+        )
+        ids.add(match["entity_id"] if match else value)
+    return ids
+
+
+def _get_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
+    snapshot = manager.serialized_data()
+    lists = {lst["id"]: lst["name"] for lst in snapshot["lists"]}
+    persons = {p["entity_id"]: p["name"] for p in snapshot["persons"]}
+    list_ids = _list_ids(manager, data["list"]) if data.get("list") else None
+    person_ids = _person_ids(manager, data["assigned_to"]) if data.get("assigned_to") else None
+    wanted_tags = {t.casefold() for t in _as_list(data.get("tags"))}
+    status = data.get("status") or "open"
+    due_filter = data.get("due") or None
+    max_priority = data.get("priority") if data.get("priority") not in (None, "") else None
+    today = manager._today()
+    week_end = (today + timedelta(days=7)).isoformat()
+
+    result = []
+    for task in snapshot["tasks"]:
+        computed = task.get("computed") or {}
+        state = computed.get("state")
+        done = state in ("done", "period_done")
+        if status == "open" and (done or state in ("hidden", "error")):
+            continue
+        if status == "done" and not done:
+            continue
+        if list_ids is not None and task["list_id"] not in list_ids:
+            continue
+        assigned = task.get("assigned_to") or []
+        if person_ids is not None:
+            if assigned:
+                if not person_ids & set(assigned):
+                    continue
+            elif not data.get("include_unassigned", True):
+                continue
+        if wanted_tags and not wanted_tags & {t.casefold() for t in task.get("tags") or []}:
+            continue
+        if max_priority is not None and not (
+            task.get("priority") is not None and task["priority"] <= max_priority
+        ):
+            continue
+        due = computed.get("due")
+        if due_filter == "overdue" and state != "overdue":
+            continue
+        if due_filter == "today" and state not in ("due", "overdue"):
+            continue
+        if due_filter == "week" and not (state == "overdue" or (due and due <= week_end)):
+            continue
+        result.append(
+            {
+                "id": task["id"],
+                "title": task["title"],
+                "list": lists.get(task["list_id"], ""),
+                "list_id": task["list_id"],
+                "type": task.get("type"),
+                "state": state,
+                "done": done,
+                "due": due,
+                "due_time": task.get("due_time"),
+                "days_overdue": computed.get("days_overdue"),
+                "days_left": computed.get("days_left"),
+                "due_count": computed.get("due_count"),
+                "notes": task.get("notes") or "",
+                "tags": task.get("tags") or [],
+                "priority": task.get("priority"),
+                "assigned_to": assigned,
+                "assigned_names": [persons.get(p, p) for p in assigned],
+                "reminders": task.get("reminders") or [],
+                "location": task.get("location"),
+                "subtasks": [
+                    {"title": st.get("title"), "done": bool(st.get("done"))}
+                    for st in task.get("subtasks") or []
+                ],
+                "streak": task.get("streak") if task.get("type") == "period" else None,
+            }
+        )
+    return {"count": len(result), "tasks": result}
+
+
 @callback
 def async_register_services(hass: HomeAssistant) -> None:
     if hass.services.has_service(DOMAIN, SERVICE_ADD_TASK):
         return
 
-    async def add_task(call: ServiceCall) -> None:
+    async def add_task(call: ServiceCall) -> ServiceResponse:
         manager = _manager(hass)
         lst = manager.find_or_create_list(call.data["list"])
         task = {
@@ -132,13 +297,12 @@ def async_register_services(hass: HomeAssistant) -> None:
             "title": call.data["title"],
             "type": call.data.get("type", TASK_TYPE_SIMPLE),
         }
-        for key in (
-            "notes", "due_date", "due_time", "visible_from", "assigned_to",
-            "schedule", "interval", "period", "overdue_repeat",
-        ):
+        for key in UPDATE_FIELDS:
             if key in call.data:
                 task[key] = call.data[key]
-        manager.save_task(task)
+        _normalize_fields(task)
+        saved = manager.save_task(task)
+        return {"task_id": saved["id"]}
 
     async def complete_task(call: ServiceCall) -> None:
         manager = _manager(hass)
@@ -171,18 +335,20 @@ def async_register_services(hass: HomeAssistant) -> None:
         for key in UPDATE_FIELDS:
             if key in call.data:
                 data[key] = call.data[key]
-        if isinstance(data.get("tags"), str):
-            data["tags"] = [x.strip() for x in data["tags"].split(",")]
+        _normalize_fields(data)
         # A schedule/interval passed here replaces the stored rule entirely —
         # partial rule edits would silently inherit stale day/weekday fields.
         manager.save_task(data)
 
+    async def get_tasks(call: ServiceCall) -> ServiceResponse:
+        return _get_tasks(_manager(hass), call.data)
+
     def _wrap(func):
         # Surface BetterTodoError as a proper service validation error
         # instead of an unhandled exception in the logs.
-        async def wrapper(call: ServiceCall) -> None:
+        async def wrapper(call: ServiceCall):
             try:
-                await func(call)
+                return await func(call)
             except BetterTodoError as err:
                 raise ServiceValidationError(str(err)) from err
             except (ValueError, TypeError, KeyError, AttributeError) as err:
@@ -192,18 +358,25 @@ def async_register_services(hass: HomeAssistant) -> None:
 
         return wrapper
 
-    hass.services.async_register(DOMAIN, SERVICE_ADD_TASK, _wrap(add_task), ADD_TASK_SCHEMA)
+    hass.services.async_register(
+        DOMAIN, SERVICE_ADD_TASK, _wrap(add_task), ADD_TASK_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
     hass.services.async_register(DOMAIN, SERVICE_COMPLETE_TASK, _wrap(complete_task), TASK_REF_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SKIP_TASK, _wrap(skip_task), TASK_REF_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_REMOVE_TASK, _wrap(remove_task), TASK_REF_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_UPDATE_TASK, _wrap(update_task), UPDATE_TASK_SCHEMA)
+    hass.services.async_register(
+        DOMAIN, SERVICE_GET_TASKS, _wrap(get_tasks), GET_TASKS_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
 
 
 @callback
 def async_remove_services(hass: HomeAssistant) -> None:
     for service in (
         SERVICE_ADD_TASK, SERVICE_COMPLETE_TASK, SERVICE_SKIP_TASK,
-        SERVICE_REMOVE_TASK, SERVICE_UPDATE_TASK,
+        SERVICE_REMOVE_TASK, SERVICE_UPDATE_TASK, SERVICE_GET_TASKS,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

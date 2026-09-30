@@ -30,7 +30,11 @@
           "periods": "Weekly/monthly tasks with streaks",
           "tags": "Tags",
           "todo_mirror": "Standard todo entity per list",
-          "calendar": "Calendar entity per list"
+          "calendar": "Calendar entity per list",
+          "priority_levels": "Priority levels"
+        },
+        "data_description": {
+          "priority_levels": "3 = high/medium/low, 5 = highest to lowest (1 is always the most important)."
         }
       },
       "notifications": {
@@ -45,7 +49,49 @@
       }
     }
   },
+  "selector": {
+    "priority_levels": {
+      "options": {
+        "3": "3 levels (high, medium, low)",
+        "5": "5 levels (highest to lowest)"
+      }
+    }
+  },
   "services": {
+    "get_tasks": {
+      "name": "Get tasks",
+      "description": "Returns tasks with all their fields (tags, priority, assignment, due state) for scripts, automations and voice assistants. All filters are optional.",
+      "fields": {
+        "list": {
+          "name": "List",
+          "description": "Only tasks from these lists (name or list of names)."
+        },
+        "assigned_to": {
+          "name": "Assigned to",
+          "description": "Only tasks assigned to these persons (person entity or name)."
+        },
+        "include_unassigned": {
+          "name": "Include unassigned",
+          "description": "When filtering by person, also return tasks nobody is assigned to."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Only tasks with at least one of these tags."
+        },
+        "status": {
+          "name": "Status",
+          "description": "open (default), done or all."
+        },
+        "due": {
+          "name": "Due",
+          "description": "today = due today or overdue, overdue = overdue only, week = due within the next 7 days."
+        },
+        "priority": {
+          "name": "Max. priority",
+          "description": "Only tasks with a priority of this value or more important (1 = most important)."
+        }
+      }
+    },
     "add_task": {
       "name": "Add task",
       "description": "Adds a task to a list (the list is created if it does not exist).",
@@ -78,13 +124,33 @@
           "name": "Visible from",
           "description": "The task appears on this date."
         },
+        "lead_days": {
+          "name": "Lead days",
+          "description": "Show the task this many days before it is due."
+        },
         "assigned_to": {
           "name": "Assigned to",
-          "description": "Person entity the task is assigned to."
+          "description": "Person entity (or list of them) the task is assigned to."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Tags (list or comma-separated)."
+        },
+        "priority": {
+          "name": "Priority",
+          "description": "1 = most important, up to 3 or 5 depending on the configured levels; empty = none."
+        },
+        "reminders": {
+          "name": "Reminders",
+          "description": "Minutes before the due moment (list or comma-separated, up to 5), e.g. 0 = at due time, 60 = 1 h before, 1440 = 1 day before."
         },
         "overdue_repeat": {
           "name": "Repeat while overdue",
           "description": "Send a reminder again every this many minutes after the due moment while the task is overdue (e.g. 1 = every minute, 15 = every 15 min, 1440 = daily)."
+        },
+        "location": {
+          "name": "Location condition",
+          "description": "Deliver reminders only while the person is inside (or outside) a zone, otherwise hold them until they enter (or leave) it: zone = zone entity, mode = inside or outside."
         },
         "schedule": {
           "name": "Schedule",
@@ -232,7 +298,15 @@
         },
         "priority": {
           "name": "Priority",
-          "description": "1 = high, 2 = medium, 3 = low, empty = none."
+          "description": "1 = most important, up to 3 or 5 depending on the configured levels; empty = none."
+        },
+        "reminders": {
+          "name": "Reminders",
+          "description": "Replaces the reminders: minutes before the due moment (list or comma-separated, up to 5). Empty removes all."
+        },
+        "location": {
+          "name": "Location condition",
+          "description": "Deliver reminders only while the person is inside (or outside) a zone, otherwise hold them until they enter (or leave) it: zone = zone entity, mode = inside or outside. Empty removes the condition."
         }
       }
     }

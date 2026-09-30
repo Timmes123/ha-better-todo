@@ -46,7 +46,9 @@ a fixed schedule. Real life needs more:
   ("weekly · Apr–Aug", "every 2 weeks", "4 d after completion · Apr–Aug").
 - **Notifications out of the box**: per-task reminders (up to 5) and a daily summary of
   open tasks are **pushed by the integration itself** — configure once, no automations
-  needed. See [Notifications](#notifications) for the exact mechanics.
+  needed. Reminders can be tied to a **location** ("only when I'm home", "when I leave
+  work") and wait for you to arrive. See [Notifications](#notifications) for the exact
+  mechanics.
 - **Assign tasks to one or more persons** (HA `person` entities). Everyone assigned sees
   the task in their personal view; completing it completes it for all. Or check
   **Rotate** and the task belongs to exactly one person at a time, moving on after every
@@ -54,15 +56,19 @@ a fixed schedule. Real life needs more:
   per-user dashboards.
 - **Multiple lists** with in-card management (create, rename, reorder via drag & drop
   or arrow buttons, delete), **tags** with filter chips and a tap-to-reuse tag picker,
-  subtasks, optional priorities.
+  subtasks, optional priorities (3 or 5 levels).
 - **Standard `todo` entity and `calendar` entity per list** — your tasks show up in the
   Companion App, on watches, in voice assistants and in the HA calendar (recurring tasks
   are expanded onto every occurrence). Better ToDo's own storage stays the single source
   of truth; deleting a list cleans up its entities.
 - **Services and events** for automations, plus a completion history from day one.
+  `better_todo.get_tasks` returns tasks with all their fields, so scripts, automations
+  and **voice assistants / LLM agents** can read, add and reprioritise tasks — see
+  [Voice assistants & LLM agents](#voice-assistants--llm-agents).
 - **Feature toggles**: switch off everything you don't need (priorities, subtasks,
   assignment, rotation, habit tasks, tags, mirror/calendar entities) — from "dumb list"
-  to full feature set.
+  to full feature set. Priorities come with 3 levels (high/medium/low) or 5 (highest to
+  lowest); 1 is always the most important.
 - **Custom dashboard card** shipped with the integration (auto-registered, no extra
   install): filters, sorting, drag & drop, card menu with bulk actions, visual config
   editor, 7 languages (EN/DE/FR/ES/IT/NL/PL), fully theme-aware.
@@ -244,6 +250,30 @@ the person whose turn it is). Tasks without a due **time** use 09:00 as the refe
 point. Reminders are for tasks where the exact moment matters — "trash pickup at 18:00,
 remind me 1 h before".
 
+### Location condition (📍)
+
+Some reminders only make sense in one place: "take out the trash" is useless while you
+are at the office, "buy milk" is best heard when you leave work. Below the reminders,
+*Remind only* takes a zone and one of two modes:
+
+- **when in** a zone — delivered right away if the assigned person is there at the
+  reminder time; otherwise the reminder is **held** and delivered the moment they
+  arrive.
+- **when outside** a zone — the mirror image: delivered right away if they are not
+  there, otherwise held until they leave.
+
+Held reminders are honest: if the task is completed (or its due date changes) before
+the person arrives, the held reminder is dropped and nothing is sent. Each reminder is
+delivered once, not on every later arrival. With several assigned persons, each one
+gets it when *their* location matches; unassigned tasks (with "send to every configured
+person" enabled) go out as soon as any configured person matches. A person without
+location tracking (no Companion App, no device tracker) is treated as matching, so a
+reminder is never swallowed. *Repeat while overdue* respects the condition as well.
+
+Location comes from HA's `person` entities — the Companion App's location tracking is
+the usual source. Zones are the ones you define under *Settings → Areas & zones*
+("Home" is always available).
+
 ### Repeat while overdue
 
 Below the reminders, *Repeat while overdue* re-sends a reminder at a free interval — every
@@ -343,15 +373,115 @@ data:
   schedule: { freq: monthly, interval: 1, day: 1 }
 ```
 
+`add_task` accepts everything a task can carry: `notes`, `type`, `due_date`, `due_time`,
+`visible_from`, `lead_days`, `assigned_to`, `schedule`, `interval`, `period`, `tags`,
+`priority`, `reminders` (minutes before due, e.g. `[60, 1440]` or `"60, 1440"`),
+`overdue_repeat` and `location` (`{zone: zone.home, mode: inside}`). It **returns the new
+task's id** when you ask for a response:
+
+```yaml
+- action: better_todo.add_task
+  data:
+    list: House
+    title: Call the plumber
+    tags: house
+    priority: 1
+  response_variable: created      # created.task_id
+```
+
 Also available: `better_todo.complete_task`, `better_todo.skip_task`,
 `better_todo.remove_task` and `better_todo.update_task` (by `task_id` or exact `title`;
 add `list` to scope the title match to one list). `update_task` changes only the fields
-you pass — `new_title`, `new_list`, `notes`, `type`, `due_date`, `due_time`,
-`visible_from`, `lead_days`, `assigned_to`, `schedule`, `interval`, `period`, `tags`,
-`priority`. A passed `schedule` or `interval` replaces the stored rule entirely.
+you pass — the same fields as `add_task` plus `new_title` and `new_list`. A passed
+`schedule` or `interval` replaces the stored rule entirely.
 
 The task id is shown (with a copy button) at the bottom of the task edit dialog and
-comes with every event below. Weather-dependent chores don't need a rule at all: make
+comes with every event below.
+
+### Reading tasks: `better_todo.get_tasks`
+
+The mirrored `todo` entities only carry title, status, due date and notes. To read the
+full picture — tags, priority, assignment, due state — from a script or automation, call
+`better_todo.get_tasks`. It returns data (`response_variable`) and takes optional filters:
+
+| Filter | Values |
+|---|---|
+| `list` | list name(s) |
+| `assigned_to` | person entity id(s) or name(s); `include_unassigned` (default `true`) also returns tasks nobody owns |
+| `tags` | at least one of these tags |
+| `status` | `open` (default), `done`, `all` |
+| `due` | `today` (due today or overdue), `overdue`, `week` (next 7 days) |
+| `priority` | max. value: `2` = priority 1 or 2 |
+
+```yaml
+- action: better_todo.get_tasks
+  data:
+    assigned_to: person.anna
+    tags: house
+    due: week
+  response_variable: result
+# result.count, result.tasks[*].title / list / tags / priority / assigned_names /
+# state (open, due, overdue, upcoming, done…) / due / due_time / days_overdue /
+# due_count / notes / subtasks / id
+```
+
+### Voice assistants & LLM agents
+
+With Assist and an LLM conversation agent, a **script exposed to Assist** becomes a
+tool the agent can call: its `fields` are the tool parameters, `response_variable`
+hands the result back. Two scripts cover "what are my urgent tasks?" and "add 'call the
+plumber' to my tasks, category house, high priority":
+
+```yaml
+# Script "Read my tasks" — expose it to Assist (script settings → Voice assistants)
+alias: Read my tasks
+description: Returns the open tasks of a person, optionally filtered by tag or due date.
+fields:
+  person:
+    description: The person, e.g. person.anna
+    selector: { entity: { domain: person } }
+  tag:
+    description: Optional tag to filter by, e.g. house
+    selector: { text: }
+  due:
+    description: Optional, one of today, overdue, week
+    selector: { text: }
+sequence:
+  - action: better_todo.get_tasks
+    data:
+      assigned_to: "{{ person }}"
+      tags: "{{ tag | default('') }}"
+      due: "{{ due | default(none) }}"
+    response_variable: result
+  - stop: Done
+    response_variable: result
+```
+
+```yaml
+# Script "Add a task" — expose it to Assist
+alias: Add a task
+description: Adds a task for a person with optional tag and priority (1 = highest).
+fields:
+  title: { description: Task title, selector: { text: } }
+  person: { description: The person, selector: { entity: { domain: person } } }
+  tag: { description: Optional tag, selector: { text: } }
+  priority: { description: Optional 1-3, selector: { number: { min: 1, max: 5 } } }
+sequence:
+  - action: better_todo.add_task
+    data:
+      list: General
+      title: "{{ title }}"
+      assigned_to: "{{ person }}"
+      tags: "{{ tag | default('') }}"
+      priority: "{{ priority | default(none) }}"
+    response_variable: created
+  - stop: Done
+    response_variable: created
+```
+
+The agent sees the descriptions, fills the fields from what you said and reads the
+result back. Tasks are plain data, so every LLM integration that supports Assist's
+tools works — local or cloud. Weather-dependent chores don't need a rule at all: make
 "water the lawn" recurring *4 days after completion* (active months May–September) and
 let an automation call `better_todo.skip_task` whenever rain is forecast.
 
@@ -363,7 +493,7 @@ let an automation call `better_todo.skip_task` whenever rain is forecast.
 | `better_todo_item_completed` | a task is completed |
 | `better_todo_item_due` | a task becomes due (daily at midnight) |
 | `better_todo_item_overdue` | a task is overdue (daily at midnight) |
-| `better_todo_item_reminder` | a reminder fires (event data includes `offset_minutes`; overdue repeats have a negative offset plus `days_overdue`) |
+| `better_todo_item_reminder` | a reminder is delivered (event data includes `offset_minutes`; overdue repeats have a negative offset plus `days_overdue`; with a location condition also `zone`, `location_mode` and `delivered_to`) |
 
 Event data includes `task_id`, `title`, `list_id` and `assigned_to` (a **list** of
 person entity ids — use `in`, not `==`, when filtering).
@@ -413,7 +543,7 @@ normal HA backups. The `todo`/`calendar` entities are read-write mirrors — del
 - Per-list sensors (open/due/overdue per list & person) and statistics
 - Sections inside lists, kanban view
 - Actionable notifications (complete/skip straight from the push)
-- Optional AI integration via HA `ai_task` entities
+- Optional AI integration via HA `ai_task` entities (task images, suggestions)
 - External platform sync (CalDAV and similar) — deliberately last
 
 ## Feedback

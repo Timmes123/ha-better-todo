@@ -7,7 +7,11 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_change
+from homeassistant.helpers.event import (
+    TrackStates,
+    async_track_state_change_filtered,
+    async_track_time_change,
+)
 from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN, FEATURE_CALENDAR, FEATURE_TODO_MIRROR
@@ -78,6 +82,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
     entry.async_on_unload(
         async_track_time_change(hass, manager.async_minute_tick, second=0)
+    )
+    # Reminders with a location condition wait for the person to enter or
+    # leave their zone; person entities are the signal for that.
+    entry.async_on_unload(
+        async_track_state_change_filtered(
+            hass, TrackStates(False, set(), {"person"}), manager.async_person_changed
+        ).async_remove
     )
 
     manager.notify()

@@ -20,10 +20,12 @@ from homeassistant.components import persistent_notification
 from .const import (
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
+    CONF_PRIORITY_LEVELS,
     CONF_SUMMARY_ENABLED,
     CONF_SUMMARY_PERSISTENT,
     CONF_SUMMARY_TIME,
     DEFAULT_FEATURES,
+    DEFAULT_PRIORITY_LEVELS,
     DEFAULT_REMINDER_TIME,
     DEFAULT_SUMMARY_TIME,
     DOMAIN,
@@ -32,7 +34,11 @@ from .const import (
     EVENT_DUE,
     EVENT_OVERDUE,
     EVENT_REMINDER,
+    LOCATION_MODE_INSIDE,
+    LOCATION_MODES,
     MAX_HISTORY,
+    MAX_PRIORITY,
+    PRIORITY_LEVEL_CHOICES,
     SIGNAL_UPDATE,
     SUMMARY_NOTIFICATION_ID,
     SUMMARY_PERIOD_LEAD,
@@ -65,6 +71,10 @@ class BetterTodoManager:
         # with its own build to spot a stale (cached) card after an update.
         self.version: str | None = None
         self._fired_reminders: set[tuple[str, str, str, int]] = set()
+        # Reminders held back by a location condition, keyed by task id:
+        # {"due": iso, "time": "HH:MM", "offset": int, "persons": [ids] | None}
+        # (persons None = unassigned task, delivered on the first match).
+        self._pending_location: dict[str, dict] = {}
         self._summary_sent: date | None = None
         self._persistent_active = False
         self._last_tick: datetime | None = None
@@ -89,6 +99,12 @@ class BetterTodoManager:
             )
         except (ValueError, TypeError):
             self._fired_reminders = set()
+        pending = meta.get("pending_location")
+        self._pending_location = (
+            {str(k): v for k, v in pending.items() if isinstance(v, dict)}
+            if isinstance(pending, dict)
+            else {}
+        )
         try:
             self._summary_sent = engine.parse_date(meta.get("summary_sent"))
         except (ValueError, TypeError):
@@ -128,6 +144,14 @@ class BetterTodoManager:
     def features(self) -> dict[str, bool]:
         options = self.entry.options or {}
         return {key: bool(options.get(key, default)) for key, default in DEFAULT_FEATURES.items()}
+
+    @property
+    def priority_levels(self) -> int:
+        try:
+            levels = int((self.entry.options or {}).get(CONF_PRIORITY_LEVELS) or 0)
+        except (ValueError, TypeError):
+            levels = 0
+        return levels if levels in PRIORITY_LEVEL_CHOICES else DEFAULT_PRIORITY_LEVELS
 
     def _today(self) -> date:
         return dt_util.now().date()
@@ -199,8 +223,20 @@ class BetterTodoManager:
                 for task in self.data["tasks"]
             ],
             "persons": self._persons(),
+            "zones": self._zones(),
+            "priority_levels": self.priority_levels,
             "version": self.version,
         }
+
+    def _zones(self) -> list[dict]:
+        """HA zones for the location condition (home first, then by name)."""
+        zones = [
+            {"entity_id": state.entity_id, "name": state.name}
+            for state in self.hass.states.async_all("zone")
+        ]
+        return sorted(
+            zones, key=lambda z: (z["entity_id"] != "zone.home", (z["name"] or "").casefold())
+        )
 
     def _persons(self) -> list[dict]:
         return [
@@ -286,7 +322,7 @@ class BetterTodoManager:
             "list_id", "title", "notes", "type", "priority", "subtasks",
             "assigned_to", "rotation", "visible_from", "due_date", "due_time",
             "lead_days", "schedule", "interval", "period", "order",
-            "tags", "reminders", "overdue_repeat", "ended",
+            "tags", "reminders", "overdue_repeat", "ended", "location",
         )
         for key in editable:
             if key in data:
@@ -341,7 +377,7 @@ class BetterTodoManager:
             # schedule: previously fired keys must not suppress it.
             if any(
                 existing.get(k) != task.get(k)
-                for k in ("due_date", "due_time", "reminders", "overdue_repeat")
+                for k in ("due_date", "due_time", "reminders", "overdue_repeat", "location")
             ):
                 self._forget_fired_reminders(task["id"])
         self._save_notify()
@@ -407,6 +443,25 @@ class BetterTodoManager:
                 task[key] = int(value)
             except (ValueError, TypeError) as err:
                 raise BetterTodoError(f"Invalid {key}: {value!r}") from err
+        priority = task.get("priority")
+        if priority is not None and not 1 <= priority <= MAX_PRIORITY:
+            raise BetterTodoError(f"priority must be between 1 and {MAX_PRIORITY}")
+        location = task.get("location")
+        if location in (None, "", {}):
+            task["location"] = None
+        else:
+            if not isinstance(location, dict):
+                raise BetterTodoError("Invalid location")
+            zone = str(location.get("zone") or "").strip()
+            mode = str(location.get("mode") or LOCATION_MODE_INSIDE).strip()
+            if not zone:
+                task["location"] = None
+            else:
+                if not zone.startswith("zone."):
+                    raise BetterTodoError(f"location.zone must be a zone entity, got {zone!r}")
+                if mode not in LOCATION_MODES:
+                    raise BetterTodoError(f"location.mode must be one of {LOCATION_MODES}")
+                task["location"] = {"zone": zone, "mode": mode}
         subtasks = task.get("subtasks")
         if subtasks is not None and (
             not isinstance(subtasks, list)
@@ -459,6 +514,7 @@ class BetterTodoManager:
             "tags": [],
             "reminders": [],
             "overdue_repeat": None,
+            "location": None,
             "occurrence_count": 0,
             "ended": False,
             "schedule": None,
@@ -714,8 +770,7 @@ class BetterTodoManager:
                         "Reminder for %r (due %s %s, %d min before) fires",
                         task["title"], due_iso, time_str, offset,
                     )
-                    self._fire_reminder_event(task, due_iso, offset)
-                    await self._async_notify_reminder(task, due_date, offset)
+                    await self._async_deliver_reminder(task, due_iso, time_str, offset)
             if repeat:
                 # Overdue nudge: the latest due + k * interval that has passed.
                 # Only that one fires - a 1-minute interval after a long HA
@@ -739,12 +794,138 @@ class BetterTodoManager:
                         "Overdue nudge for %r (due %s %s, %d min after) fires",
                         task["title"], due_iso, time_str, -offset,
                     )
-                    self._fire_reminder_event(task, due_iso, offset, now, due_dt)
-                    await self._async_notify_reminder(task, due_date, offset, now, due_dt)
+                    await self._async_deliver_reminder(task, due_iso, time_str, offset, now, due_dt)
         if fired_any:
             self._persist_reminder_state()
 
-    def _fire_reminder_event(self, task, due_iso, offset, now=None, due_dt=None) -> None:
+    # ------------------------------------------------- location condition
+
+    def _person_in_zone(self, person_id: str, zone_id: str) -> bool | None:
+        """True/False when the person's location is known, None otherwise."""
+        state = self.hass.states.get(person_id)
+        if state is None or state.state in ("unknown", "unavailable", ""):
+            return None
+        if zone_id == "zone.home":
+            return state.state == "home"
+        zone = self.hass.states.get(zone_id)
+        if zone is None:
+            return None
+        return state.state == zone.name
+
+    def _condition_met(self, task: dict, person_id: str) -> bool:
+        location = task.get("location") or {}
+        inside = self._person_in_zone(person_id, location.get("zone", ""))
+        if inside is None:
+            return True  # unknown location: deliver rather than swallow
+        return inside if location.get("mode") == LOCATION_MODE_INSIDE else not inside
+
+    def _split_by_location(
+        self, task: dict, persons: list[str] | None
+    ) -> tuple[list[str] | None, list[str] | None]:
+        """(ready, waiting) for a task with a location condition.
+
+        Assigned task: per person. Unassigned task (persons None): any
+        configured person counts; ready None = deliver to all targets,
+        waiting None = nobody matches yet."""
+        if persons is None:
+            targets = self.entry.options.get(CONF_NOTIFY_TARGETS) or {}
+            candidates = list(targets) or [
+                s.entity_id for s in self.hass.states.async_all("person")
+            ]
+            if not candidates or any(self._condition_met(task, p) for p in candidates):
+                return None, []
+            return [], None
+        ready = [p for p in persons if self._condition_met(task, p)]
+        waiting = [p for p in persons if p not in ready]
+        return ready, waiting
+
+    async def _async_deliver_reminder(
+        self, task: dict, due_iso: str, time_str: str, offset: int, now=None, due_dt=None
+    ) -> None:
+        """Fire the reminder event and push - immediately, or once the
+        location condition of the task is met."""
+        due_date = engine.parse_date(due_iso)
+        if not task.get("location"):
+            self._fire_reminder_event(task, due_iso, offset, now, due_dt)
+            await self._async_notify_reminder(task, due_date, offset, now, due_dt)
+            return
+        persons = list(task.get("assigned_to") or []) or None
+        ready, waiting = self._split_by_location(task, persons)
+        if ready is None or ready:
+            self._fire_reminder_event(task, due_iso, offset, now, due_dt, ready)
+            await self._async_notify_reminder(task, due_date, offset, now, due_dt, ready)
+        if waiting is None or waiting:
+            # Only the newest held reminder per task survives: a later one
+            # (or an overdue nudge) supersedes an older, still undelivered one.
+            self._pending_location[task["id"]] = {
+                "due": due_iso,
+                "time": time_str,
+                "offset": offset,
+                "persons": waiting,
+                "held_at": (now or dt_util.now()).isoformat(),
+            }
+            _LOGGER.debug(
+                "Reminder for %r held until %s %s (%s)",
+                task["title"], task["location"].get("mode"), task["location"].get("zone"),
+                waiting or "any person",
+            )
+        else:
+            self._pending_location.pop(task["id"], None)
+
+    @callback
+    def async_person_changed(self, event) -> None:
+        """A person entity changed state: release held reminders."""
+        if not self._pending_location:
+            return
+        self.hass.async_create_task(self._async_flush_pending())
+
+    async def _async_flush_pending(self) -> None:
+        now = dt_util.now()
+        today = now.date()
+        changed = False
+        for task_id, pending in list(self._pending_location.items()):
+            task = next((t for t in self.data["tasks"] if t["id"] == task_id), None)
+            drop = task is None or not task.get("location")
+            if not drop:
+                computed = self.computed_state(task, today)
+                due_iso = computed.get("due")
+                time_str = task.get("due_time") or DEFAULT_REMINDER_TIME
+                # Completed, hidden or re-scheduled meanwhile: the held
+                # reminder is obsolete - exactly what a location condition
+                # promises ("already ticked off before arriving -> silence").
+                drop = (
+                    computed.get("state") in ("done", "hidden", "error")
+                    or due_iso != pending.get("due")
+                    or time_str != pending.get("time")
+                )
+            if drop:
+                del self._pending_location[task_id]
+                changed = True
+                continue
+            persons = pending.get("persons")
+            ready, waiting = self._split_by_location(task, persons)
+            if ready is None or ready:
+                offset = int(pending.get("offset") or 0)
+                due_date = engine.parse_date(pending["due"])
+                hour, minute = self._parse_hhmm(pending["time"]) or (9, 0)
+                due_dt = datetime.combine(due_date, time(hour, minute), tzinfo=now.tzinfo)
+                _LOGGER.debug("Held reminder for %r released (%s)", task["title"], ready or "any")
+                self._fire_reminder_event(task, pending["due"], offset, now, due_dt, ready)
+                await self._async_notify_reminder(task, due_date, offset, now, due_dt, ready)
+                changed = True
+                if waiting:
+                    pending["persons"] = waiting
+                else:
+                    del self._pending_location[task_id]
+            elif waiting is not None and waiting != persons:
+                pending["persons"] = waiting
+                changed = True
+        if changed:
+            self._persist_reminder_state()
+
+    def _fire_reminder_event(
+        self, task, due_iso, offset, now=None, due_dt=None, delivered_to=None
+    ) -> None:
         data = {
             "task_id": task["id"],
             "title": task["title"],
@@ -756,6 +937,15 @@ class BetterTodoManager:
         }
         if offset < 0 and now is not None and due_dt is not None:
             data["days_overdue"] = (now.date() - due_dt.date()).days
+        location = task.get("location")
+        if location:
+            data["zone"] = location.get("zone")
+            data["location_mode"] = location.get("mode")
+            # The persons this delivery is for (a subset of assigned_to when
+            # the others are still waiting for their location to match).
+            data["delivered_to"] = (
+                list(delivered_to) if delivered_to is not None else task.get("assigned_to")
+            )
         self.hass.bus.async_fire(EVENT_REMINDER, data)
 
     def _fire_moment(self, key: tuple) -> datetime:
@@ -790,18 +980,21 @@ class BetterTodoManager:
         return keys
 
     def _forget_fired_reminders(self, task_id: str) -> None:
-        """Let a task's reminders fire again, e.g. after its time was edited."""
+        """Let a task's reminders fire again, e.g. after its time was edited.
+        A reminder held back by the location condition is dropped as well."""
         keep = {k for k in self._fired_reminders if k[0] != task_id}
-        if keep != self._fired_reminders:
+        held = self._pending_location.pop(task_id, None) is not None
+        if keep != self._fired_reminders or held:
             self._fired_reminders = keep
             self._persist_reminder_state()
 
     def _persist_reminder_state(self) -> None:
         self._meta()["fired_reminders"] = [list(key) for key in self._fired_reminders]
+        self._meta()["pending_location"] = dict(self._pending_location)
         self._schedule_save()
 
     async def _async_notify_reminder(
-        self, task: dict, due_date, offset: int, now=None, due_dt=None
+        self, task: dict, due_date, offset: int, now=None, due_dt=None, persons=None
     ) -> None:
         """Send the reminder to the notify services configured in the options.
 
@@ -811,7 +1004,8 @@ class BetterTodoManager:
         """
         targets = self.entry.options.get(CONF_NOTIFY_TARGETS) or {}
         assigned = task.get("assigned_to") or []
-        services = [targets[p] for p in assigned if targets.get(p)]
+        recipients = assigned if persons is None else [p for p in assigned if p in persons]
+        services = [targets[p] for p in recipients if targets.get(p)]
         if not assigned and self.entry.options.get(CONF_NOTIFY_UNASSIGNED_ALL):
             services = list(targets.values())
         if not services:

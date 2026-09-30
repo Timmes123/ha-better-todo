@@ -15,18 +15,26 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 
-from homeassistant.helpers.selector import TimeSelector
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+    TimeSelector,
+)
 
 from .const import (
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
+    CONF_PRIORITY_LEVELS,
     CONF_SUMMARY_ENABLED,
     CONF_SUMMARY_PERSISTENT,
     CONF_SUMMARY_TIME,
     DEFAULT_FEATURES,
+    DEFAULT_PRIORITY_LEVELS,
     DEFAULT_SUMMARY_TIME,
     DOMAIN,
     NOTIFY_NONE,
+    PRIORITY_LEVEL_CHOICES,
 )
 
 
@@ -69,19 +77,30 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         if user_input is not None:
+            user_input[CONF_PRIORITY_LEVELS] = int(user_input[CONF_PRIORITY_LEVELS])
             return self.async_create_entry(
                 data={**dict(self.config_entry.options), **user_input}
             )
         options = self.config_entry.options
-        schema = vol.Schema(
-            {
-                vol.Required(
-                    key, default=bool(options.get(key, default))
-                ): bool
-                for key, default in DEFAULT_FEATURES.items()
-            }
+        schema_dict: dict[Any, Any] = {
+            vol.Required(key, default=bool(options.get(key, default))): bool
+            for key, default in DEFAULT_FEATURES.items()
+        }
+        levels = options.get(CONF_PRIORITY_LEVELS, DEFAULT_PRIORITY_LEVELS)
+        if levels not in PRIORITY_LEVEL_CHOICES:
+            levels = DEFAULT_PRIORITY_LEVELS
+        schema_dict[vol.Required(CONF_PRIORITY_LEVELS, default=str(levels))] = (
+            SelectSelector(
+                SelectSelectorConfig(
+                    options=[str(x) for x in PRIORITY_LEVEL_CHOICES],
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key=CONF_PRIORITY_LEVELS,
+                )
+            )
         )
-        return self.async_show_form(step_id="features", data_schema=schema)
+        return self.async_show_form(
+            step_id="features", data_schema=vol.Schema(schema_dict)
+        )
 
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None

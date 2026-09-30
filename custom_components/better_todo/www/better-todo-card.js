@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "0.8.2";
+const CARD_VERSION = "0.9.0";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
@@ -33,6 +33,8 @@ const STR = {
     lead_f: "Show days before due (empty = on due date)",
     period_f: "Period", week: "Week", month: "Month", priority_f: "Priority",
     prio_none: "None", prio_low: "Low", prio_med: "Medium", prio_high: "High",
+    prio5: ["Highest", "High", "Medium", "Low", "Lowest"],
+    loc_f: "Remind only", loc_any: "anywhere", loc_inside: "when in", loc_outside: "when outside",
     assigned_f: "Assigned to", nobody: "Nobody", rotate_f: "Rotate", rotate_start_f: "Start with",
     rec: (n, u) => n === 1 ? ({ d: "daily", w: "weekly", m: "monthly", y: "yearly" })[u] : `every ${n} ${({ d: "days", w: "weeks", m: "months", y: "years" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "d", w: "wk", m: "mo", y: "yr" })[u]}`,
@@ -89,6 +91,8 @@ const STR = {
     lead_f: "Tage vor Fälligkeit anzeigen (leer = am Stichtag)",
     period_f: "Periode", week: "Woche", month: "Monat", priority_f: "Priorität",
     prio_none: "Keine", prio_low: "Niedrig", prio_med: "Mittel", prio_high: "Hoch",
+    prio5: ["Höchste", "Hoch", "Mittel", "Niedrig", "Niedrigste"],
+    loc_f: "Nur erinnern", loc_any: "überall", loc_inside: "innerhalb von", loc_outside: "außerhalb von",
     assigned_f: "Zugewiesen an", nobody: "Niemand", rotate_f: "Rotieren", rotate_start_f: "Beginnen mit",
     rec: (n, u) => n === 1 ? ({ d: "täglich", w: "wöchentlich", m: "monatlich", y: "jährlich" })[u] : `alle ${n} ${({ d: "Tage", w: "Wochen", m: "Monate", y: "Jahre" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "T", w: "Wo", m: "Mon", y: "J" })[u]}`,
@@ -145,6 +149,8 @@ const STR = {
     lead_f: "Afficher x jours avant l'échéance (vide = le jour même)",
     period_f: "Période", week: "Semaine", month: "Mois", priority_f: "Priorité",
     prio_none: "Aucune", prio_low: "Basse", prio_med: "Moyenne", prio_high: "Haute",
+    prio5: ["Très haute", "Haute", "Moyenne", "Basse", "Très basse"],
+    loc_f: "Rappeler seulement", loc_any: "partout", loc_inside: "dans", loc_outside: "hors de",
     assigned_f: "Assignée à", nobody: "Personne", rotate_f: "Alterner", rotate_start_f: "Commencer par",
     rec: (n, u) => n === 1 ? ({ d: "quotidien", w: "hebdomadaire", m: "mensuel", y: "annuel" })[u] : (u === "w" ? `toutes les ${n} semaines` : `tous les ${n} ${({ d: "jours", m: "mois", y: "ans" })[u]}`),
     rec_in: (n, u) => u === "y" ? `${n} an${n > 1 ? "s" : ""}` : `${n} ${({ d: "j", w: "sem", m: "mois" })[u]}`,
@@ -201,6 +207,8 @@ const STR = {
     lead_f: "Mostrar días antes del vencimiento (vacío = el mismo día)",
     period_f: "Período", week: "Semana", month: "Mes", priority_f: "Prioridad",
     prio_none: "Ninguna", prio_low: "Baja", prio_med: "Media", prio_high: "Alta",
+    prio5: ["Máxima", "Alta", "Media", "Baja", "Mínima"],
+    loc_f: "Recordar solo", loc_any: "en cualquier lugar", loc_inside: "dentro de", loc_outside: "fuera de",
     assigned_f: "Asignada a", nobody: "Nadie", rotate_f: "Rotar", rotate_start_f: "Empezar con",
     rec: (n, u) => n === 1 ? ({ d: "diaria", w: "semanal", m: "mensual", y: "anual" })[u] : `cada ${n} ${({ d: "días", w: "semanas", m: "meses", y: "años" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "d", w: "sem", m: n > 1 ? "meses" : "mes", y: n > 1 ? "años" : "año" })[u]}`,
@@ -257,6 +265,8 @@ const STR = {
     lead_f: "Mostra giorni prima della scadenza (vuoto = il giorno stesso)",
     period_f: "Periodo", week: "Settimana", month: "Mese", priority_f: "Priorità",
     prio_none: "Nessuna", prio_low: "Bassa", prio_med: "Media", prio_high: "Alta",
+    prio5: ["Massima", "Alta", "Media", "Bassa", "Minima"],
+    loc_f: "Ricorda solo", loc_any: "ovunque", loc_inside: "dentro", loc_outside: "fuori da",
     assigned_f: "Assegnata a", nobody: "Nessuno", rotate_f: "Ruota", rotate_start_f: "Inizia con",
     rec: (n, u) => n === 1 ? ({ d: "giornaliera", w: "settimanale", m: "mensile", y: "annuale" })[u] : `ogni ${n} ${({ d: "giorni", w: "settimane", m: "mesi", y: "anni" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "g", w: "sett", m: n > 1 ? "mesi" : "mese", y: n > 1 ? "anni" : "anno" })[u]}`,
@@ -313,6 +323,8 @@ const STR = {
     lead_f: "Dagen vóór vervaldatum tonen (leeg = op de dag zelf)",
     period_f: "Periode", week: "Week", month: "Maand", priority_f: "Prioriteit",
     prio_none: "Geen", prio_low: "Laag", prio_med: "Middel", prio_high: "Hoog",
+    prio5: ["Hoogste", "Hoog", "Middel", "Laag", "Laagste"],
+    loc_f: "Alleen herinneren", loc_any: "overal", loc_inside: "binnen", loc_outside: "buiten",
     assigned_f: "Toegewezen aan", nobody: "Niemand", rotate_f: "Rouleren", rotate_start_f: "Beginnen met",
     rec: (n, u) => n === 1 ? ({ d: "dagelijks", w: "wekelijks", m: "maandelijks", y: "jaarlijks" })[u] : `elke ${n} ${({ d: "dagen", w: "weken", m: "maanden", y: "jaar" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "d", w: "wk", m: "mnd", y: "jr" })[u]}`,
@@ -369,6 +381,8 @@ const STR = {
     lead_f: "Pokaż dni przed terminem (puste = w dniu terminu)",
     period_f: "Okres", week: "Tydzień", month: "Miesiąc", priority_f: "Priorytet",
     prio_none: "Brak", prio_low: "Niski", prio_med: "Średni", prio_high: "Wysoki",
+    prio5: ["Najwyższy", "Wysoki", "Średni", "Niski", "Najniższy"],
+    loc_f: "Przypominaj tylko", loc_any: "wszędzie", loc_inside: "w strefie", loc_outside: "poza strefą",
     assigned_f: "Przypisane do", nobody: "Nikt", rotate_f: "Rotacja", rotate_start_f: "Zacznij od",
     rec: (n, u) => n === 1 ? ({ d: "codziennie", w: "co tydzień", m: "co miesiąc", y: "co rok" })[u] : `co ${n} ${({ d: "dni", w: "tyg.", m: "mies.", y: "lat" })[u]}`,
     rec_in: (n, u) => `${n} ${({ d: "dni", w: "tyg.", m: "mies.", y: "lat" })[u]}`,
@@ -691,6 +705,18 @@ class BetterTodoCard extends HTMLElement {
   _feature(name) { return !!this._data?.features?.[name]; }
 
   _person(entityId) { return (this._data?.persons || []).find((p) => p.entity_id === entityId); }
+
+  _zone(entityId) { return (this._data?.zones || []).find((z) => z.entity_id === entityId); }
+
+  // Priority labels follow the configured level count (3 or 5); a stored
+  // value outside that range still renders ("P4") instead of an empty badge.
+  _prioLevels() { return this._data?.priority_levels === 5 ? 5 : 3; }
+
+  _prioLabel(p) {
+    const t = this.t;
+    const labels = this._prioLevels() === 5 ? t.prio5 : [t.prio_high, t.prio_med, t.prio_low];
+    return labels[p - 1] || `P${p}`;
+  }
 
   _myPerson() {
     const uid = this._hass?.user?.id;
@@ -1035,8 +1061,7 @@ class BetterTodoCard extends HTMLElement {
       if (s === "period_skipped") badges.push(`<span class="badge dim">${esc(t.skipped)}</span>`);
     }
     if (this._feature("priorities") && this._show("show_priority") && task.priority) {
-      const labels = { 1: t.prio_high, 2: t.prio_med, 3: t.prio_low };
-      badges.push(`<span class="badge prio p${task.priority}">${esc(labels[task.priority] || "")}</span>`);
+      badges.push(`<span class="badge prio p${task.priority}">${esc(this._prioLabel(task.priority))}</span>`);
     }
     if (this._feature("subtasks") && this._show("show_subtasks") && (task.subtasks || []).length) {
       const done = task.subtasks.filter((x) => x.done).length;
@@ -1051,7 +1076,10 @@ class BetterTodoCard extends HTMLElement {
         if (p) badges.push(`<span class="badge person">${esc(p.name)}${task.rotation ? " ⟳" : ""}</span>`);
       }
     }
-    if ((task.reminders || []).length && this._show("show_reminder")) badges.push(`<span class="badge dim">🔔</span>`);
+    if ((task.reminders || []).length && this._show("show_reminder")) {
+      const zone = task.location?.zone ? this._zone(task.location.zone) : null;
+      badges.push(`<span class="badge dim">🔔${zone ? ` 📍 ${esc(zone.name)}` : ""}</span>`);
+    }
     const recurring = task.type === "scheduled" || task.type === "after_completion";
     if (recurring && this._show("show_recurrence")) badges.push(`<span class="badge dim">🔁 ${esc(this._recurLabel(task))}</span>`);
 
@@ -1449,9 +1477,13 @@ class BetterTodoCard extends HTMLElement {
           title: "", notes: "", type: "simple", due_date: null, due_time: null,
           visible_from: null, lead_days: null, priority: null, subtasks: [],
           assigned_to: [], rotation: null, tags: [], reminders: [], overdue_repeat: null,
+          location: null,
           schedule: { freq: "monthly", interval: 1 }, interval: { unit: "weeks", value: 1 },
           period: "week",
         };
+    // Working state for the location condition (mode "" = no condition).
+    draft._locMode = draft.location?.zone ? (draft.location.mode || "inside") : "";
+    draft._locZone = draft.location?.zone || (this._data.zones || [])[0]?.entity_id || null;
     if (!Array.isArray(draft.assigned_to)) draft.assigned_to = draft.assigned_to ? [draft.assigned_to] : [];
     // Working state for the assignment UI: _persons is the selected pool
     // (with rotation, assigned_to holds only the current person).
@@ -1492,6 +1524,7 @@ class BetterTodoCard extends HTMLElement {
     const d = this._dialog.draft;
     const lists = this._data.lists || [];
     const persons = this._data.persons || [];
+    const zones = this._data.zones || [];
     const types = [
       ["simple", t.type_simple],
       ["scheduled", t.type_scheduled],
@@ -1640,20 +1673,35 @@ class BetterTodoCard extends HTMLElement {
         </select>
         ${d._orUnit ? `<input type="number" min="1" max="${({ m: 1440, h: 720, d: 365 })[d._orUnit]}" class="num" data-f="_orN" value="${esc(d._orN)}">
         <span>${esc(({ m: t.or_minutes, h: t.or_hours, d: t.or_days })[d._orUnit])}</span>` : ""}
-      </div>` : ""}
+      </div>
+      ${zones.length ? `<div class="field-row">
+        <span>📍 ${esc(t.loc_f)}</span>
+        <select data-f="_locMode" data-rebuild="1">
+          <option value="" ${!d._locMode ? "selected" : ""}>${esc(t.loc_any)}</option>
+          <option value="inside" ${d._locMode === "inside" ? "selected" : ""}>${esc(t.loc_inside)}</option>
+          <option value="outside" ${d._locMode === "outside" ? "selected" : ""}>${esc(t.loc_outside)}</option>
+        </select>
+        ${d._locMode ? `<select data-f="_locZone">
+          ${zones.map((z) => `<option value="${esc(z.entity_id)}" ${d._locZone === z.entity_id ? "selected" : ""}>${esc(z.name)}</option>`).join("")}
+        </select>` : ""}
+      </div>` : ""}` : ""}
       <label class="field">${esc(t.notes_f)}<textarea data-f="notes" rows="2">${esc(d.notes || "")}</textarea></label>
       ${this._feature("tags") ? (() => {
         const known = this._knownTags();
         return `<label class="field">${esc(t.tags_f)}<input type="text" data-f="_tags" placeholder="${esc(t.tags_ph)}" value="${esc((d.tags || []).join(", "))}"></label>
         ${known.length ? `<div class="chips tagpick">${known.map((x) => `<button type="button" class="chip tagchip ${(d.tags || []).includes(x) ? "on" : ""}" data-tagpick="${esc(x)}">#${esc(x)}</button>`).join("")}</div>` : ""}`;
       })() : ""}
-      ${this._feature("priorities") ? `<label class="field">${esc(t.priority_f)}
+      ${this._feature("priorities") ? (() => {
+        // Levels 1..n plus the stored value when it lies outside (so that
+        // opening and saving the dialog never silently drops it).
+        const levels = Array.from({ length: this._prioLevels() }, (_, i) => i + 1);
+        if (d.priority && !levels.includes(d.priority)) levels.push(d.priority);
+        return `<label class="field">${esc(t.priority_f)}
         <select data-f="priority">
           <option value="" ${!d.priority ? "selected" : ""}>${esc(t.prio_none)}</option>
-          <option value="1" ${d.priority === 1 ? "selected" : ""}>${esc(t.prio_high)}</option>
-          <option value="2" ${d.priority === 2 ? "selected" : ""}>${esc(t.prio_med)}</option>
-          <option value="3" ${d.priority === 3 ? "selected" : ""}>${esc(t.prio_low)}</option>
-        </select></label>` : ""}
+          ${levels.map((p) => `<option value="${p}" ${d.priority === p ? "selected" : ""}>${esc(this._prioLabel(p))}</option>`).join("")}
+        </select></label>`;
+      })() : ""}
       ${this._feature("assignment") && persons.length ? `<div class="field">
         <span>${esc(t.assigned_f)}</span>
         <div class="chips tagpick">${persons.map((p) => `<button type="button" class="chip tagchip ${(d._persons || []).includes(p.entity_id) ? "on" : ""}" data-personpick="${esc(p.entity_id)}">${esc(p.name)}</button>`).join("")}</div>
@@ -1831,6 +1879,9 @@ class BetterTodoCard extends HTMLElement {
     if (d.type !== "period") {
       const n = Math.max(1, Math.round(Number(d._orN) || 1));
       d.overdue_repeat = d._orUnit ? n * ({ m: 1, h: 60, d: 1440 })[d._orUnit] : null;
+      d.location = d._locMode && d._locZone ? { zone: d._locZone, mode: d._locMode } : null;
+    } else {
+      d.location = null;
     }
     // Assignment: with rotation the pool lives in rotation.persons and
     // assigned_to holds only the current person; without it the selection
@@ -1923,6 +1974,7 @@ class BetterTodoCard extends HTMLElement {
       .badge.tag { background: color-mix(in srgb, var(--accent-color, var(--primary-color)) 15%, transparent); color: var(--accent-color, var(--primary-color)); }
       .badge.prio.p1 { background: color-mix(in srgb, var(--error-color) 18%, transparent); color: var(--error-color); }
       .badge.prio.p2 { background: color-mix(in srgb, var(--warning-color) 22%, transparent); color: var(--warning-color); }
+      .badge.prio.p4, .badge.prio.p5 { opacity: 0.7; }
       .badge.dim { opacity: 0.75; }
       /* Monochrome mode (colorful: false): every pill drops its semantic color
          and uses the neutral theme look instead. */

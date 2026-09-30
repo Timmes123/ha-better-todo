@@ -39,11 +39,36 @@ add_task:
       required: false
       selector:
         date:
+    lead_days:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 365
     assigned_to:
       required: false
       selector:
         entity:
           domain: person
+          multiple: true
+    tags:
+      required: false
+      example: "house, urgent"
+      selector:
+        text:
+    priority:
+      required: false
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
+    reminders:
+      required: false
+      example: "60, 1440"
+      selector:
+        text:
     overdue_repeat:
       required: false
       example: 15
@@ -53,6 +78,11 @@ add_task:
           max: 43200
           step: 1
           unit_of_measurement: min
+    location:
+      required: false
+      example: '{"zone": "zone.home", "mode": "inside"}'
+      selector:
+        object:
     schedule:
       required: false
       example: '{"freq": "monthly", "interval": 1, "day": 1}'
@@ -70,6 +100,55 @@ add_task:
           options:
             - week
             - month
+
+get_tasks:
+  fields:
+    list:
+      required: false
+      example: "Household"
+      selector:
+        text:
+    assigned_to:
+      required: false
+      selector:
+        entity:
+          domain: person
+          multiple: true
+    include_unassigned:
+      required: false
+      default: true
+      selector:
+        boolean:
+    tags:
+      required: false
+      example: "house"
+      selector:
+        text:
+    status:
+      required: false
+      default: open
+      selector:
+        select:
+          options:
+            - open
+            - done
+            - all
+    due:
+      required: false
+      selector:
+        select:
+          options:
+            - today
+            - overdue
+            - week
+    priority:
+      required: false
+      example: 2
+      selector:
+        number:
+          min: 1
+          max: 5
+          step: 1
 
 complete_task:
   fields:
@@ -217,12 +296,19 @@ update_task:
         text:
     priority:
       required: false
+      example: 1
       selector:
-        select:
-          options:
-            - label: High
-              value: "1"
-            - label: Medium
-              value: "2"
-            - label: Low
-              value: "3"
+        number:
+          min: 1
+          max: 5
+          step: 1
+    reminders:
+      required: false
+      example: "60, 1440"
+      selector:
+        text:
+    location:
+      required: false
+      example: '{"zone": "zone.home", "mode": "inside"}'
+      selector:
+        object:

@@ -34,7 +34,7 @@ Skala: von „dumme Liste" bis Vollausbau.
 
 | Schalter | Default | Wirkung |
 |---|---|---|
-| Prioritäten | aus | Prioritätsfeld an Aufgaben + Sortierung/Filter |
+| Prioritäten | aus | Prioritätsfeld an Aufgaben + Sortierung/Filter; Stufenzahl wählbar: 3 (hoch/mittel/niedrig) oder 5 (höchste…niedrigste), 1 = wichtigste (Entscheidung 2026-09-30, Issue #12). Backend akzeptiert immer 1–5, die Karte zeigt Werte außerhalb der Stufen als „P4"/„P5" statt leer und überschreibt sie nicht beim Speichern |
 | Unteraufgaben | an | Checklisten unterhalb einer Aufgabe |
 | Zuweisung | an | Aufgaben an Personen zuweisbar, „Meine Aufgaben"-Sicht |
 | Rotation | an | rotierende Zuweisung (setzt Zuweisung voraus) |
@@ -82,6 +82,16 @@ Gemeinsame Felder aller Typen:
   Stapeln: ein Nachstoß pro Intervall; nach HA-Downtime feuert nur der jüngste verpasste
   Zeitpunkt (kein Nachhol-Gewitter), und pro Aufgabe wird nur der letzte Nudge-Key gespeichert.
   Ergänzt die Tageszusammenfassung, ersetzt sie nicht.
+- `ort` (optional, Entscheidung 2026-09-30, Issue #10): `{zone: <zone-Entity>, mode: inside|outside}`
+  als **Zustandsbedingung** für Erinnerungen (kein Edge-Trigger): Ist die Bedingung zum
+  Erinnerungszeitpunkt erfüllt (Person in/außerhalb der Zone), wird sofort zugestellt; sonst
+  wird die Erinnerung **zurückgehalten** und beim Betreten/Verlassen der Zone zugestellt.
+  Zurückgehaltene Erinnerungen verfallen bei Erledigung oder Datumsänderung (genau eine
+  zurückgehaltene Erinnerung pro Aufgabe, die jüngste gewinnt; persistiert in `meta`).
+  Mehrere Personen: jede einzeln bei eigener Ankunft; ohne Zuweisung zählt die erste
+  konfigurierte Person. Person ohne Standort (kein Tracker) gilt als erfüllt (fail-open).
+  Überfällig-Nachstöße respektieren die Bedingung. Event feuert bei tatsächlicher Zustellung
+  mit `zone`, `location_mode`, `delivered_to`. Quelle: `person`-Entities (Companion-App).
 - `tags` (optional): freie Schlagwörter, quer zu Listen, filterbar in der Karte
 - `sortierung` innerhalb der Liste (manuell, per Drag & Drop in der Karte)
 
@@ -150,8 +160,19 @@ gemacht"). Aufbewahrung konfigurierbar (Default: unbegrenzt, Datenmenge trivial)
 (z. B. „Waschmaschine fertig → Aufgabe ‚Wäsche aufhängen'"). Die Aufgaben-ID ist in
 der Karte unten im Bearbeiten-Dialog sichtbar (mit Kopierknopf; bewusst nicht in der Aufgabenzeile, dort braucht sie niemand).
 
-**Events**: `better_todo_item_completed`, `better_todo_item_due`,
-`better_todo_item_overdue` — damit Automationen auf Aufgaben reagieren können.
+**Lese-Schnittstelle / Sprachassistenten** (Entscheidung 2026-09-30, Issue #12): `add_task`
+und `update_task` nehmen alle Aufgabenfelder an (auch `tags`, `priority`, `reminders`,
+`location`); `add_task` liefert `task_id` zurück (`SupportsResponse.OPTIONAL`). Neuer Service
+`better_todo.get_tasks` (`SupportsResponse.ONLY`) mit optionalen Filtern `list`, `assigned_to`
+(Entity oder Name) + `include_unassigned`, `tags`, `status` (open|done|all), `due`
+(today|overdue|week), `priority` (max.) — liefert Aufgaben mit Listen-NAME, Tags, Priorität,
+Zuweisung (IDs + Namen), berechnetem Zustand, Fälligkeit, Notizen, Unteraufgaben. Damit
+können Assist-Skripte (LLM-Agenten) Aufgaben lesen, anlegen und umpriorisieren, ohne
+Websocket. Bewusst über Standard-HA-Services, nicht über eine eigene LLM-API.
+
+**Events**: `better_todo_item_created`, `better_todo_item_completed`, `better_todo_item_due`,
+`better_todo_item_overdue`, `better_todo_item_reminder` — damit Automationen auf Aufgaben
+reagieren können.
 
 **Sensoren** (optional, je Liste / je Person): Anzahl offene / heute fällige /
 überfällige Aufgaben — für Badges, bedingte Karten, Automationen.

@@ -30,7 +30,11 @@
           "periods": "Wochen-/Monatsaufgaben mit Strähnen",
           "tags": "Tags",
           "todo_mirror": "Standard-Todo-Entität pro Liste",
-          "calendar": "Kalender-Entität pro Liste"
+          "calendar": "Kalender-Entität pro Liste",
+          "priority_levels": "Prioritätsstufen"
+        },
+        "data_description": {
+          "priority_levels": "3 = hoch/mittel/niedrig, 5 = höchste bis niedrigste (1 ist immer die wichtigste)."
         }
       },
       "notifications": {
@@ -45,7 +49,49 @@
       }
     }
   },
+  "selector": {
+    "priority_levels": {
+      "options": {
+        "3": "3 Stufen (hoch, mittel, niedrig)",
+        "5": "5 Stufen (höchste bis niedrigste)"
+      }
+    }
+  },
   "services": {
+    "get_tasks": {
+      "name": "Aufgaben abfragen",
+      "description": "Liefert Aufgaben mit allen Feldern (Tags, Priorität, Zuweisung, Fälligkeit) für Skripte, Automationen und Sprachassistenten. Alle Filter sind optional.",
+      "fields": {
+        "list": {
+          "name": "Liste",
+          "description": "Nur Aufgaben aus diesen Listen (Name oder Liste von Namen)."
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Nur Aufgaben dieser Personen (Person-Entität oder Name)."
+        },
+        "include_unassigned": {
+          "name": "Nicht zugewiesene einschließen",
+          "description": "Beim Filtern nach Person auch Aufgaben ohne Zuweisung liefern."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Nur Aufgaben mit mindestens einem dieser Tags."
+        },
+        "status": {
+          "name": "Status",
+          "description": "open (Standard), done oder all."
+        },
+        "due": {
+          "name": "Fälligkeit",
+          "description": "today = heute fällig oder überfällig, overdue = nur überfällig, week = in den nächsten 7 Tagen fällig."
+        },
+        "priority": {
+          "name": "Max. Priorität",
+          "description": "Nur Aufgaben mit dieser Priorität oder wichtiger (1 = am wichtigsten)."
+        }
+      }
+    },
     "add_task": {
       "name": "Aufgabe anlegen",
       "description": "Legt eine Aufgabe in einer Liste an (die Liste wird bei Bedarf erstellt).",
@@ -78,13 +124,33 @@
           "name": "Sichtbar ab",
           "description": "Die Aufgabe erscheint an diesem Datum."
         },
+        "lead_days": {
+          "name": "Vorlauftage",
+          "description": "Aufgabe so viele Tage vor Fälligkeit anzeigen."
+        },
         "assigned_to": {
           "name": "Zugewiesen an",
-          "description": "Personen-Entität, der die Aufgabe zugewiesen wird."
+          "description": "Person-Entität (oder Liste davon), der die Aufgabe zugewiesen wird."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Tags (Liste oder kommagetrennt)."
+        },
+        "priority": {
+          "name": "Priorität",
+          "description": "1 = am wichtigsten, bis 3 oder 5 je nach eingestellten Stufen; leer = keine."
+        },
+        "reminders": {
+          "name": "Erinnerungen",
+          "description": "Minuten vor der Fälligkeit (Liste oder kommagetrennt, max. 5), z. B. 0 = zur Fälligkeit, 60 = 1 Std vorher, 1440 = 1 Tag vorher."
         },
         "overdue_repeat": {
           "name": "Bei Überfälligkeit wiederholen",
           "description": "Solange die Aufgabe überfällig ist, alle so viele Minuten nach der Fälligkeit erneut erinnern (z. B. 1 = jede Minute, 15 = alle 15 Min, 1440 = täglich)."
+        },
+        "location": {
+          "name": "Ortsbedingung",
+          "description": "Erinnerungen nur zustellen, solange die Person innerhalb (oder außerhalb) einer Zone ist, sonst zurückhalten, bis sie die Zone betritt (oder verlässt): zone = Zonen-Entität, mode = inside oder outside."
         },
         "schedule": {
           "name": "Zeitplan",
@@ -232,7 +298,15 @@
         },
         "priority": {
           "name": "Priorität",
-          "description": "1 = hoch, 2 = mittel, 3 = niedrig, leer = keine."
+          "description": "1 = am wichtigsten, bis 3 oder 5 je nach eingestellten Stufen; leer = keine."
+        },
+        "reminders": {
+          "name": "Erinnerungen",
+          "description": "Ersetzt die Erinnerungen: Minuten vor der Fälligkeit (Liste oder kommagetrennt, max. 5). Leer entfernt alle."
+        },
+        "location": {
+          "name": "Ortsbedingung",
+          "description": "Erinnerungen nur zustellen, solange die Person innerhalb (oder außerhalb) einer Zone ist, sonst zurückhalten, bis sie die Zone betritt (oder verlässt): zone = Zonen-Entität, mode = inside oder outside. Leer entfernt die Bedingung."
         }
       }
     }

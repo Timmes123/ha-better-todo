@@ -46,6 +46,20 @@ DEFAULT_FEATURES = {
 
 DEFAULT_REMINDER_TIME = "09:00"
 
+# Options: how many priority levels the card offers (1 = highest). The
+# backend always accepts 1..MAX_PRIORITY so a stored value never breaks
+# when the option is lowered again.
+CONF_PRIORITY_LEVELS = "priority_levels"
+PRIORITY_LEVEL_CHOICES = [3, 5]
+DEFAULT_PRIORITY_LEVELS = 3
+MAX_PRIORITY = 5
+
+# Per-task location condition for reminders: deliver only while the person
+# is inside/outside a zone, otherwise hold the reminder until they are.
+LOCATION_MODE_INSIDE = "inside"
+LOCATION_MODE_OUTSIDE = "outside"
+LOCATION_MODES = [LOCATION_MODE_INSIDE, LOCATION_MODE_OUTSIDE]
+
 # Options: reminder notifications sent by the integration itself.
 CONF_NOTIFY_TARGETS = "notify_targets"  # {person_entity_id: notify service name}
 CONF_NOTIFY_UNASSIGNED_ALL = "notify_unassigned_all"
