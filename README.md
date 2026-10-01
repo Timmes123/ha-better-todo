@@ -149,6 +149,8 @@ title: My tasks
 assigned: me            # tasks assigned to the logged-in user
 show_menu: false
 show_add: false
+allow_edit: false
+allow_delete: false
 sort: due
 ```
 
@@ -178,6 +180,9 @@ cards:
 | `sort` | Sort | `smart` | `smart`, `manual` (drag & drop), `due`, `priority`, `title`, `person` |
 | `show_menu` | Display › Menu | `true` | Card menu (filters, list management, bulk actions) |
 | `show_add` | Display › + New task | `true` | "+" button to add tasks |
+| `allow_edit` | Display › Allow edit | `true` | "Edit" button on an expanded task; `false` for read-only views |
+| `allow_skip` | Display › Allow skip | `true` | "Skip" button on recurring tasks |
+| `allow_delete` | Display › Allow delete | `true` | "Delete" button on an expanded task |
 | `compact` | Display › Compact | `false` | Denser rows |
 | `colorful` | Display › Multicolor | `true` | Multicolor badges; `false` = neutral theme colors only |
 | `hide_when_empty` | Display › Hide card when empty | `false` | Hide the whole card (including its header) while nothing is left to do; stays visible in dashboard edit mode |

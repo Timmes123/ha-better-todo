@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "0.10.2";
+const CARD_VERSION = "0.10.3";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
@@ -68,7 +68,7 @@ const STR = {
     hidden_hint: "Hidden outside edit mode (\"Hide card when empty\" is on).",
     grp_display: "Display", grp_filters: "Filters", grp_badges: "Badges on tasks",
     grp_behavior: "Behavior", grp_advanced: "Advanced",
-    hide_empty_t: "Hide card when empty", css_f: "Custom CSS",
+    hide_empty_t: "Hide card when empty", allow_edit_t: "Allow edit", allow_skip_t: "Allow skip", allow_delete_t: "Allow delete", css_f: "Custom CSS",
     css_hint: "Applied inside the card, see README for class names",
     b_due: "Due date / status", b_person: "Person", b_rec: "Recurrence", b_streak: "Streak / misses",
     months_f: "Active months", task_id_t: "ID", copied: "Copied",
@@ -126,7 +126,7 @@ const STR = {
     hidden_hint: "Außerhalb des Bearbeitungsmodus ausgeblendet („Karte bei Leere ausblenden“ ist aktiv).",
     grp_display: "Anzeige", grp_filters: "Filter", grp_badges: "Badges an der Aufgabe",
     grp_behavior: "Verhalten", grp_advanced: "Erweitert",
-    hide_empty_t: "Karte bei Leere ausblenden", css_f: "Eigenes CSS",
+    hide_empty_t: "Karte bei Leere ausblenden", allow_edit_t: "Bearbeiten erlauben", allow_skip_t: "Überspringen erlauben", allow_delete_t: "Löschen erlauben", css_f: "Eigenes CSS",
     css_hint: "Wirkt innerhalb der Karte, Klassennamen siehe README",
     b_due: "Fälligkeit / Status", b_person: "Person", b_rec: "Wiederholung", b_streak: "Serie / Versäumnisse",
     months_f: "Aktive Monate", task_id_t: "ID", copied: "Kopiert",
@@ -184,7 +184,7 @@ const STR = {
     hidden_hint: "Masquée hors du mode édition (« Masquer la carte si vide » est activé).",
     grp_display: "Affichage", grp_filters: "Filtres", grp_badges: "Badges sur les tâches",
     grp_behavior: "Comportement", grp_advanced: "Avancé",
-    hide_empty_t: "Masquer la carte si vide", css_f: "CSS personnalisé",
+    hide_empty_t: "Masquer la carte si vide", allow_edit_t: "Autoriser la modification", allow_skip_t: "Autoriser le saut", allow_delete_t: "Autoriser la suppression", css_f: "CSS personnalisé",
     css_hint: "Appliqué dans la carte, noms de classes dans le README",
     b_due: "Échéance / statut", b_person: "Personne", b_rec: "Récurrence", b_streak: "Série / oublis",
     months_f: "Mois actifs", task_id_t: "ID", copied: "Copié",
@@ -242,7 +242,7 @@ const STR = {
     hidden_hint: "Oculta fuera del modo de edición («Ocultar tarjeta si está vacía» está activado).",
     grp_display: "Visualización", grp_filters: "Filtros", grp_badges: "Insignias en las tareas",
     grp_behavior: "Comportamiento", grp_advanced: "Avanzado",
-    hide_empty_t: "Ocultar tarjeta si está vacía", css_f: "CSS personalizado",
+    hide_empty_t: "Ocultar tarjeta si está vacía", allow_edit_t: "Permitir editar", allow_skip_t: "Permitir omitir", allow_delete_t: "Permitir eliminar", css_f: "CSS personalizado",
     css_hint: "Se aplica dentro de la tarjeta, nombres de clase en el README",
     b_due: "Vencimiento / estado", b_person: "Persona", b_rec: "Recurrencia", b_streak: "Racha / fallos",
     months_f: "Meses activos", task_id_t: "ID", copied: "Copiado",
@@ -300,7 +300,7 @@ const STR = {
     hidden_hint: "Nascosta fuori dalla modalità di modifica («Nascondi la scheda se vuota» è attivo).",
     grp_display: "Visualizzazione", grp_filters: "Filtri", grp_badges: "Badge sulle attività",
     grp_behavior: "Comportamento", grp_advanced: "Avanzate",
-    hide_empty_t: "Nascondi la scheda se vuota", css_f: "CSS personalizzato",
+    hide_empty_t: "Nascondi la scheda se vuota", allow_edit_t: "Consenti modifica", allow_skip_t: "Consenti salto", allow_delete_t: "Consenti eliminazione", css_f: "CSS personalizzato",
     css_hint: "Applicato dentro la scheda, nomi delle classi nel README",
     b_due: "Scadenza / stato", b_person: "Persona", b_rec: "Ricorrenza", b_streak: "Serie / mancate",
     months_f: "Mesi attivi", task_id_t: "ID", copied: "Copiato",
@@ -358,7 +358,7 @@ const STR = {
     hidden_hint: "Verborgen buiten de bewerkmodus (\"Kaart verbergen als leeg\" staat aan).",
     grp_display: "Weergave", grp_filters: "Filters", grp_badges: "Badges bij taken",
     grp_behavior: "Gedrag", grp_advanced: "Geavanceerd",
-    hide_empty_t: "Kaart verbergen als leeg", css_f: "Eigen CSS",
+    hide_empty_t: "Kaart verbergen als leeg", allow_edit_t: "Bewerken toestaan", allow_skip_t: "Overslaan toestaan", allow_delete_t: "Verwijderen toestaan", css_f: "Eigen CSS",
     css_hint: "Werkt binnen de kaart, klassenamen in de README",
     b_due: "Vervaldatum / status", b_person: "Persoon", b_rec: "Herhaling", b_streak: "Reeks / gemist",
     months_f: "Actieve maanden", task_id_t: "ID", copied: "Gekopieerd",
@@ -416,7 +416,7 @@ const STR = {
     hidden_hint: "Ukryta poza trybem edycji („Ukryj kartę, gdy pusta” jest włączone).",
     grp_display: "Wyświetlanie", grp_filters: "Filtry", grp_badges: "Odznaki przy zadaniach",
     grp_behavior: "Zachowanie", grp_advanced: "Zaawansowane",
-    hide_empty_t: "Ukryj kartę, gdy pusta", css_f: "Własny CSS",
+    hide_empty_t: "Ukryj kartę, gdy pusta", allow_edit_t: "Zezwól na edycję", allow_skip_t: "Zezwól na pomijanie", allow_delete_t: "Zezwól na usuwanie", css_f: "Własny CSS",
     css_hint: "Działa wewnątrz karty, nazwy klas w README",
     b_due: "Termin / status", b_person: "Osoba", b_rec: "Powtarzanie", b_streak: "Seria / pominięcia",
     months_f: "Aktywne miesiące", task_id_t: "ID", copied: "Skopiowano",
@@ -561,7 +561,7 @@ class BetterTodoCard extends HTMLElement {
   setConfig(config) {
     this._config = {
       title: null, lists: null, tags: null, assigned: "all", sort: "smart",
-      show_menu: true, show_add: true, show_completed: false, show_upcoming: false,
+      show_menu: true, show_add: true, allow_edit: true, allow_skip: true, allow_delete: true, show_completed: false, show_upcoming: false,
       compact: false, max_height: null, confirm_complete: false, due_soon_days: 7, due_soon: false,
       upcoming_days: null,
       colorful: true, hide_when_empty: false, css: null,
@@ -910,7 +910,11 @@ class BetterTodoCard extends HTMLElement {
     } else {
       body = this._renderBody();
     }
-    const maxH = this._config.max_height ? `style="max-height:${Number(this._config.max_height)}px;overflow-y:auto"` : "";
+    // overflow-y:auto also turns overflow-x into auto, and the task rows
+    // reach 8px into the card padding (hover background) — without the
+    // explicit overflow-x:hidden that alone draws a horizontal scrollbar.
+    // The negative margin keeps that hover overhang inside the clip box.
+    const maxH = this._config.max_height ? `style="max-height:${Number(this._config.max_height)}px;overflow-y:auto;overflow-x:hidden;margin:0 -8px;padding:0 8px"` : "";
     // The backend reports its version with every push. A mismatch means the
     // browser still runs an older card from before an update — the page was
     // simply never reloaded (a HA restart only reconnects the websocket).
@@ -1101,16 +1105,20 @@ class BetterTodoCard extends HTMLElement {
     const t = this.t;
     const subtasks = this._feature("subtasks") ? (task.subtasks || []) : [];
     const recurring = task.type !== "simple";
+    const c = this._config;
+    // Read-only displays (wall tablets, kids' views) can switch each per-task
+    // action off; the click handler re-checks so hidden actions stay inert.
+    const actions = [
+      c.allow_edit !== false ? `<button class="btn" data-action="edit" data-id="${esc(task.id)}">${esc(t.edit)}</button>` : "",
+      recurring && c.allow_skip !== false ? `<button class="btn" data-action="skip" data-id="${esc(task.id)}">${esc(t.skip)}</button>` : "",
+      c.allow_delete !== false ? `<button class="btn danger" data-action="del-task" data-id="${esc(task.id)}">${esc(t.delete)}</button>` : "",
+    ].filter(Boolean);
     return `<div class="details">
       ${task.notes ? `<div class="notes">${esc(task.notes)}</div>` : ""}
       ${subtasks.length ? `<div class="subtasks">${subtasks
         .map((st) => `<label class="subtask"><input type="checkbox" data-action="subtask" data-id="${esc(task.id)}" data-sub="${esc(st.id)}" ${st.done ? "checked" : ""}> <span class="${st.done ? "st-done" : ""}">${esc(st.title)}</span></label>`)
         .join("")}</div>` : ""}
-      <div class="actions">
-        <button class="btn" data-action="edit" data-id="${esc(task.id)}">${esc(t.edit)}</button>
-        ${recurring ? `<button class="btn" data-action="skip" data-id="${esc(task.id)}">${esc(t.skip)}</button>` : ""}
-        <button class="btn danger" data-action="del-task" data-id="${esc(task.id)}">${esc(t.delete)}</button>
-      </div>
+      ${actions.length ? `<div class="actions">${actions.join("")}</div>` : ""}
     </div>`;
   }
 
@@ -1187,10 +1195,10 @@ class BetterTodoCard extends HTMLElement {
     else if (action === "add-list") this._openListDialog(null);
     else if (action === "expand") { this._ui.expanded = this._ui.expanded === id ? null : id; this._render(); }
     else if (action === "complete") this._complete(id);
-    else if (action === "edit") this._openTaskDialog(this._task(id));
-    else if (action === "skip") this._wsBg({ type: "better_todo/skip_task", task_id: id });
+    else if (action === "edit") { if (this._config.allow_edit !== false) this._openTaskDialog(this._task(id)); }
+    else if (action === "skip") { if (this._config.allow_skip !== false) this._wsBg({ type: "better_todo/skip_task", task_id: id }); }
     else if (action === "del-task") {
-      if (confirm(this.t.delete_task_confirm)) this._wsBg({ type: "better_todo/delete_task", task_id: id });
+      if (this._config.allow_delete !== false && confirm(this.t.delete_task_confirm)) this._wsBg({ type: "better_todo/delete_task", task_id: id });
     }
   }
 
@@ -2103,6 +2111,9 @@ class BetterTodoCardEditor extends HTMLElement {
     const displayToggles = [
       ["show_menu", t.menu_t, true],
       ["show_add", `+ ${t.new_task}`, true],
+      ["allow_edit", t.allow_edit_t, true],
+      ["allow_skip", t.allow_skip_t, true],
+      ["allow_delete", t.allow_delete_t, true],
       ["compact", t.compact_t, false],
       ["colorful", t.colorful_t, true],
       ["hide_when_empty", t.hide_empty_t, false],
@@ -2205,7 +2216,7 @@ class BetterTodoCardEditor extends HTMLElement {
     if (el.type === "checkbox") {
       // Store only deviations from the default so a fresh config stays
       // minimal (badge toggles default to true, most others to false).
-      const defTrue = ["show_menu", "show_add", "colorful", "show_due", "show_priority", "show_subtasks",
+      const defTrue = ["show_menu", "show_add", "allow_edit", "allow_skip", "allow_delete", "colorful", "show_due", "show_priority", "show_subtasks",
         "show_tags", "show_person", "show_reminder", "show_recurrence", "show_streak"].includes(f);
       if (el.checked === defTrue) delete this._config[f];
       else this._config[f] = el.checked;
