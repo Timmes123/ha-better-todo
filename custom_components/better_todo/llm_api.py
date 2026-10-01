@@ -213,9 +213,10 @@ def match_tasks(pool: list[dict], query: str) -> tuple[dict | None, list[dict]]:
     """Find the task an assistant means.
 
     Returns ``(task, [])`` for a unique hit, ``(None, candidates)`` when
-    several tasks fit and ``(None, [])`` when none does. An exact title wins
-    over a substring ('milk' must not pick 'coconut milk' when both exist),
-    then a substring in either direction, then all words of the query.
+    several tasks fit or only part of the query fits, and ``(None, [])`` when
+    nothing does. An exact title wins over a substring ('milk' must not pick
+    'coconut milk' when both exist), then a substring in either direction,
+    then all words of the query; a partial word match is never acted on.
     """
     query = (query or "").strip()
     if not query:
@@ -240,7 +241,16 @@ def match_tasks(pool: list[dict], query: str) -> tuple[dict | None, list[dict]]:
     by_words = [t for t in pool if all(w in _norm(t["title"]) for w in words)]
     if len(by_words) == 1:
         return by_words[0], []
-    return None, by_words
+    if by_words:
+        return None, by_words
+    # "I called the plumber" vs "Call plumber Dupont": only some words fit
+    # (inflection, filler words). Never act on that alone — hand the
+    # candidates back so the agent confirms with the user.
+    strong = [w for w in words if len(w) >= 4]
+    if strong:
+        partial = [t for t in pool if any(w in _norm(t["title"]) for w in strong)]
+        return None, partial[:5]
+    return None, []
 
 
 # -------------------------------------------------------------------- scope
@@ -607,8 +617,9 @@ def _ambiguous_result(err: _Ambiguous) -> Any:
             "success": False,
             "error": "ambiguous",
             "message": (
-                f"Several open tasks match '{err.query}'. Ask the user which one "
-                "and call again with the exact title or task_id."
+                f"No unique match for '{err.query}'. Ask the user which of the "
+                "candidates they mean (or whether they mean the one candidate) and "
+                "call again with its exact title or task_id."
             ),
             "candidates": err.candidates,
         },
