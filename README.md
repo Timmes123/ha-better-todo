@@ -464,6 +464,11 @@ the kitchen one to *General* and *Shopping* — enforced by the integration, wha
 prompt says. A rule for the person who is talking (typed and app requests carry the
 user) wins over the rule for the satellite's area.
 
+> **Don't expose the mirrored `todo.*` entities to Assist** if you rely on these
+> scopes. Assist's built-in list tools read and write every exposed to-do list, so an
+> agent could reach a restricted list that way. With the mirror entities not exposed,
+> all task access goes through the Better ToDo tools and the scopes hold.
+
 #### Without the tool set: scripts exposed to Assist
 
 For agents that don't support HA's LLM APIs, a **script exposed to Assist** becomes a

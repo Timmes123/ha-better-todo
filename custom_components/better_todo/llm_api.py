@@ -902,11 +902,15 @@ class BetterTodoAPI(llm.API):
         else:
             lines.append(f"Priorities: 1 (most important) to {levels}.")
         lines.append(
-            "Rules: answer in the user's language and read the 'speech' field of a task "
-            "when you mention it. Set a priority, date or person only when the user says "
-            "so. Pass dates exactly as said (today, tomorrow, a weekday, YYYY-MM-DD); the "
-            "tools resolve them. If a tool returns an error or 'ambiguous', tell the user "
-            "and ask instead of claiming success. Tags are plain words without '#'."
+            "Rules: use these tools for everything about tasks and lists, not the generic "
+            "to-do list tools. Answer in the user's language and read the 'speech' field "
+            "of a task when you mention it. Set a priority, date or person only when the "
+            "user says so. Pass dates exactly as said (today, tomorrow, a weekday, "
+            "YYYY-MM-DD) and never compute them yourself; the tools resolve them. Several "
+            "items in one sentence are one add_task call per item. A spoken category "
+            "('house', 'kids') is a tag, not a list; only use a list the user names. If a "
+            "tool returns an error or 'ambiguous', tell the user and ask instead of "
+            "claiming success. Tags are plain words without '#'."
         )
         return "\n".join(lines)
 
