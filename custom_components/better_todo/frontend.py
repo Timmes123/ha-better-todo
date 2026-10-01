@@ -30,9 +30,9 @@ async def _ensure_resource(hass: HomeAssistant, url: str) -> None:
     lovelace = hass.data.get("lovelace")
     resources = getattr(lovelace, "resources", None)
     if resources is None or not hasattr(resources, "async_create_item"):
-        _LOGGER.info(
-            "Lovelace resources not editable (YAML mode?). Add the card resource "
-            "manually: %s (type: module)",
+        _LOGGER.warning(
+            "Lovelace resources are not editable (dashboards in YAML mode?). Add the "
+            "card resource yourself: url %s, type module",
             url,
         )
         return

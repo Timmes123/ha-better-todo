@@ -89,7 +89,10 @@ a fixed schedule. Real life needs more:
    (or *Settings → Devices & Services → Add Integration → Better ToDo*)
 
 The dashboard card is registered automatically — after an update, hard-refresh your
-browser (Ctrl+F5) once so it picks up the new version.
+browser (Ctrl+F5) once so it picks up the new version. If your dashboards are in
+**YAML mode**, resources cannot be registered automatically: add
+`/better_todo_static/better-todo-card.js` as a *JavaScript module* resource yourself
+(the log shows the exact URL including the version).
 
 ### Manual
 
@@ -412,6 +415,7 @@ full picture — tags, priority, assignment, due state — from a script or auto
 | `status` | `open` (default), `done`, `all` |
 | `due` | `today` (due today or overdue), `overdue`, `week` (next 7 days) |
 | `priority` | max. value: `2` = priority 1 or 2 |
+| `sort` | `priority` (priority, then due date, then title) or `due` (due date first); default is the stored order |
 
 ```yaml
 - action: better_todo.get_tasks
@@ -422,12 +426,47 @@ full picture — tags, priority, assignment, due state — from a script or auto
   response_variable: result
 # result.count, result.tasks[*].title / list / tags / priority / assigned_names /
 # state (open, due, overdue, upcoming, done…) / due / due_time / days_overdue /
-# due_count / notes / subtasks / id
+# due_count / notes / subtasks / task_id
 ```
 
 ### Voice assistants & LLM agents
 
-With Assist and an LLM conversation agent, a **script exposed to Assist** becomes a
+Better ToDo registers its own **tool set for conversation agents**. In the agent's
+settings (Anthropic, OpenAI, Google, Ollama, … → *Control Home Assistant*) tick
+**Better ToDo** next to *Assist* — no scripts to maintain. The agent then has five
+tools:
+
+| Tool | What it does |
+|---|---|
+| `list_tasks` | open tasks, filtered by list, person (`me` = the user talking), tags, due (`today`, `overdue`, `week`) or priority — sorted by importance, each with a ready-to-read `speech` line in the user's language |
+| `add_task` | title, optional list, due date, time, priority, tags, person, notes |
+| `complete_task` | marks a task done; titles are matched loosely |
+| `skip_task` | skips the current occurrence of a recurring task (streaks are kept) |
+| `update_task` | changes due date, time, priority, tags, person, title, notes or list |
+
+Built for small local models as much as for cloud ones:
+
+- **Dates are resolved by the integration**: `tomorrow`, `friday`, `+3` and
+  `2026-10-03` all work (English, German and French words). Anything else is a clear
+  error instead of a wrong date — the prompt also tells the agent today's date.
+- **Loose matching with an honest answer**: "I called the plumber" finds *Call plumber
+  Dupont*; an exact title wins over a substring (*milk* vs *coconut milk*); when several
+  tasks fit, the tool answers `ambiguous` with the candidates so the agent asks back.
+- **Speech lines**: every task comes with a line like *Call plumber (high priority,
+  tags house, overdue since Mon 28 Sep, for Tim)* in English, German or French.
+- **Tags** work with or without `#`.
+
+**Who may see what** — *Settings → Devices & Services → Better ToDo → Configure →
+Voice assistants*: pick the default list for new tasks, and per person and per area
+with an Assist satellite the lists that assistant may read and change (nothing
+selected = all lists). The satellite in the kids' room can be limited to their list,
+the kitchen one to *General* and *Shopping* — enforced by the integration, whatever the
+prompt says. A rule for the person who is talking (typed and app requests carry the
+user) wins over the rule for the satellite's area.
+
+#### Without the tool set: scripts exposed to Assist
+
+For agents that don't support HA's LLM APIs, a **script exposed to Assist** becomes a
 tool the agent can call: its `fields` are the tool parameters, `response_variable`
 hands the result back. Two scripts cover "what are my urgent tasks?" and "add 'call the
 plumber' to my tasks, category house, high priority":

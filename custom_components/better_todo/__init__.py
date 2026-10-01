@@ -7,6 +7,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import (
     TrackStates,
     async_track_state_change_filtered,
@@ -16,6 +17,7 @@ from homeassistant.loader import async_get_integration
 
 from .const import DOMAIN, FEATURE_CALENDAR, FEATURE_TODO_MIRROR
 from .frontend import async_setup_frontend
+from .llm_api import async_register_llm_api
 from .manager import BetterTodoManager
 from .services import async_register_services, async_remove_services
 from .websocket_api import async_register_websocket
@@ -33,6 +35,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async_register_websocket(hass)
     async_register_services(hass)
+    # "Better ToDo" as a tool set for Assist conversation agents; the entry
+    # unload (every options save) unregisters it again.
+    try:
+        entry.async_on_unload(async_register_llm_api(hass))
+    except HomeAssistantError as err:
+        _LOGGER.warning("Better ToDo LLM API not registered: %s", err)
 
     features = manager.features
     platforms = []

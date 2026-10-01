@@ -330,7 +330,14 @@ class BetterTodoManager:
 
         self._validate_task(task)
 
-        task["tags"] = sorted({str(t).strip() for t in (task.get("tags") or []) if str(t).strip()})
+        # A leading '#' (as typed in the card) is not part of the tag.
+        task["tags"] = sorted(
+            {
+                tag
+                for tag in (str(t).strip().lstrip("#").strip() for t in (task.get("tags") or []))
+                if tag
+            }
+        )
 
         # Normalize subtasks and rotation structures.
         task["subtasks"] = [

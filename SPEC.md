@@ -168,7 +168,28 @@ und `update_task` nehmen alle Aufgabenfelder an (auch `tags`, `priority`, `remin
 (today|overdue|week), `priority` (max.) — liefert Aufgaben mit Listen-NAME, Tags, Priorität,
 Zuweisung (IDs + Namen), berechnetem Zustand, Fälligkeit, Notizen, Unteraufgaben. Damit
 können Assist-Skripte (LLM-Agenten) Aufgaben lesen, anlegen und umpriorisieren, ohne
-Websocket. Bewusst über Standard-HA-Services, nicht über eine eigene LLM-API.
+Websocket. `get_tasks` kann mit `sort` (priority|due) sortieren; Tags werden mit und ohne
+führendes `#` gleich behandelt.
+
+**Eigene LLM-API** (Entscheidung 2026-10-01, Issue #14, v0.10.0 — revidiert die Aussage
+„bewusst keine eigene LLM-API" von 2026-09-30): Die Integration registriert über
+`homeassistant.helpers.llm.async_register_api` die API „Better ToDo", die in jedem
+Konversationsagenten neben „Assist" anwählbar ist. Fünf Tools: `list_tasks`, `add_task`,
+`complete_task`, `skip_task`, `update_task` (Modul `llm_api.py`). Prinzipien, weil
+kleine lokale Modelle das Zielpublikum sind: (1) Datumsauflösung serverseitig
+(ISO, today/tomorrow/Wochentag/+N in EN/DE/FR; sonst lesbarer Fehler statt falschem
+Datum), Prompt nennt das heutige Datum; (2) lose Titelsuche — exakt vor Teilstring vor
+Wortmenge, bei mehreren Treffern Antwort `ambiguous` mit Kandidaten statt Raten;
+(3) jede Aufgabe mit `speech`-Zeile in der Sprache der Anfrage (de/fr/en, Fallback
+HA-Sprache); (4) **Scoping in der Integration**: Options-Seite „Sprachassistenten" mit
+Standardliste für neue Aufgaben und je Person bzw. je Bereich mit Assist-Satellit die
+erlaubten Listen (leer = alle). Auflösung je Anfrage: Regel für die sprechende Person
+(`context.user_id` → person) vor Regel für den Bereich des Geräts (`device_id`) vor
+„alle". Die Tools verweigern fremde Listen unabhängig vom Prompt; unbekannte Listen
+werden per Sprache nie angelegt. (5) Kompatibilität: Tool-Parameter als `vol.Schema`
+(ab HA 2026.9 ist `voluptuous` ein Alias auf probatio), Rückgabe als `llm.ToolResult`,
+wenn die Klasse existiert (HA 2026.10+), sonst Dict; `integration`/`annotations` werden
+gesetzt, wenn die HA-Version sie kennt.
 
 **Events**: `better_todo_item_created`, `better_todo_item_completed`, `better_todo_item_due`,
 `better_todo_item_overdue`, `better_todo_item_reminder` — damit Automationen auf Aufgaben

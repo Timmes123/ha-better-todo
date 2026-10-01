@@ -16,7 +16,8 @@
         "title": "Better ToDo options",
         "menu_options": {
           "features": "Features",
-          "notifications": "Notifications"
+          "notifications": "Notifications",
+          "voice": "Voice assistants"
         }
       },
       "features": {
@@ -45,6 +46,13 @@
           "summary_enabled": "Send a daily summary of open tasks",
           "summary_time": "Summary time",
           "summary_persistent": "Also show the summary in the HA notification center"
+        }
+      },
+      "voice": {
+        "title": "Voice assistants & LLM agents",
+        "description": "Settings for the Better ToDo tool set that conversation agents can use (enable it in the agent's settings under \"Control Home Assistant\"). The default list receives new tasks when no list is named. One row per person and per area with an Assist satellite: the lists this person or area may read and change. Nothing selected = all lists. A rule for the person who is talking wins over a rule for the satellite's area.",
+        "data": {
+          "llm_default_list": "Default list for new tasks"
         }
       }
     }
@@ -89,6 +97,10 @@
         "priority": {
           "name": "Max. priority",
           "description": "Only tasks with a priority of this value or more important (1 = most important)."
+        },
+        "sort": {
+          "name": "Sort",
+          "description": "priority = priority, then due date; due = due date first. Without it the stored order is kept."
         }
       }
     },

@@ -149,6 +149,13 @@ get_tasks:
           min: 1
           max: 5
           step: 1
+    sort:
+      required: false
+      selector:
+        select:
+          options:
+            - priority
+            - due
 
 complete_task:
   fields:

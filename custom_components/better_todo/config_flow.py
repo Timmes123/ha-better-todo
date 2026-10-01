@@ -13,8 +13,13 @@ from homeassistant.config_entries import (
     OptionsFlow,
     OptionsFlowWithReload,
 )
-from homeassistant.core import callback
-
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import (
+    area_registry as ar,
+    device_registry as dr,
+    entity_registry as er,
+)
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
@@ -23,6 +28,9 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_LLM_AREA_LISTS,
+    CONF_LLM_DEFAULT_LIST,
+    CONF_LLM_PERSON_LISTS,
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
     CONF_PRIORITY_LEVELS,
@@ -70,7 +78,7 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["features", "notifications"]
+            step_id="init", menu_options=["features", "notifications", "voice"]
         )
 
     async def async_step_features(
@@ -168,3 +176,82 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
         return self.async_show_form(
             step_id="notifications", data_schema=vol.Schema(schema_dict)
         )
+
+    async def async_step_voice(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """LLM API scope: default list, and per person / per satellite area
+        the lists an assistant may use (nothing selected = all lists)."""
+        options = self.config_entry.options
+        manager = self.hass.data.get(DOMAIN)
+        lists = sorted(
+            (manager.data["lists"] if manager else []), key=lambda l: l.get("order", 0)
+        )
+        list_choices = {lst["id"]: lst["name"] for lst in lists}
+        if user_input is not None:
+            person_rules: dict[str, list[str]] = {}
+            area_rules: dict[str, list[str]] = {}
+            for key, value in user_input.items():
+                if key == CONF_LLM_DEFAULT_LIST or not value:
+                    continue
+                if key.startswith("person."):
+                    person_rules[key] = list(value)
+                else:
+                    area_rules[key] = list(value)
+            return self.async_create_entry(
+                data={
+                    **dict(options),
+                    CONF_LLM_DEFAULT_LIST: user_input.get(CONF_LLM_DEFAULT_LIST) or None,
+                    CONF_LLM_PERSON_LISTS: person_rules,
+                    CONF_LLM_AREA_LISTS: area_rules,
+                }
+            )
+        person_rules = options.get(CONF_LLM_PERSON_LISTS) or {}
+        area_rules = options.get(CONF_LLM_AREA_LISTS) or {}
+        default = options.get(CONF_LLM_DEFAULT_LIST) or ""
+        if default not in list_choices:
+            default = ""
+        schema_dict: dict[Any, Any] = {
+            vol.Optional(CONF_LLM_DEFAULT_LIST, default=default): vol.In(
+                {"": NOTIFY_NONE, **list_choices}
+            )
+        }
+        persons = sorted(
+            self.hass.states.async_all("person"),
+            key=lambda s: (s.name or s.entity_id).casefold(),
+        )
+        for state in persons:
+            current = [i for i in person_rules.get(state.entity_id, []) if i in list_choices]
+            schema_dict[vol.Optional(state.entity_id, default=current)] = cv.multi_select(
+                list_choices
+            )
+        areas = _satellite_areas(self.hass, set(area_rules))
+        for area_id, _name in areas:
+            current = [i for i in area_rules.get(area_id, []) if i in list_choices]
+            schema_dict[vol.Optional(area_id, default=current)] = cv.multi_select(
+                list_choices
+            )
+        return self.async_show_form(step_id="voice", data_schema=vol.Schema(schema_dict))
+
+
+def _satellite_areas(hass: HomeAssistant, extra: set[str]) -> list[tuple[str, str]]:
+    """Areas that contain an Assist satellite (plus ``extra`` ids that
+    already have a rule), as (area_id, name) sorted by name."""
+    ent_reg = er.async_get(hass)
+    dev_reg = dr.async_get(hass)
+    area_reg = ar.async_get(hass)
+    area_ids = set(extra)
+    for entry in ent_reg.entities.values():
+        if entry.domain != "assist_satellite":
+            continue
+        area_id = entry.area_id
+        if not area_id and entry.device_id:
+            device = dev_reg.async_get(entry.device_id)
+            area_id = device.area_id if device else None
+        if area_id:
+            area_ids.add(area_id)
+    result = []
+    for area_id in area_ids:
+        area = area_reg.async_get_area(area_id)
+        result.append((area_id, area.name if area else area_id))
+    return sorted(result, key=lambda item: item[1].casefold())

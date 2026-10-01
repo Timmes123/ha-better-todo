@@ -30,6 +30,11 @@ SERVICE_REMOVE_TASK = "remove_task"
 SERVICE_UPDATE_TASK = "update_task"
 SERVICE_GET_TASKS = "get_tasks"
 
+# get_tasks sort modes; without one the stored (card) order is kept.
+SORT_PRIORITY = "priority"
+SORT_DUE = "due"
+SORT_MODES = [SORT_PRIORITY, SORT_DUE]
+
 # Tags, reminders and persons may be passed as a list or comma-separated.
 _STR_OR_LIST = vol.Any(cv.string, [cv.string])
 _REMINDERS = vol.Any(None, cv.string, [vol.Coerce(int)])
@@ -120,6 +125,7 @@ GET_TASKS_SCHEMA = vol.Schema(
         vol.Optional("priority"): vol.Any(
             None, "", vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_PRIORITY))
         ),
+        vol.Optional("sort"): vol.Any(None, "", vol.In(SORT_MODES)),
     }
 )
 
@@ -131,7 +137,7 @@ def _manager(hass: HomeAssistant) -> BetterTodoManager:
     return manager
 
 
-def _as_list(value) -> list[str]:
+def as_list(value) -> list[str]:
     """'a, b' or ['a', 'b'] -> ['a', 'b'] (trimmed, empties dropped)."""
     if value is None:
         return []
@@ -139,21 +145,32 @@ def _as_list(value) -> list[str]:
     return [str(x).strip() for x in items if str(x).strip()]
 
 
-def _as_int_list(value) -> list[int]:
+def normalize_tags(value) -> list[str]:
+    """Tags as a list; a leading '#' (as typed in the card) is dropped so
+    '#kids' and 'kids' are the same tag."""
+    out: list[str] = []
+    for tag in as_list(value):
+        tag = tag.lstrip("#").strip()
+        if tag and tag not in out:
+            out.append(tag)
+    return out
+
+
+def as_int_list(value) -> list[int]:
     try:
-        return [int(x) for x in _as_list(value)]
+        return [int(x) for x in as_list(value)]
     except (ValueError, TypeError) as err:
         raise BetterTodoError(f"Invalid reminders: {value!r}") from err
 
 
-def _normalize_fields(data: dict) -> None:
+def normalize_fields(data: dict) -> None:
     """Coerce the list-ish service fields into what the manager stores."""
     if "tags" in data:
-        data["tags"] = _as_list(data["tags"])
+        data["tags"] = normalize_tags(data["tags"])
     if "reminders" in data:
-        data["reminders"] = _as_int_list(data["reminders"])
+        data["reminders"] = as_int_list(data["reminders"])
     if "assigned_to" in data and isinstance(data["assigned_to"], str):
-        data["assigned_to"] = _as_list(data["assigned_to"])
+        data["assigned_to"] = as_list(data["assigned_to"])
 
 
 async def _resolve_by(hass: HomeAssistant, call: ServiceCall) -> str | None:
@@ -164,10 +181,10 @@ async def _resolve_by(hass: HomeAssistant, call: ServiceCall) -> str | None:
     return None
 
 
-def _list_ids(manager: BetterTodoManager, names) -> set[str]:
+def list_ids(manager: BetterTodoManager, names) -> set[str]:
     """Ids of the lists named (case-insensitive); unknown names raise."""
     ids: set[str] = set()
-    for name in _as_list(names):
+    for name in as_list(names):
         matches = {
             lst["id"] for lst in manager.data["lists"]
             if lst["name"].casefold() == name.casefold()
@@ -186,20 +203,20 @@ def _find_task_id(manager: BetterTodoManager, call: ServiceCall) -> str:
         raise BetterTodoError("Provide task_id or title")
     # An optional list name scopes the title match, so identically named
     # tasks in other lists cannot be hit by accident.
-    list_ids = _list_ids(manager, call.data["list"]) if call.data.get("list") else None
+    wanted = list_ids(manager, call.data["list"]) if call.data.get("list") else None
     for task in manager.data["tasks"]:
         if task["title"].casefold() == title and (
-            list_ids is None or task["list_id"] in list_ids
+            wanted is None or task["list_id"] in wanted
         ):
             return task["id"]
     raise BetterTodoError(f"No task with title '{call.data.get('title')}'")
 
 
-def _person_ids(manager: BetterTodoManager, values) -> set[str]:
+def person_ids(manager: BetterTodoManager, values) -> set[str]:
     """Accept person entity ids or person names (case-insensitive)."""
     persons = manager.serialized_data()["persons"]
     ids: set[str] = set()
-    for value in _as_list(values):
+    for value in as_list(values):
         key = value.casefold()
         match = next(
             (p for p in persons if p["entity_id"].casefold() == key or (p["name"] or "").casefold() == key),
@@ -209,13 +226,13 @@ def _person_ids(manager: BetterTodoManager, values) -> set[str]:
     return ids
 
 
-def _get_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
+def query_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
     snapshot = manager.serialized_data()
     lists = {lst["id"]: lst["name"] for lst in snapshot["lists"]}
     persons = {p["entity_id"]: p["name"] for p in snapshot["persons"]}
-    list_ids = _list_ids(manager, data["list"]) if data.get("list") else None
-    person_ids = _person_ids(manager, data["assigned_to"]) if data.get("assigned_to") else None
-    wanted_tags = {t.casefold() for t in _as_list(data.get("tags"))}
+    wanted_lists = list_ids(manager, data["list"]) if data.get("list") else None
+    wanted_persons = person_ids(manager, data["assigned_to"]) if data.get("assigned_to") else None
+    wanted_tags = {t.casefold() for t in normalize_tags(data.get("tags"))}
     status = data.get("status") or "open"
     due_filter = data.get("due") or None
     max_priority = data.get("priority") if data.get("priority") not in (None, "") else None
@@ -231,12 +248,12 @@ def _get_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
             continue
         if status == "done" and not done:
             continue
-        if list_ids is not None and task["list_id"] not in list_ids:
+        if wanted_lists is not None and task["list_id"] not in wanted_lists:
             continue
         assigned = task.get("assigned_to") or []
-        if person_ids is not None:
+        if wanted_persons is not None:
             if assigned:
-                if not person_ids & set(assigned):
+                if not wanted_persons & set(assigned):
                     continue
             elif not data.get("include_unassigned", True):
                 continue
@@ -255,12 +272,14 @@ def _get_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
             continue
         result.append(
             {
-                "id": task["id"],
+                "task_id": task["id"],
                 "title": task["title"],
                 "list": lists.get(task["list_id"], ""),
                 "list_id": task["list_id"],
                 "type": task.get("type"),
+                "period": task.get("period") if task.get("type") == "period" else None,
                 "state": state,
+                "visible_from": computed.get("visible_from"),
                 "done": done,
                 "due": due,
                 "due_time": task.get("due_time"),
@@ -281,7 +300,25 @@ def _get_tasks(manager: BetterTodoManager, data: dict) -> ServiceResponse:
                 "streak": task.get("streak") if task.get("type") == "period" else None,
             }
         )
+    if sort := data.get("sort"):
+        sort_tasks(result, sort)
     return {"count": len(result), "tasks": result}
+
+
+def sort_tasks(rows: list[dict], mode: str) -> None:
+    """Sort get_tasks rows in place: 'priority' = priority, then due date,
+    then title; 'due' = due date first. Unset values sort last."""
+
+    def prio(row: dict) -> int:
+        return row.get("priority") if row.get("priority") is not None else MAX_PRIORITY + 1
+
+    def due(row: dict) -> str:
+        return row.get("due") or "9999-12-31"
+
+    if mode == SORT_DUE:
+        rows.sort(key=lambda r: (due(r), prio(r), (r.get("title") or "").casefold()))
+    else:
+        rows.sort(key=lambda r: (prio(r), due(r), (r.get("title") or "").casefold()))
 
 
 @callback
@@ -300,7 +337,7 @@ def async_register_services(hass: HomeAssistant) -> None:
         for key in UPDATE_FIELDS:
             if key in call.data:
                 task[key] = call.data[key]
-        _normalize_fields(task)
+        normalize_fields(task)
         saved = manager.save_task(task)
         return {"task_id": saved["id"]}
 
@@ -335,13 +372,13 @@ def async_register_services(hass: HomeAssistant) -> None:
         for key in UPDATE_FIELDS:
             if key in call.data:
                 data[key] = call.data[key]
-        _normalize_fields(data)
+        normalize_fields(data)
         # A schedule/interval passed here replaces the stored rule entirely —
         # partial rule edits would silently inherit stale day/weekday fields.
         manager.save_task(data)
 
     async def get_tasks(call: ServiceCall) -> ServiceResponse:
-        return _get_tasks(_manager(hass), call.data)
+        return query_tasks(_manager(hass), call.data)
 
     def _wrap(func):
         # Surface BetterTodoError as a proper service validation error

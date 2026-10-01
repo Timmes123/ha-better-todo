@@ -16,7 +16,8 @@
         "title": "Better ToDo Optionen",
         "menu_options": {
           "features": "Funktionen",
-          "notifications": "Benachrichtigungen"
+          "notifications": "Benachrichtigungen",
+          "voice": "Sprachassistenten"
         }
       },
       "features": {
@@ -45,6 +46,13 @@
           "summary_enabled": "Tägliche Zusammenfassung offener Aufgaben senden",
           "summary_time": "Uhrzeit der Zusammenfassung",
           "summary_persistent": "Zusammenfassung auch in der HA-Benachrichtigungszentrale anzeigen"
+        }
+      },
+      "voice": {
+        "title": "Sprachassistenten & LLM-Agenten",
+        "description": "Einstellungen für die Better-ToDo-Werkzeuge, die Konversationsagenten nutzen können (im Agenten unter „Home Assistant steuern“ aktivieren). Die Standardliste bekommt neue Aufgaben, wenn keine Liste genannt wird. Je Person und je Bereich mit Assist-Satellit eine Zeile: die Listen, die diese Person bzw. dieser Bereich lesen und ändern darf. Nichts ausgewählt = alle Listen. Eine Regel für die sprechende Person geht einer Regel für den Bereich des Satelliten vor.",
+        "data": {
+          "llm_default_list": "Standardliste für neue Aufgaben"
         }
       }
     }
@@ -89,6 +97,10 @@
         "priority": {
           "name": "Max. Priorität",
           "description": "Nur Aufgaben mit dieser Priorität oder wichtiger (1 = am wichtigsten)."
+        },
+        "sort": {
+          "name": "Sortierung",
+          "description": "priority = Priorität, dann Fälligkeit; due = Fälligkeit zuerst. Ohne Angabe bleibt die gespeicherte Reihenfolge."
         }
       }
     },

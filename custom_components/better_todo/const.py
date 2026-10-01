@@ -75,3 +75,12 @@ SUMMARY_NOTIFICATION_ID = "better_todo_summary"
 SUMMARY_PERIOD_LEAD = {"week": 2, "month": 5}
 
 MAX_HISTORY = 5000
+
+# Options: the LLM API ("Better ToDo" tools for Assist conversation agents).
+# Which lists an assistant may use is resolved per request: a rule for the
+# calling person wins over a rule for the satellite's area; no rule = all.
+CONF_LLM_DEFAULT_LIST = "llm_default_list"  # list id for new tasks
+CONF_LLM_PERSON_LISTS = "llm_person_lists"  # {person_entity_id: [list_id, ...]}
+CONF_LLM_AREA_LISTS = "llm_area_lists"  # {area_id: [list_id, ...]}
+LLM_API_ID = DOMAIN
+LLM_API_NAME = "Better ToDo"

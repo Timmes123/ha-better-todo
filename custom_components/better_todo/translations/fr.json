@@ -16,7 +16,8 @@
         "title": "Options de Better ToDo",
         "menu_options": {
           "features": "Fonctionnalités",
-          "notifications": "Notifications"
+          "notifications": "Notifications",
+          "voice": "Assistants vocaux"
         }
       },
       "features": {
@@ -45,6 +46,13 @@
           "summary_enabled": "Envoyer un résumé quotidien des tâches ouvertes",
           "summary_time": "Heure du résumé",
           "summary_persistent": "Afficher aussi le résumé dans le centre de notifications de HA"
+        }
+      },
+      "voice": {
+        "title": "Assistants vocaux et agents LLM",
+        "description": "Réglages des outils Better ToDo utilisables par les agents de conversation (à activer dans l'agent sous « Contrôler Home Assistant »). La liste par défaut reçoit les nouvelles tâches quand aucune liste n'est nommée. Une ligne par personne et par pièce équipée d'un satellite Assist : les listes que cette personne ou cette pièce peut lire et modifier. Rien de sélectionné = toutes les listes. Une règle pour la personne qui parle l'emporte sur celle de la pièce du satellite.",
+        "data": {
+          "llm_default_list": "Liste par défaut pour les nouvelles tâches"
         }
       }
     }
@@ -89,6 +97,10 @@
         "priority": {
           "name": "Priorité max.",
           "description": "Seulement les tâches de cette priorité ou plus importantes (1 = la plus importante)."
+        },
+        "sort": {
+          "name": "Tri",
+          "description": "priority = priorité puis échéance ; due = échéance d'abord. Sans valeur, l'ordre enregistré est conservé."
         }
       }
     },
