@@ -3,7 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo)](https://github.com/Timmes123/ha-better-todo/releases/latest)
 [![Pre-release](https://img.shields.io/github/v/release/Timmes123/ha-better-todo?include_prereleases&label=pre-release&color=orange)](https://github.com/Timmes123/ha-better-todo/releases)
 [![Validate](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml/badge.svg)](https://github.com/Timmes123/ha-better-todo/actions/workflows/validate.yml)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
 [![Downloads](https://img.shields.io/github/downloads/Timmes123/ha-better-todo/total?label=downloads)](https://github.com/Timmes123/ha-better-todo/releases)
 [![License](https://img.shields.io/github/license/Timmes123/ha-better-todo)](https://github.com/Timmes123/ha-better-todo/blob/main/LICENSE)
 [![Community Forum](https://img.shields.io/badge/community-forum-41BDF5.svg?logo=homeassistant&logoColor=white)](https://community.home-assistant.io/t/better-todo-flexible-recurring-tasks-habits-household-rotation-for-ha/1022821)
@@ -79,9 +79,9 @@ a fixed schedule. Real life needs more:
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Timmes123&repository=ha-better-todo&category=integration)
 
-1. Click the button above (or: HACS → ⋮ → *Custom repositories* → add
-   `Timmes123/ha-better-todo` with category *Integration*).
-2. Download **Better ToDo** and restart Home Assistant.
+1. Better ToDo is in the HACS default store: open HACS, search for **Better ToDo**
+   (or click the button above).
+2. Download it and restart Home Assistant.
 3. Add the integration:
 
    [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=better_todo)
