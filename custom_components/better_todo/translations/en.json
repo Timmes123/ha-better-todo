@@ -16,6 +16,7 @@
         "title": "Better ToDo options",
         "menu_options": {
           "features": "Features",
+          "persons": "Persons",
           "notifications": "Notifications",
           "voice": "Voice assistants"
         }
@@ -38,6 +39,17 @@
           "priority_levels": "3 = high/medium/low, 5 = highest to lowest (1 is always the most important)."
         }
       },
+      "persons": {
+        "title": "Persons",
+        "description": "Excluded persons can no longer be assigned and are hidden everywhere: in the card, in notifications and for voice assistants. Persons added to Home Assistant later are included automatically.",
+        "data": {
+          "excluded_persons": "Excluded persons"
+        }
+      },
+      "persons_confirm": {
+        "title": "Remove from tasks?",
+        "description": "These persons are still used in {count} task(s): {persons}\n\n{tasks}\n\nWhen you submit, they are removed from all of these tasks (assignment and rotation). This cannot be undone; the completion history stays. Close this dialog to cancel."
+      },
       "notifications": {
         "title": "Notifications",
         "description": "Notification service per person. Reminders and the daily summary are sent to the assigned persons. The dash means: no notifications for this person. Weekly and monthly tasks only enter the summary shortly before their period ends.",
@@ -45,7 +57,11 @@
           "notify_unassigned_all": "Send tasks without assignment to every configured person",
           "summary_enabled": "Send a daily summary of open tasks",
           "summary_time": "Summary time",
-          "summary_persistent": "Also show the summary in the HA notification center"
+          "summary_persistent": "Also show the summary in the HA notification center",
+          "time_format": "Time format in notifications"
+        },
+        "data_description": {
+          "time_format": "The card follows each user's own 12/24-hour profile setting."
         }
       },
       "voice": {
@@ -62,6 +78,12 @@
       "options": {
         "3": "3 levels (high, medium, low)",
         "5": "5 levels (highest to lowest)"
+      }
+    },
+    "time_format": {
+      "options": {
+        "24": "24-hour (14:30)",
+        "12": "12-hour (2:30 PM)"
       }
     }
   },

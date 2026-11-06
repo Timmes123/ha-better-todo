@@ -275,10 +275,14 @@ class Scope:
         return next((lst for lst in self.lists if lst["name"].casefold() == key), None)
 
 
-def _person_for_user(hass: HomeAssistant, user_id: str | None) -> dict | None:
+def _person_for_user(
+    hass: HomeAssistant, user_id: str | None, excluded: set[str] | None = None
+) -> dict | None:
     if not user_id:
         return None
     for state in hass.states.async_all("person"):
+        if excluded and state.entity_id in excluded:
+            continue
         if state.attributes.get("user_id") == user_id:
             return {"entity_id": state.entity_id, "name": state.name or state.entity_id}
     return None
@@ -304,7 +308,9 @@ def resolve_scope(
     lists = sorted(manager.data["lists"], key=lambda l: l.get("order", 0))
     by_id = {lst["id"]: lst for lst in lists}
     person = _person_for_user(
-        hass, llm_context.context.user_id if llm_context.context else None
+        hass,
+        llm_context.context.user_id if llm_context.context else None,
+        manager.excluded_persons,
     )
     area_id = _area_for_device(hass, llm_context.device_id)
 

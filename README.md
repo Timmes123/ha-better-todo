@@ -53,7 +53,8 @@ a fixed schedule. Real life needs more:
   the task in their personal view; completing it completes it for all. Or check
   **Rotate** and the task belongs to exactly one person at a time, moving on after every
   completion. A "logged-in user" filter gives every family member their own view without
-  per-user dashboards.
+  per-user dashboards. Guests or other `person` entities that should never get tasks can
+  be excluded under *Configure → Persons*.
 - **Multiple lists** with in-card management (create, rename, reorder via drag & drop
   or arrow buttons, delete), **tags** with filter chips and a tap-to-reuse tag picker,
   subtasks, optional priorities (3 or 5 levels).
@@ -247,6 +248,8 @@ once under *Settings → Devices & Services → Better ToDo → Configure → No
 - Pick a **notify service per person** (e.g. the Companion App device,
   `notify.mobile_app_…`). The dash means "no notifications for this person".
 - Optionally let **tasks without an assignment** go to every configured person.
+- **Time format in notifications**: 24-hour (default) or 12-hour ("2:30 PM"). The card
+  itself always follows each user's own 12/24-hour setting from their HA profile.
 
 Two independent mechanisms build on that mapping:
 

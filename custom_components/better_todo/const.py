@@ -64,6 +64,17 @@ LOCATION_MODES = [LOCATION_MODE_INSIDE, LOCATION_MODE_OUTSIDE]
 CONF_NOTIFY_TARGETS = "notify_targets"  # {person_entity_id: notify service name}
 CONF_NOTIFY_UNASSIGNED_ALL = "notify_unassigned_all"
 NOTIFY_NONE = "-"
+# Clock format of times in notification texts. The backend cannot see the
+# per-user 12/24-hour profile setting (the card follows that one itself).
+CONF_TIME_FORMAT = "time_format"
+TIME_FORMAT_24 = "24"
+TIME_FORMAT_12 = "12"
+TIME_FORMAT_CHOICES = [TIME_FORMAT_24, TIME_FORMAT_12]
+DEFAULT_TIME_FORMAT = TIME_FORMAT_24
+
+# Options: person entities that cannot be assigned (guests etc.). They are
+# hidden everywhere; confirming the exclusion removes them from all tasks.
+CONF_EXCLUDED_PERSONS = "excluded_persons"
 
 # Options: daily summary of open tasks.
 CONF_SUMMARY_ENABLED = "summary_enabled"

@@ -16,6 +16,7 @@
         "title": "Options de Better ToDo",
         "menu_options": {
           "features": "Fonctionnalités",
+          "persons": "Personnes",
           "notifications": "Notifications",
           "voice": "Assistants vocaux"
         }
@@ -38,6 +39,17 @@
           "priority_levels": "3 = haute/moyenne/basse, 5 = de la plus haute à la plus basse (1 est toujours la plus importante)."
         }
       },
+      "persons": {
+        "title": "Personnes",
+        "description": "Les personnes exclues ne peuvent plus être assignées et sont masquées partout : dans la carte, dans les notifications et pour les assistants vocaux. Les personnes ajoutées plus tard à Home Assistant sont incluses automatiquement.",
+        "data": {
+          "excluded_persons": "Personnes exclues"
+        }
+      },
+      "persons_confirm": {
+        "title": "Retirer des tâches ?",
+        "description": "Ces personnes figurent encore dans {count} tâche(s) : {persons}\n\n{tasks}\n\nEn validant, elles sont retirées de toutes ces tâches (assignation et rotation). Cette action est irréversible ; l'historique des tâches terminées est conservé. Fermez cette fenêtre pour annuler."
+      },
       "notifications": {
         "title": "Notifications",
         "description": "Service de notification par personne. Les rappels et le résumé quotidien sont envoyés aux personnes attribuées. Le tiret signifie : aucune notification pour cette personne. Les tâches hebdomadaires et mensuelles n'apparaissent dans le résumé que peu avant la fin de leur période.",
@@ -45,7 +57,11 @@
           "notify_unassigned_all": "Envoyer les tâches sans attribution à toutes les personnes configurées",
           "summary_enabled": "Envoyer un résumé quotidien des tâches ouvertes",
           "summary_time": "Heure du résumé",
-          "summary_persistent": "Afficher aussi le résumé dans le centre de notifications de HA"
+          "summary_persistent": "Afficher aussi le résumé dans le centre de notifications de HA",
+          "time_format": "Format de l'heure dans les notifications"
+        },
+        "data_description": {
+          "time_format": "La carte suit le réglage 12/24 heures du profil de chaque utilisateur."
         }
       },
       "voice": {
@@ -62,6 +78,12 @@
       "options": {
         "3": "3 niveaux (haute, moyenne, basse)",
         "5": "5 niveaux (de la plus haute à la plus basse)"
+      }
+    },
+    "time_format": {
+      "options": {
+        "24": "24 heures (14:30)",
+        "12": "12 heures (2:30 PM)"
       }
     }
   },

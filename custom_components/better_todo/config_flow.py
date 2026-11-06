@@ -21,6 +21,8 @@ from homeassistant.helpers import (
 )
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -28,6 +30,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_EXCLUDED_PERSONS,
     CONF_LLM_AREA_LISTS,
     CONF_LLM_DEFAULT_LIST,
     CONF_LLM_PERSON_LISTS,
@@ -37,13 +40,28 @@ from .const import (
     CONF_SUMMARY_ENABLED,
     CONF_SUMMARY_PERSISTENT,
     CONF_SUMMARY_TIME,
+    CONF_TIME_FORMAT,
     DEFAULT_FEATURES,
     DEFAULT_PRIORITY_LEVELS,
     DEFAULT_SUMMARY_TIME,
+    DEFAULT_TIME_FORMAT,
     DOMAIN,
     NOTIFY_NONE,
     PRIORITY_LEVEL_CHOICES,
+    TIME_FORMAT_CHOICES,
 )
+
+# Task titles listed in the "remove from tasks?" warning.
+CONFIRM_MAX_TITLES = 10
+
+
+def _active_persons(hass: HomeAssistant, options) -> list:
+    """Person states that are not excluded, sorted by name."""
+    excluded = set(options.get(CONF_EXCLUDED_PERSONS) or [])
+    return sorted(
+        (s for s in hass.states.async_all("person") if s.entity_id not in excluded),
+        key=lambda s: (s.name or s.entity_id).casefold(),
+    )
 
 
 class BetterTodoConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -78,7 +96,8 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         return self.async_show_menu(
-            step_id="init", menu_options=["features", "notifications", "voice"]
+            step_id="init",
+            menu_options=["features", "persons", "notifications", "voice"],
         )
 
     async def async_step_features(
@@ -113,10 +132,7 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        persons = sorted(
-            self.hass.states.async_all("person"),
-            key=lambda s: (s.name or s.entity_id).casefold(),
-        )
+        persons = _active_persons(self.hass, self.config_entry.options)
         if user_input is not None:
             targets = {
                 entity_id: service
@@ -136,6 +152,9 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
                     ),
                     CONF_SUMMARY_PERSISTENT: bool(
                         user_input.get(CONF_SUMMARY_PERSISTENT)
+                    ),
+                    CONF_TIME_FORMAT: user_input.get(
+                        CONF_TIME_FORMAT, DEFAULT_TIME_FORMAT
                     ),
                 }
             )
@@ -173,9 +192,87 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
                 default=bool(options.get(CONF_SUMMARY_PERSISTENT)),
             )
         ] = bool
+        time_format = options.get(CONF_TIME_FORMAT, DEFAULT_TIME_FORMAT)
+        if time_format not in TIME_FORMAT_CHOICES:
+            time_format = DEFAULT_TIME_FORMAT
+        schema_dict[vol.Optional(CONF_TIME_FORMAT, default=time_format)] = (
+            SelectSelector(
+                SelectSelectorConfig(
+                    options=TIME_FORMAT_CHOICES,
+                    mode=SelectSelectorMode.DROPDOWN,
+                    translation_key=CONF_TIME_FORMAT,
+                )
+            )
+        )
         return self.async_show_form(
             step_id="notifications", data_schema=vol.Schema(schema_dict)
         )
+
+    async def async_step_persons(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Persons that cannot be assigned. If any of them still appears in
+        tasks, a confirmation step warns that they will be removed there."""
+        manager = self.hass.data.get(DOMAIN)
+        if user_input is not None:
+            self._excluded = sorted(set(user_input.get(CONF_EXCLUDED_PERSONS) or []))
+            if manager and manager.persons_in_tasks(self._excluded):
+                return await self.async_step_persons_confirm()
+            return self._save_excluded()
+        current = [
+            p for p in (self.config_entry.options.get(CONF_EXCLUDED_PERSONS) or [])
+            if self.hass.states.get(p) is not None
+        ]
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_EXCLUDED_PERSONS, default=current): EntitySelector(
+                    EntitySelectorConfig(domain="person", multiple=True)
+                )
+            }
+        )
+        return self.async_show_form(step_id="persons", data_schema=schema)
+
+    async def async_step_persons_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        manager = self.hass.data.get(DOMAIN)
+        if user_input is not None:
+            if manager:
+                manager.remove_persons(self._excluded)
+                await manager.async_save_now()
+            return self._save_excluded()
+        used = manager.persons_in_tasks(self._excluded) if manager else []
+        tasks = manager.tasks_with_persons(self._excluded) if manager else []
+        names = []
+        for person_id in used:
+            state = self.hass.states.get(person_id)
+            names.append(state.name if state and state.name else person_id)
+        titles = [f"- {t.get('title') or '?'}" for t in tasks[:CONFIRM_MAX_TITLES]]
+        if len(tasks) > CONFIRM_MAX_TITLES:
+            titles.append(f"- … (+{len(tasks) - CONFIRM_MAX_TITLES})")
+        return self.async_show_form(
+            step_id="persons_confirm",
+            data_schema=vol.Schema({}),
+            description_placeholders={
+                "persons": ", ".join(names),
+                "count": str(len(tasks)),
+                "tasks": "\n".join(titles),
+            },
+        )
+
+    def _save_excluded(self) -> ConfigFlowResult:
+        """Store the exclusion and drop the per-person settings of the
+        excluded persons (notify target, voice list rule)."""
+        excluded = set(self._excluded)
+        options = dict(self.config_entry.options)
+        options[CONF_EXCLUDED_PERSONS] = list(self._excluded)
+        for key in (CONF_NOTIFY_TARGETS, CONF_LLM_PERSON_LISTS):
+            per_person = options.get(key)
+            if isinstance(per_person, dict):
+                options[key] = {
+                    k: v for k, v in per_person.items() if k not in excluded
+                }
+        return self.async_create_entry(data=options)
 
     async def async_step_voice(
         self, user_input: dict[str, Any] | None = None
@@ -216,11 +313,7 @@ class BetterTodoOptionsFlow(OptionsFlowWithReload):
                 {"": NOTIFY_NONE, **list_choices}
             )
         }
-        persons = sorted(
-            self.hass.states.async_all("person"),
-            key=lambda s: (s.name or s.entity_id).casefold(),
-        )
-        for state in persons:
+        for state in _active_persons(self.hass, options):
             current = [i for i in person_rules.get(state.entity_id, []) if i in list_choices]
             schema_dict[vol.Optional(state.entity_id, default=current)] = cv.multi_select(
                 list_choices

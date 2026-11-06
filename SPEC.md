@@ -44,6 +44,27 @@ Skala: von „dumme Liste" bis Vollausbau.
 | Kalender-Entities | an | `calendar`-Entity pro Liste; Aufgaben mit Fälligkeit erscheinen im HA-Kalender, wiederholende auf jedem Termin |
 | Benachrichtigungen | — | über Erinnerungs-Events + eigene Automation (kein eigener Schalter nötig) |
 
+**Ausgeschlossene Personen** (Options-Seite „Personen", v1.1.0, Issue #17): `person`-Entities,
+die nie zugewiesen werden (Gäste o. Ä.). Ausschlussliste statt Erlaubtliste, später
+hinzugefügte Personen sind also automatisch dabei. Ausgeschlossene Personen fehlen überall:
+Karte (Filter, Zuweisung, Rotation), Benachrichtigungs- und Sprachassistenten-Optionen,
+Namensauflösung der Services/LLM-Tools, Ersatzziel unzugewiesener Ortserinnerungen.
+Services lehnen das *neue* Zuweisen einer ausgeschlossenen Person ab. Kommt eine
+auszuschließende Person noch in Aufgaben vor, zeigt der Options-Flow einen Warnschritt
+(Anzahl + Titel); Bestätigen entfernt sie aus Zuweisung und Rotationspool aller Aufgaben
+(war sie in der Rotation dran, übernimmt die nächste verbleibende Person; bleibt nur eine
+übrig, wird daraus eine feste Zuweisung), dazu ihre Benachrichtigungsziel- und
+Sprachassistenten-Einträge sowie wartende Ortserinnerungen. Der Erledigt-Verlauf bleibt
+unverändert. Wieder aufnehmen stellt alte Zuweisungen bewusst nicht wieder her
+(Entscheidung des Users 2026-11-06: „wer bestätigt, ist selbst schuld").
+
+**Uhrzeitformat** (v1.1.0, Issue #18): Die Karte formatiert Uhrzeiten nach der
+12/24-Stunden-Einstellung im HA-Profil des Nutzers (`hass.locale.time_format`, wie HA
+selbst: 24 h zweistellig „09:05", 12 h „9:05 AM"). Benachrichtigungstexte erzeugt das
+Backend, das die Profileinstellung nicht kennt: Option „Uhrzeitformat in
+Benachrichtigungen" (24 h Standard / 12 h). Kalender- und Todo-Spiegel formatiert HA
+selbst; LLM-Tools bekommen weiterhin HH:MM (24 h).
+
 ## 3. Datenmodell
 
 ### 3.1 Liste

@@ -18,12 +18,14 @@ from . import engine
 from homeassistant.components import persistent_notification
 
 from .const import (
+    CONF_EXCLUDED_PERSONS,
     CONF_NOTIFY_TARGETS,
     CONF_NOTIFY_UNASSIGNED_ALL,
     CONF_PRIORITY_LEVELS,
     CONF_SUMMARY_ENABLED,
     CONF_SUMMARY_PERSISTENT,
     CONF_SUMMARY_TIME,
+    CONF_TIME_FORMAT,
     DEFAULT_FEATURES,
     DEFAULT_PRIORITY_LEVELS,
     DEFAULT_REMINDER_TIME,
@@ -47,6 +49,7 @@ from .const import (
     TASK_TYPE_SCHEDULED,
     TASK_TYPE_SIMPLE,
     TASK_TYPES,
+    TIME_FORMAT_12,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -153,6 +156,12 @@ class BetterTodoManager:
             levels = 0
         return levels if levels in PRIORITY_LEVEL_CHOICES else DEFAULT_PRIORITY_LEVELS
 
+    @property
+    def excluded_persons(self) -> set[str]:
+        """Person entities that must not be assigned (options)."""
+        excluded = (self.entry.options or {}).get(CONF_EXCLUDED_PERSONS) or []
+        return {str(p) for p in excluded} if isinstance(excluded, list) else set()
+
     def _today(self) -> date:
         return dt_util.now().date()
 
@@ -239,6 +248,7 @@ class BetterTodoManager:
         )
 
     def _persons(self) -> list[dict]:
+        excluded = self.excluded_persons
         return [
             {
                 "entity_id": state.entity_id,
@@ -249,7 +259,85 @@ class BetterTodoManager:
             for state in sorted(
                 self.hass.states.async_all("person"), key=lambda s: s.name or ""
             )
+            if state.entity_id not in excluded
         ]
+
+    # ------------------------------------------------------------- persons
+
+    @staticmethod
+    def _task_persons(task: dict) -> set[str]:
+        persons = set(task.get("assigned_to") or [])
+        rotation = task.get("rotation")
+        if isinstance(rotation, dict):
+            persons.update(rotation.get("persons") or [])
+        return persons
+
+    def tasks_with_persons(self, person_ids) -> list[dict]:
+        """Tasks in which any of the given persons is assigned or part of
+        the rotation pool."""
+        wanted = set(person_ids)
+        return [t for t in self.data["tasks"] if self._task_persons(t) & wanted]
+
+    def persons_in_tasks(self, person_ids) -> list[str]:
+        """The given persons that appear in at least one task."""
+        wanted = set(person_ids)
+        used: set[str] = set()
+        for task in self.data["tasks"]:
+            used |= self._task_persons(task) & wanted
+        return sorted(used)
+
+    def remove_persons(self, person_ids) -> int:
+        """Remove persons from every task's assignment and rotation pool
+        (the completion history stays as it was). Returns the number of
+        changed tasks.
+
+        Rotation: if the current person is removed, the next remaining one
+        in pool order takes over; a pool left with one person becomes a
+        plain assignment to that person."""
+        removed = set(person_ids)
+        changed = 0
+        for task in self.data["tasks"]:
+            if not self._task_persons(task) & removed:
+                continue
+            changed += 1
+            rotation = task.get("rotation")
+            pool = list(rotation.get("persons") or []) if isinstance(rotation, dict) else []
+            if pool:
+                try:
+                    index = int(rotation.get("index") or 0) % len(pool)
+                except (ValueError, TypeError):
+                    index = 0
+                remaining = [p for p in pool if p not in removed]
+                # The current person, or the next one after them who stays.
+                order = [pool[(index + k) % len(pool)] for k in range(len(pool))]
+                current = next((p for p in order if p not in removed), None)
+                if len(remaining) >= 2:
+                    rotation["persons"] = remaining
+                    rotation["index"] = remaining.index(current)
+                    task["assigned_to"] = [current]
+                else:
+                    task["rotation"] = None
+                    task["assigned_to"] = remaining
+            else:
+                task["assigned_to"] = [
+                    p for p in (task.get("assigned_to") or []) if p not in removed
+                ]
+        # Held location reminders no longer wait for removed persons.
+        pending_changed = False
+        for task_id, pending in list(self._pending_location.items()):
+            persons = pending.get("persons")
+            if isinstance(persons, list) and set(persons) & removed:
+                left = [p for p in persons if p not in removed]
+                if left:
+                    pending["persons"] = left
+                else:
+                    del self._pending_location[task_id]
+                pending_changed = True
+        if pending_changed:
+            self._persist_reminder_state()
+        if changed:
+            self._save_notify()
+        return changed
 
     # ------------------------------------------------------------- lists
 
@@ -329,6 +417,16 @@ class BetterTodoManager:
                 task[key] = data[key]
 
         self._validate_task(task)
+        # Excluded persons cannot be newly assigned (a task that still holds
+        # one from before stays editable).
+        excluded = self.excluded_persons
+        if excluded:
+            before = self._task_persons(existing) if existing is not None else set()
+            blocked = sorted((self._task_persons(task) - before) & excluded)
+            if blocked:
+                raise BetterTodoError(
+                    f"Excluded from assignment: {', '.join(blocked)}"
+                )
 
         # A leading '#' (as typed in the card) is not part of the tag.
         task["tags"] = sorted(
@@ -836,8 +934,10 @@ class BetterTodoManager:
         waiting None = nobody matches yet."""
         if persons is None:
             targets = self.entry.options.get(CONF_NOTIFY_TARGETS) or {}
-            candidates = list(targets) or [
+            excluded = self.excluded_persons
+            candidates = [p for p in targets if p not in excluded] or [
                 s.entity_id for s in self.hass.states.async_all("person")
+                if s.entity_id not in excluded
             ]
             if not candidates or any(self._condition_met(task, p) for p in candidates):
                 return None, []
@@ -1040,7 +1140,7 @@ class BetterTodoManager:
                 title = "Aufgabe fällig" if offset == 0 else "Erinnerung"
                 message = f"{task['title']} — fällig am {date_str}"
             if due_time:
-                message += f" um {due_time} Uhr"
+                message += f" um {self._fmt_time(due_time, lang)}"
         elif lang == "fr":
             if offset < 0:
                 title = "Tâche en retard"
@@ -1050,7 +1150,7 @@ class BetterTodoManager:
                 title = "Tâche à faire" if offset == 0 else "Rappel"
                 message = f"{task['title']} — prévue le {date_str}"
             if due_time:
-                message += f" à {due_time}"
+                message += f" à {self._fmt_time(due_time, lang)}"
         else:
             if offset < 0:
                 title = "Task overdue"
@@ -1060,7 +1160,7 @@ class BetterTodoManager:
                 title = "Task due" if offset == 0 else "Reminder"
                 message = f"{task['title']} — due {date_str}"
             if due_time:
-                message += f" at {due_time}"
+                message += f" at {self._fmt_time(due_time, lang)}"
         for service in dict.fromkeys(services):
             try:
                 await self.hass.services.async_call(
@@ -1101,9 +1201,10 @@ class BetterTodoManager:
         elif kind == "due":
             due_time = task.get("due_time")
             if due_time:
+                at = self._fmt_time(due_time, lang)
                 suffix = {
-                    "de": f"heute {due_time} Uhr", "fr": f"aujourd'hui à {due_time}",
-                }.get(lang, f"today {due_time}")
+                    "de": f"heute {at}", "fr": f"aujourd'hui à {at}",
+                }.get(lang, f"today {at}")
             else:
                 suffix = {"de": "heute fällig", "fr": "à faire aujourd'hui"}.get(lang, "due today")
         else:
@@ -1115,6 +1216,18 @@ class BetterTodoManager:
             else:
                 suffix = "this week" if week else "this month"
         return f"- {task['title']} ({suffix})"
+
+    def _fmt_time(self, hhmm: str, lang: str) -> str:
+        """A due time for notification texts in the configured clock format:
+        24 h '14:30' (German '14:30 Uhr'), 12 h '2:30 PM'."""
+        parsed = self._parse_hhmm(hhmm)
+        if parsed is None:
+            return str(hhmm)
+        hour, minute = parsed
+        if (self.entry.options or {}).get(CONF_TIME_FORMAT) == TIME_FORMAT_12:
+            return f"{(hour % 12) or 12}:{minute:02d} {'AM' if hour < 12 else 'PM'}"
+        text = f"{hour:02d}:{minute:02d}"
+        return f"{text} Uhr" if lang == "de" else text
 
     def _lang(self) -> str:
         """Notification language: 'de', 'fr' or 'en' (fallback)."""

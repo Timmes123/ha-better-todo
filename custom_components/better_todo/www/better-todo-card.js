@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.1.0";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
@@ -1040,7 +1040,7 @@ class BetterTodoCard extends HTMLElement {
     const doneish = s === "done" || s === "period_done";
     const expanded = this._ui.expanded === task.id;
     const badges = [];
-    const timeSuffix = task.due_time ? ` · ${esc(task.due_time)}` : "";
+    const timeSuffix = task.due_time ? ` · ${esc(this._fmtTime(task.due_time))}` : "";
 
     if (this._show("show_due")) {
       if (s === "overdue" && c.due_count > 1) badges.push(`<span class="badge err">${esc(t.times_due(c.due_count))}</span>`);
@@ -1152,6 +1152,31 @@ class BetterTodoCard extends HTMLElement {
       if (iso.slice(0, 4) !== this._todayIso().slice(0, 4)) opts.year = "numeric";
       return new Date(iso + "T00:00:00").toLocaleDateString(this._hass?.locale?.language || "en", opts);
     } catch { return iso; }
+  }
+
+  // A stored "HH:MM" in the clock format of the user's HA profile
+  // (locale.time_format: "language" | "system" | "12" | "24").
+  _fmtTime(hhmm) {
+    if (!hhmm) return "";
+    const [h, m] = String(hhmm).split(":").map(Number);
+    if (!Number.isInteger(h) || !Number.isInteger(m)) return hhmm;
+    const mode = this._hass?.locale?.time_format || "language";
+    const lang = mode === "system" ? undefined : (this._hass?.locale?.language || "en");
+    const key = `${mode}|${lang}`;
+    try {
+      // cached: constructing Intl.DateTimeFormat is expensive and this runs
+      // for every task with a due time on every render
+      if (this._timeFmtKey !== key) {
+        // Like HA itself: 12 h as "2:30 PM", 24 h with two-digit hours "09:05".
+        const amPm = mode === "12" || (mode !== "24"
+          && /h1[12]/.test(new Intl.DateTimeFormat(lang, { hour: "numeric" }).resolvedOptions().hourCycle || ""));
+        this._timeFmt = new Intl.DateTimeFormat(lang, {
+          hour: amPm ? "numeric" : "2-digit", minute: "2-digit", hourCycle: amPm ? "h12" : "h23",
+        });
+        this._timeFmtKey = key;
+      }
+      return this._timeFmt.format(new Date(2000, 0, 1, h, m));
+    } catch { return hhmm; }
   }
 
   // ------------------------------------------------------------- events

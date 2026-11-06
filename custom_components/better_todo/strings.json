@@ -16,7 +16,9 @@
         "title": "Better ToDo options",
         "menu_options": {
           "features": "Features",
-          "notifications": "Notifications"
+          "persons": "Persons",
+          "notifications": "Notifications",
+          "voice": "Voice assistants"
         }
       },
       "features": {
@@ -37,6 +39,17 @@
           "priority_levels": "3 = high/medium/low, 5 = highest to lowest (1 is always the most important)."
         }
       },
+      "persons": {
+        "title": "Persons",
+        "description": "Excluded persons can no longer be assigned and are hidden everywhere: in the card, in notifications and for voice assistants. Persons added to Home Assistant later are included automatically.",
+        "data": {
+          "excluded_persons": "Excluded persons"
+        }
+      },
+      "persons_confirm": {
+        "title": "Remove from tasks?",
+        "description": "These persons are still used in {count} task(s): {persons}\n\n{tasks}\n\nWhen you submit, they are removed from all of these tasks (assignment and rotation). This cannot be undone; the completion history stays. Close this dialog to cancel."
+      },
       "notifications": {
         "title": "Notifications",
         "description": "Notification service per person. Reminders and the daily summary are sent to the assigned persons. The dash means: no notifications for this person. Weekly and monthly tasks only enter the summary shortly before their period ends.",
@@ -44,7 +57,18 @@
           "notify_unassigned_all": "Send tasks without assignment to every configured person",
           "summary_enabled": "Send a daily summary of open tasks",
           "summary_time": "Summary time",
-          "summary_persistent": "Also show the summary in the HA notification center"
+          "summary_persistent": "Also show the summary in the HA notification center",
+          "time_format": "Time format in notifications"
+        },
+        "data_description": {
+          "time_format": "The card follows each user's own 12/24-hour profile setting."
+        }
+      },
+      "voice": {
+        "title": "Voice assistants & LLM agents",
+        "description": "Settings for the Better ToDo tool set that conversation agents can use (enable it in the agent's settings under \"Control Home Assistant\"). The default list receives new tasks when no list is named. One row per person and per area with an Assist satellite: the lists this person or area may read and change. Nothing selected = all lists. A rule for the person who is talking wins over a rule for the satellite's area.",
+        "data": {
+          "llm_default_list": "Default list for new tasks"
         }
       }
     }
@@ -54,6 +78,12 @@
       "options": {
         "3": "3 levels (high, medium, low)",
         "5": "5 levels (highest to lowest)"
+      }
+    },
+    "time_format": {
+      "options": {
+        "24": "24-hour (14:30)",
+        "12": "12-hour (2:30 PM)"
       }
     }
   },
@@ -89,6 +119,10 @@
         "priority": {
           "name": "Max. priority",
           "description": "Only tasks with a priority of this value or more important (1 = most important)."
+        },
+        "sort": {
+          "name": "Sort",
+          "description": "priority = priority, then due date; due = due date first. Without it the stored order is kept."
         }
       }
     },

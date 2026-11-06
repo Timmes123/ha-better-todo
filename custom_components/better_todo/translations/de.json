@@ -16,6 +16,7 @@
         "title": "Better ToDo Optionen",
         "menu_options": {
           "features": "Funktionen",
+          "persons": "Personen",
           "notifications": "Benachrichtigungen",
           "voice": "Sprachassistenten"
         }
@@ -38,6 +39,17 @@
           "priority_levels": "3 = hoch/mittel/niedrig, 5 = höchste bis niedrigste (1 ist immer die wichtigste)."
         }
       },
+      "persons": {
+        "title": "Personen",
+        "description": "Ausgeschlossene Personen können nicht mehr zugewiesen werden und sind überall ausgeblendet: in der Karte, bei Benachrichtigungen und für Sprachassistenten. Personen, die später in Home Assistant dazukommen, sind automatisch dabei.",
+        "data": {
+          "excluded_persons": "Ausgeschlossene Personen"
+        }
+      },
+      "persons_confirm": {
+        "title": "Aus Aufgaben entfernen?",
+        "description": "Diese Personen sind noch in {count} Aufgabe(n) eingetragen: {persons}\n\n{tasks}\n\nBeim Absenden werden sie aus all diesen Aufgaben entfernt (Zuweisung und Rotation). Das lässt sich nicht rückgängig machen; der Erledigt-Verlauf bleibt erhalten. Zum Abbrechen diesen Dialog schließen."
+      },
       "notifications": {
         "title": "Benachrichtigungen",
         "description": "Benachrichtigungsdienst je Person. Erinnerungen und die tägliche Zusammenfassung gehen an die zugewiesenen Personen. Der Strich bedeutet: keine Benachrichtigung für diese Person. Wochen- und Monatsaufgaben erscheinen in der Zusammenfassung erst kurz vor Ende ihres Zeitraums.",
@@ -45,7 +57,11 @@
           "notify_unassigned_all": "Aufgaben ohne Zuweisung an alle konfigurierten Personen melden",
           "summary_enabled": "Tägliche Zusammenfassung offener Aufgaben senden",
           "summary_time": "Uhrzeit der Zusammenfassung",
-          "summary_persistent": "Zusammenfassung auch in der HA-Benachrichtigungszentrale anzeigen"
+          "summary_persistent": "Zusammenfassung auch in der HA-Benachrichtigungszentrale anzeigen",
+          "time_format": "Uhrzeitformat in Benachrichtigungen"
+        },
+        "data_description": {
+          "time_format": "Die Karte richtet sich nach der 12/24-Stunden-Einstellung im Profil des jeweiligen Nutzers."
         }
       },
       "voice": {
@@ -62,6 +78,12 @@
       "options": {
         "3": "3 Stufen (hoch, mittel, niedrig)",
         "5": "5 Stufen (höchste bis niedrigste)"
+      }
+    },
+    "time_format": {
+      "options": {
+        "24": "24 Stunden (14:30)",
+        "12": "12 Stunden (2:30 PM)"
       }
     }
   },
