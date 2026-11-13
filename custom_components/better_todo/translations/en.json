@@ -343,6 +343,44 @@
           "description": "Deliver reminders only while the person is inside (or outside) a zone, otherwise hold them until they enter (or leave) it: zone = zone entity, mode = inside or outside. Empty removes the condition."
         }
       }
+    },
+    "set_filters": {
+      "name": "Set shared filters",
+      "description": "Changes the shared filters of all cards that use the same sync group, on every device. Only the fields you pass are changed.",
+      "fields": {
+        "group": {
+          "name": "Sync group",
+          "description": "Name of the sync group, as entered in the cards."
+        },
+        "show_completed": {
+          "name": "Show completed",
+          "description": "Show completed tasks."
+        },
+        "show_upcoming": {
+          "name": "Show upcoming",
+          "description": "Show tasks that are not visible yet."
+        },
+        "due_soon": {
+          "name": "Due only",
+          "description": "Only show tasks that are due within the card's lead time."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Only tasks with at least one of these tags. Empty = no tag filter."
+        },
+        "sort": {
+          "name": "Sort",
+          "description": "Sort order of the cards."
+        },
+        "assigned_to": {
+          "name": "Assigned to",
+          "description": "Person entity or name, all, or me_unassigned (logged-in user + unassigned). Only used by cards that share the person filter."
+        },
+        "reset": {
+          "name": "Reset first",
+          "description": "Drop all shared filters of the group first, so the cards return to their own defaults."
+        }
+      }
     }
   }
 }

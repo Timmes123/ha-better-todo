@@ -343,6 +343,44 @@
           "description": "N'envoyer les rappels que lorsque la personne est dans (ou hors d')une zone, sinon les retenir jusqu'à ce qu'elle y entre (ou en sorte) : zone = entité zone, mode = inside ou outside. Vide pour supprimer la condition."
         }
       }
+    },
+    "set_filters": {
+      "name": "Définir les filtres partagés",
+      "description": "Modifie les filtres partagés de toutes les cartes du même groupe de synchronisation, sur chaque appareil. Seuls les champs transmis sont modifiés.",
+      "fields": {
+        "group": {
+          "name": "Groupe de synchronisation",
+          "description": "Nom du groupe de synchronisation, tel que saisi dans les cartes."
+        },
+        "show_completed": {
+          "name": "Afficher terminées",
+          "description": "Afficher les tâches terminées."
+        },
+        "show_upcoming": {
+          "name": "Afficher à venir",
+          "description": "Afficher les tâches qui ne sont pas encore visibles."
+        },
+        "due_soon": {
+          "name": "Échéances uniquement",
+          "description": "Afficher uniquement les tâches à échéance dans le délai de la carte."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Uniquement les tâches ayant au moins un de ces tags. Vide = aucun filtre de tags."
+        },
+        "sort": {
+          "name": "Tri",
+          "description": "Ordre de tri des cartes."
+        },
+        "assigned_to": {
+          "name": "Assignée à",
+          "description": "Entité personne ou nom, all, ou me_unassigned (utilisateur connecté + non assignées). Utilisé uniquement par les cartes qui partagent le filtre de personne."
+        },
+        "reset": {
+          "name": "Réinitialiser d'abord",
+          "description": "Supprimer d'abord tous les filtres partagés du groupe, afin que les cartes reprennent leurs propres valeurs par défaut."
+        }
+      }
     }
   }
 }

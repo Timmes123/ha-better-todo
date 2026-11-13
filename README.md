@@ -72,7 +72,8 @@ a fixed schedule. Real life needs more:
   lowest); 1 is always the most important.
 - **Custom dashboard card** shipped with the integration (auto-registered, no extra
   install): filters, sorting, drag & drop, card menu with bulk actions, visual config
-  editor, 7 languages (EN/DE/FR/ES/IT/NL/PL), fully theme-aware.
+  editor, 7 languages (EN/DE/FR/ES/IT/NL/PL), fully theme-aware. Several cards can
+  **share their filters** — one tap changes all of them, on every device.
 
 ## Installation
 
@@ -132,7 +133,7 @@ works the same way: tap the persons, and with 2+ selected on a recurring task a
 Everything is configurable in the **visual editor** — no YAML needed: edit your
 dashboard, *Add card*, search for *Better ToDo* and the editor opens. It is organised in
 groups: **Title / List / Tags / Assigned to / Sort** at the top, then *Display*,
-*Filters*, *Badges on tasks*, *Behavior* and *Advanced* (custom CSS). The option table
+*Filters*, *Shared filters*, *Badges on tasks*, *Behavior* and *Advanced* (custom CSS). The option table
 below names the editor label next to each YAML key.
 
 Prefer YAML? Every option maps 1:1. The minimal card:
@@ -170,6 +171,44 @@ cards:
     lists: [Healthy Week]
 ```
 
+### Shared filters across cards and devices
+
+Normally the filters in the card menu (show completed, show upcoming, due only, tags,
+sort) belong to that one card in that one browser and are gone after a reload. Give
+several cards the same **sync group** and they share these filters instead: change one
+in any of the cards and all cards of the group follow — on the phone, the laptop and
+every wall tablet, and it survives reloads and restarts.
+
+In the editor: *Shared filters → Sync group*, enter the same name (for example `rooms`)
+in every card that should follow. Two optional switches sit right below:
+
+- **Filter bar only (no tasks)** turns a card into a control panel: it shows just the
+  filter bar for its group, with a reset button once a filter is active. Put one of
+  these on top of a view with one card per room.
+- **Also share the person filter** — off by default, so "my tasks" on a phone does not
+  change what a wall tablet shows.
+
+A shared filter overrides the defaults of each card (*Filters* group) until it is
+reset; the list chips always stay per card. The same in YAML:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: custom:better-todo-card
+    title: Filters
+    sync_group: rooms
+    filters_only: true
+  - type: custom:better-todo-card
+    lists: [Kitchen]
+    sync_group: rooms
+  - type: custom:better-todo-card
+    lists: [Bathroom]
+    sync_group: rooms
+```
+
+Automations can set the same filters, see
+[`better_todo.set_filters`](#shared-filters-better_todoset_filters).
+
 ### All card options
 
 | YAML key | In the editor | Default | Description |
@@ -193,6 +232,9 @@ cards:
 | `due_soon` | Filters › Due only | `false` | Start with the "due only" filter active |
 | `due_soon_days` | Filters › Due lead time (days) | `7` | Lead time in days for the "due only" filter |
 | `upcoming_days` | Filters › Upcoming: horizon (days) | – | Horizon in days for `show_upcoming` (empty = no limit); tasks visible through their own lead window are unaffected |
+| `sync_group` | Shared filters › Sync group | – | Cards with the same group name share their menu filters on all devices, see [above](#shared-filters-across-cards-and-devices) |
+| `sync_person` | Shared filters › Also share the person filter | `false` | Share the person filter with the group as well |
+| `filters_only` | Shared filters › Filter bar only (no tasks) | `false` | Show only the filter bar — a control card for its sync group |
 | `show_due` | Badges › Due date / status | `true` | Due/overdue/upcoming badge |
 | `show_priority` | Badges › Priority | `true` | Priority badge |
 | `show_subtasks` | Badges › Subtasks | `true` | Subtask progress badge (☑ 1/3) |
@@ -331,7 +373,8 @@ built-in notifications and wire up your own automations if you prefer.
 ### Services
 
 In the automation editor, add an action and search for *Better ToDo* — the services
-appear as *Add task*, *Complete task*, *Skip task*, *Remove task* and *Update task*,
+appear as *Add task*, *Complete task*, *Skip task*, *Remove task*, *Update task*,
+*Get tasks* and *Set shared filters*,
 each with a form for its fields. The same in YAML:
 
 ```yaml
@@ -408,6 +451,33 @@ you pass — the same fields as `add_task` plus `new_title` and `new_list`. A pa
 
 The task id is shown (with a copy button) at the bottom of the task edit dialog and
 comes with every event below.
+
+### Shared filters: `better_todo.set_filters`
+
+Cards with a [sync group](#shared-filters-across-cards-and-devices) can be filtered by
+an automation as well. In the automation editor, add the action *Set shared filters*,
+enter the *Sync group* and fill in only the filters you want to change. The same in
+YAML:
+
+```yaml
+# Vacuum day: every room card shows only the vacuum tasks
+- action: better_todo.set_filters
+  data:
+    group: rooms
+    tags: vacuum
+    show_upcoming: true
+
+# Back to each card's own defaults
+- action: better_todo.set_filters
+  data:
+    group: rooms
+    reset: true
+```
+
+Fields: `show_completed`, `show_upcoming`, `due_soon` (booleans), `tags` (empty = no
+tag filter), `sort` (`smart`, `manual`, `due`, `priority`, `title`, `person`),
+`assigned_to` (person entity or name, `all` or `me_unassigned` — only used by cards
+that share the person filter) and `reset` (drop all shared filters of the group first).
 
 ### Reading tasks: `better_todo.get_tasks`
 

@@ -36,8 +36,13 @@ from .const import (
     EVENT_DUE,
     EVENT_OVERDUE,
     EVENT_REMINDER,
+    FILTER_BOOL_KEYS,
+    FILTER_KEYS,
+    FILTER_SORTS,
     LOCATION_MODE_INSIDE,
     LOCATION_MODES,
+    MAX_FILTER_GROUP_NAME,
+    MAX_FILTER_GROUPS,
     MAX_HISTORY,
     MAX_PRIORITY,
     PRIORITY_LEVEL_CHOICES,
@@ -91,6 +96,11 @@ class BetterTodoManager:
             self.data.setdefault("lists", [])
             self.data.setdefault("tasks", [])
             self.data.setdefault("history", [])
+        # Shared card filters (added in 1.2.0; older data simply has none).
+        # Stored values are untrusted: anything invalid is dropped.
+        self.data["filter_groups"] = self._load_filter_groups(
+            self.data.get("filter_groups")
+        )
         # Restore reminder/summary bookkeeping so a restart neither loses
         # reminders that fell into the downtime nor re-sends fired ones.
         # Stored meta is untrusted like everything else: corrupt values fall
@@ -234,6 +244,7 @@ class BetterTodoManager:
             "persons": self._persons(),
             "zones": self._zones(),
             "priority_levels": self.priority_levels,
+            "filter_groups": self.data.get("filter_groups") or {},
             "version": self.version,
         }
 
@@ -338,6 +349,96 @@ class BetterTodoManager:
         if changed:
             self._save_notify()
         return changed
+
+    # ------------------------------------------------------------- shared filters
+
+    @staticmethod
+    def _clean_filter(key: str, value):
+        """Validate one shared-filter value; raises BetterTodoError."""
+        if key not in FILTER_KEYS:
+            raise BetterTodoError(f"Unknown filter '{key}'")
+        if key in FILTER_BOOL_KEYS:
+            if not isinstance(value, bool):
+                raise BetterTodoError(f"Filter '{key}' must be true or false")
+            return value
+        if key == "tags":
+            if isinstance(value, str):
+                value = value.split(",")
+            if not isinstance(value, (list, tuple)):
+                raise BetterTodoError("Filter 'tags' must be a list")
+            tags: list[str] = []
+            for tag in value:
+                tag = str(tag).strip().lstrip("#").strip()
+                if tag and tag not in tags:
+                    tags.append(tag)
+            return tags
+        if key == "sort":
+            if value not in FILTER_SORTS:
+                raise BetterTodoError(f"Unknown sort mode '{value}'")
+            return value
+        # person: "all", "me_unassigned" or a person entity id
+        if not isinstance(value, str) or not value.strip() or len(value) > 255:
+            raise BetterTodoError("Filter 'person' must be a person entity id or 'all'")
+        return value.strip()
+
+    @staticmethod
+    def _filter_group_name(group) -> str:
+        name = str(group or "").strip()
+        if not name or len(name) > MAX_FILTER_GROUP_NAME:
+            raise BetterTodoError(
+                f"Filter group name must be 1-{MAX_FILTER_GROUP_NAME} characters"
+            )
+        return name
+
+    def _load_filter_groups(self, stored) -> dict[str, dict]:
+        groups: dict[str, dict] = {}
+        if not isinstance(stored, dict):
+            return groups
+        for name, filters in stored.items():
+            if not isinstance(filters, dict) or len(groups) >= MAX_FILTER_GROUPS:
+                continue
+            clean = {}
+            for key, value in filters.items():
+                try:
+                    clean[key] = self._clean_filter(key, value)
+                except BetterTodoError:
+                    continue
+            try:
+                name = self._filter_group_name(name)
+            except BetterTodoError:
+                continue
+            if clean:
+                groups[name] = clean
+        return groups
+
+    def set_filters(self, group, filters: dict | None, reset: bool = False) -> dict:
+        """Change the shared filter state of a card sync group.
+
+        `filters` holds only the keys to change; a value of None removes
+        that override again (cards fall back to their own default). With
+        `reset` every existing override is dropped first. Returns the new
+        state of the group."""
+        name = self._filter_group_name(group)
+        groups: dict[str, dict] = self.data.setdefault("filter_groups", {})
+        current = {} if reset else dict(groups.get(name) or {})
+        for key, value in (filters or {}).items():
+            if key not in FILTER_KEYS:
+                raise BetterTodoError(f"Unknown filter '{key}'")
+            if value is None:
+                current.pop(key, None)
+            else:
+                current[key] = self._clean_filter(key, value)
+        if current == (groups.get(name) or {}):
+            return current
+        if current:
+            if name not in groups and len(groups) >= MAX_FILTER_GROUPS:
+                raise BetterTodoError("Too many filter groups")
+            groups[name] = current
+        else:
+            groups.pop(name, None)
+        self._schedule_save()
+        self.notify()
+        return current
 
     # ------------------------------------------------------------- lists
 

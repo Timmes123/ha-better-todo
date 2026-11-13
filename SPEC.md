@@ -256,6 +256,24 @@ reagieren können.
   einmal angelegt, nur der Container-Inhalt wird neu gerendert — Fremd-Styles im
   Shadow-DOM überleben Updates.
 
+- (1.2.0, Issue #19, Entscheidung 2026-11-13) **Gemeinsame Filter / Sync-Gruppen**:
+  Karten mit derselben `sync_group` teilen ihre Menü-Filter (Erledigte, Kommende,
+  Nur fällige, Tags, Sortierung). Der Zustand liegt **im Backend** (Store-Schlüssel
+  `filter_groups`, persistent, abwärtskompatibel: fehlt in alten Daten einfach) und
+  kommt mit jedem Push an alle Karten — gilt damit geräte- und nutzerübergreifend
+  (Wandtablets). Gespeichert werden nur Abweichungen vom Karten-Standard; ein
+  gesetzter Gruppenwert schlägt den Config-Standard der einzelnen Karte, „Filter
+  zurücksetzen" löscht die Gruppe. Bewusst **nicht** geteilt: die Listen-Chips (jede
+  Karte hat ihre eigenen Listen) und standardmäßig der **Personenfilter** (sonst
+  ändert „meine Aufgaben" am Handy die Wandtablets) — per `sync_person` zuschaltbar.
+  `filters_only` macht aus einer Karte eine reine Filterleiste (Steuerkarte ohne
+  Aufgabenliste). Schnittstellen: WS `better_todo/set_filters` (jeder angemeldete
+  Nutzer, wie Aufgaben-Änderungen) und Service `better_todo.set_filters` (`group`,
+  Filterfelder, `reset`) für Automationen. Verworfen: Jinja-Templates in der
+  Karten-Config (nicht im Editor abbildbar, Nutzer müsste Helfer anlegen) und eine
+  reine Browser-Kopplung (nicht geräteübergreifend). Ohne `sync_group` bleibt alles
+  wie bisher: Menü-Filter leben nur in der einzelnen Karte bis zum Neuladen.
+
 ## 8. Ausbaustufen (Grobplan)
 
 1. ✅ **v0.2 MVP**: Listen, alle 4 Aufgabentypen, Wiederholungs-Engine, Historie,

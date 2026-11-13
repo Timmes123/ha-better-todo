@@ -18,7 +18,17 @@ from homeassistant.core import (
 from homeassistant.exceptions import ServiceValidationError
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN, LOCATION_MODES, MAX_PRIORITY, TASK_TYPES, TASK_TYPE_SIMPLE
+from .const import (
+    DOMAIN,
+    FILTER_BOOL_KEYS,
+    FILTER_PERSON_ALL,
+    FILTER_PERSON_ME_UNASSIGNED,
+    FILTER_SORTS,
+    LOCATION_MODES,
+    MAX_PRIORITY,
+    TASK_TYPES,
+    TASK_TYPE_SIMPLE,
+)
 from .manager import BetterTodoError, BetterTodoManager
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,6 +39,7 @@ SERVICE_SKIP_TASK = "skip_task"
 SERVICE_REMOVE_TASK = "remove_task"
 SERVICE_UPDATE_TASK = "update_task"
 SERVICE_GET_TASKS = "get_tasks"
+SERVICE_SET_FILTERS = "set_filters"
 
 # get_tasks sort modes; without one the stored (card) order is kept.
 SORT_PRIORITY = "priority"
@@ -126,6 +137,22 @@ GET_TASKS_SCHEMA = vol.Schema(
             None, "", vol.All(vol.Coerce(int), vol.Range(min=1, max=MAX_PRIORITY))
         ),
         vol.Optional("sort"): vol.Any(None, "", vol.In(SORT_MODES)),
+    }
+)
+
+
+# Shared card filters of a sync group. Only the fields passed are changed;
+# `reset` first drops every override so cards return to their own defaults.
+SET_FILTERS_SCHEMA = vol.Schema(
+    {
+        vol.Required("group"): cv.string,
+        vol.Optional("show_completed"): cv.boolean,
+        vol.Optional("show_upcoming"): cv.boolean,
+        vol.Optional("due_soon"): cv.boolean,
+        vol.Optional("tags"): vol.Any(None, _STR_OR_LIST),
+        vol.Optional("sort"): vol.In(FILTER_SORTS),
+        vol.Optional("assigned_to"): cv.string,
+        vol.Optional("reset", default=False): cv.boolean,
     }
 )
 
@@ -380,6 +407,29 @@ def async_register_services(hass: HomeAssistant) -> None:
     async def get_tasks(call: ServiceCall) -> ServiceResponse:
         return query_tasks(_manager(hass), call.data)
 
+    async def set_filters(call: ServiceCall) -> None:
+        manager = _manager(hass)
+        filters: dict = {
+            key: call.data[key] for key in FILTER_BOOL_KEYS if key in call.data
+        }
+        if "tags" in call.data:
+            filters["tags"] = normalize_tags(call.data["tags"])
+        if "sort" in call.data:
+            filters["sort"] = call.data["sort"]
+        if "assigned_to" in call.data:
+            person = call.data["assigned_to"].strip()
+            if person.casefold() in (FILTER_PERSON_ALL, FILTER_PERSON_ME_UNASSIGNED):
+                filters["person"] = person.casefold()
+            else:
+                # Person entity id or name; an unknown value is an error
+                # because no card could ever match it.
+                resolved = next(iter(person_ids(manager, person)), "")
+                known = {p["entity_id"] for p in manager.serialized_data()["persons"]}
+                if resolved not in known:
+                    raise BetterTodoError(f"No person '{person}'")
+                filters["person"] = resolved
+        manager.set_filters(call.data["group"], filters, call.data["reset"])
+
     def _wrap(func):
         # Surface BetterTodoError as a proper service validation error
         # instead of an unhandled exception in the logs.
@@ -407,6 +457,9 @@ def async_register_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_GET_TASKS, _wrap(get_tasks), GET_TASKS_SCHEMA,
         supports_response=SupportsResponse.ONLY,
     )
+    hass.services.async_register(
+        DOMAIN, SERVICE_SET_FILTERS, _wrap(set_filters), SET_FILTERS_SCHEMA
+    )
 
 
 @callback
@@ -414,6 +467,7 @@ def async_remove_services(hass: HomeAssistant) -> None:
     for service in (
         SERVICE_ADD_TASK, SERVICE_COMPLETE_TASK, SERVICE_SKIP_TASK,
         SERVICE_REMOVE_TASK, SERVICE_UPDATE_TASK, SERVICE_GET_TASKS,
+        SERVICE_SET_FILTERS,
     ):
         if hass.services.has_service(DOMAIN, service):
             hass.services.async_remove(DOMAIN, service)

@@ -87,6 +87,17 @@ SUMMARY_PERIOD_LEAD = {"week": 2, "month": 5}
 
 MAX_HISTORY = 5000
 
+# Shared card filters: cards with the same `sync_group` follow one filter
+# state kept here in the backend, so it is the same on every device. Only
+# keys that override a card's own defaults are stored.
+FILTER_BOOL_KEYS = ("show_completed", "show_upcoming", "due_soon")
+FILTER_SORTS = ("smart", "manual", "due", "priority", "title", "person")
+FILTER_PERSON_ALL = "all"
+FILTER_PERSON_ME_UNASSIGNED = "me_unassigned"
+FILTER_KEYS = (*FILTER_BOOL_KEYS, "tags", "sort", "person")
+MAX_FILTER_GROUPS = 100
+MAX_FILTER_GROUP_NAME = 64
+
 # Options: the LLM API ("Better ToDo" tools for Assist conversation agents).
 # Which lists an assistant may use is resolved per request: a rule for the
 # calling person wins over a rule for the satellite's area; no rule = all.

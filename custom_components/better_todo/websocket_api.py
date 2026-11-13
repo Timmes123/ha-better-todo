@@ -36,6 +36,7 @@ def async_register_websocket(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_reorder)
     websocket_api.async_register_command(hass, ws_reorder_lists)
     websocket_api.async_register_command(hass, ws_clear_completed)
+    websocket_api.async_register_command(hass, ws_set_filters)
 
 
 def _manager(hass: HomeAssistant) -> BetterTodoManager:
@@ -231,3 +232,18 @@ def ws_reorder_lists(hass, connection, msg):
 @_handle
 def ws_toggle_subtask(hass, connection, msg):
     _manager(hass).toggle_subtask(msg["task_id"], msg["subtask_id"], msg["done"])
+
+
+# Shared filter state of a card sync group; like task edits, any
+# authenticated user may change it.
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "better_todo/set_filters",
+        vol.Required("group"): str,
+        vol.Optional("filters"): dict,
+        vol.Optional("reset", default=False): bool,
+    }
+)
+@_handle
+def ws_set_filters(hass, connection, msg):
+    return _manager(hass).set_filters(msg["group"], msg.get("filters"), msg["reset"])

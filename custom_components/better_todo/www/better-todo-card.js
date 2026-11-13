@@ -4,7 +4,7 @@
  */
 
 // Must match manifest.json — CI checks it. Used to detect a stale cached card.
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.2.0";
 
 // Past this many days a day count stops being readable ("1095 d overdue"),
 // so the badge shows the actual date instead.
@@ -73,6 +73,8 @@ const STR = {
     b_due: "Due date / status", b_person: "Person", b_rec: "Recurrence", b_streak: "Streak / misses",
     months_f: "Active months", task_id_t: "ID", copied: "Copied",
     outdated: "Better ToDo was updated — reload the page to get the new card.", reload: "Reload",
+    grp_sync: "Shared filters", sync_group_f: "Sync group", sync_group_hint: "Cards with the same group name share their filters on all devices (empty = off)",
+    sync_person_t: "Also share the person filter", filters_only_t: "Filter bar only (no tasks)",
   },
   de: {
     wd: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
@@ -131,6 +133,8 @@ const STR = {
     b_due: "Fälligkeit / Status", b_person: "Person", b_rec: "Wiederholung", b_streak: "Serie / Versäumnisse",
     months_f: "Aktive Monate", task_id_t: "ID", copied: "Kopiert",
     outdated: "Better ToDo wurde aktualisiert – Seite neu laden für die neue Karte.", reload: "Neu laden",
+    grp_sync: "Gemeinsame Filter", sync_group_f: "Sync-Gruppe", sync_group_hint: "Karten mit demselben Gruppennamen teilen ihre Filter auf allen Geräten (leer = aus)",
+    sync_person_t: "Auch den Personenfilter teilen", filters_only_t: "Nur Filterleiste (keine Aufgaben)",
   },
   fr: {
     wd: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
@@ -189,6 +193,8 @@ const STR = {
     b_due: "Échéance / statut", b_person: "Personne", b_rec: "Récurrence", b_streak: "Série / oublis",
     months_f: "Mois actifs", task_id_t: "ID", copied: "Copié",
     outdated: "Better ToDo a été mis à jour – rechargez la page pour obtenir la nouvelle carte.", reload: "Recharger",
+    grp_sync: "Filtres partagés", sync_group_f: "Groupe de synchronisation", sync_group_hint: "Les cartes portant le même nom de groupe partagent leurs filtres sur tous les appareils (vide = désactivé)",
+    sync_person_t: "Partager aussi le filtre de personne", filters_only_t: "Barre de filtres uniquement (sans tâches)",
   },
   es: {
     wd: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
@@ -247,6 +253,8 @@ const STR = {
     b_due: "Vencimiento / estado", b_person: "Persona", b_rec: "Recurrencia", b_streak: "Racha / fallos",
     months_f: "Meses activos", task_id_t: "ID", copied: "Copiado",
     outdated: "Better ToDo se ha actualizado: recarga la página para obtener la nueva tarjeta.", reload: "Recargar",
+    grp_sync: "Filtros compartidos", sync_group_f: "Grupo de sincronización", sync_group_hint: "Las tarjetas con el mismo nombre de grupo comparten sus filtros en todos los dispositivos (vacío = desactivado)",
+    sync_person_t: "Compartir también el filtro de persona", filters_only_t: "Solo barra de filtros (sin tareas)",
   },
   it: {
     wd: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
@@ -305,6 +313,8 @@ const STR = {
     b_due: "Scadenza / stato", b_person: "Persona", b_rec: "Ricorrenza", b_streak: "Serie / mancate",
     months_f: "Mesi attivi", task_id_t: "ID", copied: "Copiato",
     outdated: "Better ToDo è stato aggiornato: ricarica la pagina per ottenere la nuova scheda.", reload: "Ricarica",
+    grp_sync: "Filtri condivisi", sync_group_f: "Gruppo di sincronizzazione", sync_group_hint: "Le schede con lo stesso nome di gruppo condividono i filtri su tutti i dispositivi (vuoto = disattivato)",
+    sync_person_t: "Condividi anche il filtro persona", filters_only_t: "Solo barra dei filtri (senza attività)",
   },
   nl: {
     wd: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
@@ -363,6 +373,8 @@ const STR = {
     b_due: "Vervaldatum / status", b_person: "Persoon", b_rec: "Herhaling", b_streak: "Reeks / gemist",
     months_f: "Actieve maanden", task_id_t: "ID", copied: "Gekopieerd",
     outdated: "Better ToDo is bijgewerkt – herlaad de pagina voor de nieuwe kaart.", reload: "Herladen",
+    grp_sync: "Gedeelde filters", sync_group_f: "Synchronisatiegroep", sync_group_hint: "Kaarten met dezelfde groepsnaam delen hun filters op alle apparaten (leeg = uit)",
+    sync_person_t: "Ook het persoonsfilter delen", filters_only_t: "Alleen filterbalk (geen taken)",
   },
   pl: {
     wd: ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"],
@@ -421,6 +433,8 @@ const STR = {
     b_due: "Termin / status", b_person: "Osoba", b_rec: "Powtarzanie", b_streak: "Seria / pominięcia",
     months_f: "Aktywne miesiące", task_id_t: "ID", copied: "Skopiowano",
     outdated: "Better ToDo został zaktualizowany – odśwież stronę, aby pobrać nową kartę.", reload: "Odśwież",
+    grp_sync: "Wspólne filtry", sync_group_f: "Grupa synchronizacji", sync_group_hint: "Karty z tą samą nazwą grupy współdzielą filtry na wszystkich urządzeniach (puste = wyłączone)",
+    sync_person_t: "Udostępniaj także filtr osoby", filters_only_t: "Tylko pasek filtrów (bez zadań)",
   },
 };
 
@@ -443,6 +457,12 @@ const canonJson = (v) => {
 const STATE_RANK = {
   overdue: 0, due: 1, period_open: 2, open: 3, period_skipped: 4,
   upcoming: 5, hidden: 5, done: 6, period_done: 6,
+};
+
+// Card filter override -> key in the backend's shared filter group.
+const SYNC_KEYS = {
+  showDone: "show_completed", showUpcoming: "show_upcoming", dueSoon: "due_soon",
+  tags: "tags", sort: "sort", person: "person",
 };
 
 const REMINDER_PRESETS = [0, 30, 60, 120, 1440, 2880, 10080];
@@ -564,6 +584,7 @@ class BetterTodoCard extends HTMLElement {
       show_menu: true, show_add: true, allow_edit: true, allow_skip: true, allow_delete: true, show_completed: false, show_upcoming: false,
       compact: false, max_height: null, confirm_complete: false, due_soon_days: 7, due_soon: false,
       upcoming_days: null,
+      sync_group: null, sync_person: false, filters_only: false,
       colorful: true, hide_when_empty: false, css: null,
       // Per-badge toggles — every badge the card knows, all on by default.
       show_due: true, show_priority: true, show_subtasks: true, show_tags: true,
@@ -704,6 +725,48 @@ class BetterTodoCard extends HTMLElement {
 
   _feature(name) { return !!this._data?.features?.[name]; }
 
+  // Session filters live in this._ui (null = follow the card config). With
+  // a sync_group the same overrides are kept by the backend instead and are
+  // shared by every card of the group on every device. The list chips always
+  // stay per card; the person filter only joins in with sync_person.
+  _group() {
+    const g = this._config.sync_group;
+    return typeof g === "string" && g.trim() ? g.trim() : null;
+  }
+
+  _synced(key) {
+    return !!SYNC_KEYS[key] && !!this._group()
+      && (key !== "person" || this._config.sync_person === true);
+  }
+
+  _ov(key) {
+    if (!this._synced(key)) return this._ui[key];
+    const v = this._data?.filter_groups?.[this._group()]?.[SYNC_KEYS[key]];
+    return v === undefined ? null : v;
+  }
+
+  _setOv(changes) {
+    const shared = {};
+    for (const [key, value] of Object.entries(changes)) {
+      if (this._synced(key)) shared[SYNC_KEYS[key]] = value;
+      else this._ui[key] = value;
+    }
+    if (Object.keys(shared).length && this._data) {
+      // Optimistic: apply locally right away, the backend push confirms it.
+      const group = this._group();
+      const groups = { ...(this._data.filter_groups || {}) };
+      const next = { ...(groups[group] || {}) };
+      for (const [k, v] of Object.entries(shared)) {
+        if (v === null) delete next[k];
+        else next[k] = v;
+      }
+      groups[group] = next;
+      this._data.filter_groups = groups;
+      this._wsBg({ type: "better_todo/set_filters", group, filters: shared });
+    }
+    this._render();
+  }
+
   _person(entityId) { return (this._data?.persons || []).find((p) => p.entity_id === entityId); }
 
   _zone(entityId) { return (this._data?.zones || []).find((z) => z.entity_id === entityId); }
@@ -734,7 +797,8 @@ class BetterTodoCard extends HTMLElement {
   }
 
   _personFilter() {
-    const raw = this._ui.person !== null ? this._ui.person : (this._config.assigned || "all");
+    const ov = this._ov("person");
+    const raw = ov !== null ? ov : (this._config.assigned || "all");
     if (raw === "me") return this._myPerson()?.entity_id || "all";
     // "me+<id>" keeps the or-unassigned semantics in one token; with no
     // matching person entity only unassigned tasks pass.
@@ -751,9 +815,9 @@ class BetterTodoCard extends HTMLElement {
     return assigned.includes(personFilter);
   }
 
-  _showDone() { return this._ui.showDone ?? !!this._config.show_completed; }
-  _showUpcoming() { return this._ui.showUpcoming ?? !!this._config.show_upcoming; }
-  _dueSoon() { return this._ui.dueSoon ?? !!this._config.due_soon; }
+  _showDone() { return this._ov("showDone") ?? !!this._config.show_completed; }
+  _showUpcoming() { return this._ov("showUpcoming") ?? !!this._config.show_upcoming; }
+  _dueSoon() { return this._ov("dueSoon") ?? !!this._config.due_soon; }
   // Horizon for the show-upcoming reveal: it only caps what the toggle adds
   // on top — tasks visible through their own lead window are untouched, and
   // tasks without a due date cannot be measured, so they always reveal.
@@ -764,10 +828,10 @@ class BetterTodoCard extends HTMLElement {
   }
   // null = no tag filter; a session override of [] clears a configured default.
   _tagFilter() {
-    const tags = this._ui.tags ?? this._config.tags;
+    const tags = this._ov("tags") ?? this._config.tags;
     return Array.isArray(tags) && tags.length ? tags : null;
   }
-  _sortMode() { return this._ui.sort ?? this._config.sort ?? "smart"; }
+  _sortMode() { return this._ov("sort") ?? this._config.sort ?? "smart"; }
 
   _monthShort(m) {
     return new Date(2000, m - 1, 1).toLocaleDateString(this._hass?.locale?.language || "en", { month: "short" });
@@ -813,9 +877,10 @@ class BetterTodoCard extends HTMLElement {
   }
 
   _filtersActive() {
-    const u = this._ui;
-    return !!(u.lists || u.person !== null || u.tags !== null
-      || u.dueSoon !== null || u.sort || u.showDone !== null || u.showUpcoming !== null);
+    return !!this._ui.lists || Object.keys(SYNC_KEYS).some((key) => {
+      const v = this._ov(key);
+      return v !== null && v !== undefined;
+    });
   }
 
   _allTags() {
@@ -921,18 +986,23 @@ class BetterTodoCard extends HTMLElement {
     const stale = !!this._data?.version && this._data.version !== CARD_VERSION;
     const banner = stale ? `<div class="update-hint">${esc(t.outdated)}
         <button class="btn small" data-action="reload">${esc(t.reload)}</button></div>` : "";
+    // filters_only: a pure control card for a sync group — header and filter
+    // bar, no task list. Errors and the loading state still show.
+    const only = this._filtersOnly();
     this._root.innerHTML = `<ha-card class="${this._config.compact ? "compact" : ""}${this._config.colorful === false ? " mono" : ""}">
         ${banner}${this._renderHeader()}
-        <div class="body" ${maxH}>${body}</div>
+        ${only ? "" : `<div class="body" ${maxH}>${body}</div>`}
       </ha-card>`;
     // hide_when_empty: only the "nothing to do" state hides the card —
     // errors, loading and "no lists yet" stay visible because the user has
     // to act on them. The editor preview never hides, so the option can be
     // toggled without the card vanishing from the editor.
-    const hide = !!this._config.hide_when_empty && !this._error && !!this._data && this._empty && !this.preview;
+    const hide = !!this._config.hide_when_empty && !this._error && !!this._data && this._empty && !this.preview && !only;
     this._setHidden(hide);
     if (this._dialog?.kind === "lists" && this._dialogEl?.open) this._renderManageLists();
   }
+
+  _filtersOnly() { return !!this._config.filters_only && !!this._data && !this._error; }
 
   _setHidden(hide) {
     if (this._hiddenState === hide) return;
@@ -946,6 +1016,15 @@ class BetterTodoCard extends HTMLElement {
     const t = this.t;
     if (!this._data) return "";
     const title = this._config.title;
+    if (this._filtersOnly()) {
+      const reset = this._filtersActive()
+        ? `<button class="icon-btn" data-action="dd-reset" title="${esc(t.reset_filters)}">↺</button>` : "";
+      const head = title || reset ? `<div class="head">
+        <div class="head-title">${title ? esc(title) : ""}</div>
+        <div class="head-actions">${reset}</div>
+      </div>` : "";
+      return head + this._renderMenu();
+    }
     if (!title && !this._config.show_add && !this._config.show_menu) return "";
     return `<div class="head">
       <div class="head-title">${title ? esc(title) : ""}</div>
@@ -978,16 +1057,21 @@ class BetterTodoCard extends HTMLElement {
     const tags = this._feature("tags") ? this._allTags() : [];
     const selTags = this._tagFilter() || [];
     const sort = this._sortMode();
-    return `<div class="menu">
-      <div class="chips">
+    // The filter-bar-only card has no task list of its own: the per-card
+    // list chips would do nothing there, and neither would a person filter
+    // that is not shared.
+    const only = this._filtersOnly();
+    const personSelect = this._feature("assignment") && persons.length && (!only || this._synced("person"));
+    return `<div class="menu${only ? " solo" : ""}">
+      ${only ? "" : `<div class="chips">
         ${all.map((l) => `<button class="chip ${active.includes(l.id) ? "on" : ""}" data-action="toggle-list" data-id="${esc(l.id)}">${esc(l.name)}</button>`).join("")}
         <button class="chip ghost" data-action="add-list">+ ${esc(t.new_list)}</button>
-      </div>
+      </div>`}
       ${tags.length ? `<div class="chips">
         ${tags.map((x) => `<button class="chip tagchip ${selTags.includes(x) ? "on" : ""}" data-action="toggle-tag" data-id="${esc(x)}">#${esc(x)}</button>`).join("")}
       </div>` : ""}
       <div class="menu-row selects">
-        ${this._feature("assignment") && persons.length ? `<select data-action="person-filter">
+        ${personSelect ? `<select data-action="person-filter">
           <option value="all" ${personFilter === "all" ? "selected" : ""}>${esc(t.all_persons)}</option>
           <option value="me_unassigned" ${personFilter.startsWith("me+") ? "selected" : ""}>${esc(t.logged_in_un)}</option>
           ${persons.map((p) => `<option value="${esc(p.entity_id)}" ${personFilter === p.entity_id ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
@@ -1204,11 +1288,11 @@ class BetterTodoCard extends HTMLElement {
       }
     }
     else if (action === "dd-reset") {
-      Object.assign(this._ui, {
-        lists: null, person: null, tags: null, dueSoon: null, sort: null,
-        showDone: null, showUpcoming: null, dropdown: false,
+      Object.assign(this._ui, { lists: null, dropdown: false });
+      this._setOv({
+        person: null, tags: null, dueSoon: null, sort: null,
+        showDone: null, showUpcoming: null,
       });
-      this._render();
     }
     else if (action === "toggle-list") this._toggleListFilter(id);
     else if (action === "toggle-tag") this._toggleTagFilter(id);
@@ -1233,11 +1317,11 @@ class BetterTodoCard extends HTMLElement {
     const action = el.dataset.action;
     if (action === "subtask") {
       this._wsBg({ type: "better_todo/toggle_subtask", task_id: el.dataset.id, subtask_id: el.dataset.sub, done: el.checked });
-    } else if (action === "person-filter") { this._ui.person = el.value; this._render(); }
-    else if (action === "sort") { this._ui.sort = el.value; this._render(); }
-    else if (action === "show-done") { this._ui.showDone = el.checked; this._render(); }
-    else if (action === "show-upcoming") { this._ui.showUpcoming = el.checked; this._render(); }
-    else if (action === "due-soon") { this._ui.dueSoon = el.checked; this._render(); }
+    } else if (action === "person-filter") this._setOv({ person: el.value });
+    else if (action === "sort") this._setOv({ sort: el.value });
+    else if (action === "show-done") this._setOv({ showDone: el.checked });
+    else if (action === "show-upcoming") this._setOv({ showUpcoming: el.checked });
+    else if (action === "due-soon") this._setOv({ dueSoon: el.checked });
   }
 
   _onDragStart(e) {
@@ -1298,8 +1382,7 @@ class BetterTodoCard extends HTMLElement {
   _toggleTagFilter(tag) {
     let cur = this._tagFilter() || [];
     cur = cur.includes(tag) ? cur.filter((x) => x !== tag) : [...cur, tag];
-    this._ui.tags = cur;
-    this._render();
+    this._setOv({ tags: cur });
   }
 
   _task(id) { return (this._data?.tasks || []).find((x) => x.id === id); }
@@ -1964,6 +2047,7 @@ class BetterTodoCard extends HTMLElement {
       .icon-btn:disabled:hover { background: none; color: var(--secondary-text-color); }
       .row-edit { opacity: 0.6; margin-left: 12px; }
       .menu { padding: 8px 0 4px; border-bottom: 1px solid var(--divider-color); margin-bottom: 8px; }
+      .menu.solo { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
       .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
       .chip { border: 1px solid var(--divider-color); background: none; color: var(--secondary-text-color);
         border-radius: 14px; padding: 3px 12px; cursor: pointer; font-size: 0.85em; }
@@ -2209,6 +2293,9 @@ class BetterTodoCardEditor extends HTMLElement {
             <label>${esc(t.due_lead_f)}<input type="number" min="0" max="90" data-f="due_soon_days" value="${esc(c.due_soon_days ?? 7)}"></label>
             <label>${esc(t.horizon_f)}<input type="number" min="0" data-f="upcoming_days" value="${esc(c.upcoming_days ?? "")}"></label>
           </div>`)}
+        ${group(t.grp_sync, `<div class="row"><label>${esc(t.sync_group_f)}<input type="text" data-f="sync_group" value="${esc(c.sync_group || "")}"></label></div>
+          <div class="hint">${esc(t.sync_group_hint)}</div>
+          ${checks([["sync_person", t.sync_person_t, false], ["filters_only", t.filters_only_t, false]])}`)}
         ${group(t.grp_badges, checks(badgeToggles))}
         ${group(t.grp_behavior, checks(behaviorToggles))}
         <details class="grp" ${c.css ? "open" : ""}><summary>${esc(t.grp_advanced)}</summary>

@@ -319,3 +319,49 @@ update_task:
       example: '{"zone": "zone.home", "mode": "inside"}'
       selector:
         object:
+
+set_filters:
+  fields:
+    group:
+      required: true
+      example: "rooms"
+      selector:
+        text:
+    show_completed:
+      required: false
+      selector:
+        boolean:
+    show_upcoming:
+      required: false
+      selector:
+        boolean:
+    due_soon:
+      required: false
+      selector:
+        boolean:
+    tags:
+      required: false
+      example: "vacuum"
+      selector:
+        text:
+    sort:
+      required: false
+      selector:
+        select:
+          options:
+            - smart
+            - manual
+            - due
+            - priority
+            - title
+            - person
+    assigned_to:
+      required: false
+      example: "all"
+      selector:
+        text:
+    reset:
+      required: false
+      default: false
+      selector:
+        boolean:

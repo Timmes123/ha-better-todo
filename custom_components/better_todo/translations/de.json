@@ -343,6 +343,44 @@
           "description": "Erinnerungen nur zustellen, solange die Person innerhalb (oder außerhalb) einer Zone ist, sonst zurückhalten, bis sie die Zone betritt (oder verlässt): zone = Zonen-Entität, mode = inside oder outside. Leer entfernt die Bedingung."
         }
       }
+    },
+    "set_filters": {
+      "name": "Gemeinsame Filter setzen",
+      "description": "Ändert die gemeinsamen Filter aller Karten mit derselben Sync-Gruppe, auf jedem Gerät. Nur die übergebenen Felder werden geändert.",
+      "fields": {
+        "group": {
+          "name": "Sync-Gruppe",
+          "description": "Name der Sync-Gruppe, wie in den Karten eingetragen."
+        },
+        "show_completed": {
+          "name": "Erledigte anzeigen",
+          "description": "Erledigte Aufgaben anzeigen."
+        },
+        "show_upcoming": {
+          "name": "Kommende anzeigen",
+          "description": "Aufgaben anzeigen, die noch nicht sichtbar sind."
+        },
+        "due_soon": {
+          "name": "Nur fällige",
+          "description": "Nur Aufgaben anzeigen, die innerhalb des Vorlaufs der Karte fällig sind."
+        },
+        "tags": {
+          "name": "Tags",
+          "description": "Nur Aufgaben mit mindestens einem dieser Tags. Leer = kein Tag-Filter."
+        },
+        "sort": {
+          "name": "Sortierung",
+          "description": "Sortierung der Karten."
+        },
+        "assigned_to": {
+          "name": "Zugewiesen an",
+          "description": "Person-Entität oder Name, all oder me_unassigned (angemeldeter Nutzer + nicht zugewiesene). Wirkt nur auf Karten, die den Personenfilter teilen."
+        },
+        "reset": {
+          "name": "Zuerst zurücksetzen",
+          "description": "Zuerst alle gemeinsamen Filter der Gruppe verwerfen, sodass die Karten wieder ihre eigenen Standards nutzen."
+        }
+      }
     }
   }
 }
